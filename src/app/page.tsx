@@ -1,7 +1,6 @@
 'use client';
 
 import { useAppStore, PageName } from '@/lib/store';
-import dynamic from 'next/dynamic';
 
 // Auth screens
 import WelcomeScreen from '@/components/screens/WelcomeScreen';

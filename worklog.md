@@ -121,3 +121,27 @@ Stage Summary:
 - All API endpoints tested and working
 - ESLint clean (zero errors)
 - Dev server running on port 3000
+
+---
+Task ID: 8
+Agent: main-orchestrator
+Task: Fix all 9 console errors
+
+Work Log:
+- ERROR 1: Fixed `ease: 'easeOut'` type widening in WelcomeScreen.tsx by adding `as const`
+- ERROR 2: Fixed Notification.type union in store.ts to match actual API values (transfer_received, withdrawal_validated, general, purchase, barter_accepted, etc.)
+- ERROR 3: Removed unused `dynamic` import from page.tsx
+- ERROR 4: Removed unused `Skeleton` import from SendScreen.tsx
+- ERROR 5: Removed duplicate Togo (+228) entry from AuthPhoneScreen countryCodes array
+- ERROR 6: Fixed Guinea country code from +36 (Hungary) to +224 in AuthPhoneScreen
+- ERROR 7: Fixed dead `offeredBy` form field in BarterCreateScreen - renamed to `offerDescription` and integrated into API description
+- ERROR 8: Added missing `.no-scrollbar` CSS class to globals.css (webkit + standard)
+- ERROR 9: Fixed SettingsScreen ChevronRight rendering logic - items with `value: null` now correctly show the chevron
+- Also fixed: Added `allowedDevOrigins` to next.config.ts to suppress cross-origin warning
+
+Stage Summary:
+- All 9 errors fixed
+- ESLint: 0 errors
+- Dev server: clean, no warnings
+- All 17 screens compile and render correctly
+- All 13 API endpoints responding correctly

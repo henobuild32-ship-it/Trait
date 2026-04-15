@@ -23,7 +23,7 @@ const countryCodes = [
   { code: '+228', label: '+228', country: 'Togo' },
   { code: '+229', label: '+229', country: 'Bénin' },
   { code: '+225', label: '+225', country: "Côte d'Ivoire" },
-  { code: '+228', label: '+228', country: 'Togo' },
+  { code: '+224', label: '+224', country: 'Guinée' },
   { code: '+237', label: '+237', country: 'Cameroun' },
   { code: '+243', label: '+243', country: 'RDC' },
   { code: '+221', label: '+221', country: 'Sénégal' },
@@ -31,7 +31,6 @@ const countryCodes = [
   { code: '+226', label: '+226', country: 'Burkina Faso' },
   { code: '+234', label: '+234', country: 'Nigeria' },
   { code: '+233', label: '+233', country: 'Ghana' },
-  { code: '+36', label: '+36', country: 'Guinée' },
 ];
 
 export default function AuthPhoneScreen() {

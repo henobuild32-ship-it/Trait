@@ -38,7 +38,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'transaction' | 'security' | 'promo' | 'system';
+  type: 'transfer_received' | 'transfer_sent' | 'withdrawal_validated' | 'purchase' | 'barter_accepted' | 'general' | 'security' | 'promo' | 'system';
   read: boolean;
   createdAt: string;
 }

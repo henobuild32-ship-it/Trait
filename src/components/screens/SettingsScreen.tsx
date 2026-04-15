@@ -192,11 +192,9 @@ export default function SettingsScreen() {
                               {item.value}
                             </span>
                           )}
-                        {!item.value ||
-                          (item.value !== 'toggle' &&
-                            item.value !== 'darkMode' && (
-                              <ChevronRight className="size-4 text-muted-foreground" />
-                            ))}
+                        {item.value !== 'toggle' && item.value !== 'darkMode' && (
+                          <ChevronRight className="size-4 text-muted-foreground" />
+                        )}
                       </button>
                     </div>
                   );

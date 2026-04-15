@@ -25,7 +25,7 @@ export default function BarterCreateScreen() {
     title: '',
     description: '',
     category: '',
-    offeredBy: '',
+    offerDescription: '',
     wantedItem: '',
   });
 
@@ -48,12 +48,15 @@ export default function BarterCreateScreen() {
 
     setSubmitting(true);
     try {
+      const fullDescription = form.offerDescription.trim()
+        ? `${form.description.trim()}\n\nDétail: ${form.offerDescription.trim()}`
+        : form.description.trim();
       const res = await fetch('/api/barter/offers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.title.trim(),
-          description: form.description.trim(),
+          description: fullDescription,
           category: form.category,
           offeredBy: user.id,
           wantedItem: form.wantedItem.trim() || undefined,
@@ -140,12 +143,12 @@ export default function BarterCreateScreen() {
 
           {/* What you offer */}
           <div className="space-y-2">
-            <Label htmlFor="offeredBy">Ce que vous proposez *</Label>
+            <Label htmlFor="offerDescription">Détail de l'offre</Label>
             <Input
-              id="offeredBy"
+              id="offerDescription"
               placeholder="Ex: Design de site web, cours de guitare..."
-              value={form.offeredBy}
-              onChange={(e) => handleChange('offeredBy', e.target.value)}
+              value={form.offerDescription}
+              onChange={(e) => handleChange('offerDescription', e.target.value)}
               disabled={submitting}
             />
           </div>

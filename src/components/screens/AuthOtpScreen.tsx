@@ -86,10 +86,15 @@ export default function AuthOtpScreen() {
       setOtpCode(otp);
       setOtpVerified(true);
 
-      // If user has no name, go to profile setup
+      // Routing logic after OTP verification
       if (!user.name || user.name.trim() === '') {
+        // New user — go to profile setup
         navigateTo('auth-profile');
+      } else if (!user.hasCompletedOnboarding) {
+        // Existing user but hasn't completed onboarding
+        navigateTo('onboarding');
       } else {
+        // Returning user — go home
         navigateTo('home');
       }
     } catch {

@@ -5,9 +5,14 @@ import { persist } from 'zustand/middleware';
 
 export type PageName =
   | 'welcome'
+  | 'auth-role'
   | 'auth-phone'
   | 'auth-otp'
   | 'auth-profile'
+  | 'pin-setup'
+  | 'auth-login'
+  | 'pin-verify'
+  | 'onboarding'
   | 'home'
   | 'send'
   | 'withdraw'
@@ -21,7 +26,13 @@ export type PageName =
   | 'barter-create'
   | 'notifications'
   | 'settings'
-  | 'profile';
+  | 'profile'
+  | 'agent-dashboard'
+  | 'agent-deposit'
+  | 'agent-withdraw-validate'
+  | 'agent-activity';
+
+export type UserRole = 'client' | 'agent';
 
 export interface User {
   id: string;
@@ -29,9 +40,13 @@ export interface User {
   name: string;
   pseudo: string;
   country: string;
+  role: UserRole;
+  agentCode: string | null;
   realBalance: number;
   bonusBalance: number;
+  pin: string;
   isVerified: boolean;
+  hasCompletedOnboarding: boolean;
 }
 
 export interface Notification {
@@ -55,7 +70,9 @@ interface NavigationState {
 
 interface AuthState {
   user: User | null;
+  selectedRole: UserRole;
   setUser: (user: User | null) => void;
+  setSelectedRole: (role: UserRole) => void;
   logout: () => void;
 }
 
@@ -66,6 +83,12 @@ interface OtpState {
   setPhoneNumber: (phone: string) => void;
   setOtpCode: (code: string) => void;
   setOtpVerified: (verified: boolean) => void;
+}
+
+interface PinState {
+  pendingPinAction: (() => void) | null;
+  setPendingPinAction: (action: (() => void) | null) => void;
+  clearPendingPinAction: () => void;
 }
 
 interface NotificationState {
@@ -83,7 +106,7 @@ interface ThemeState {
 
 // ─── Combined Store Interface ───────────────────────────────────────
 
-export interface AppStore extends NavigationState, AuthState, OtpState, NotificationState, ThemeState {}
+export interface AppStore extends NavigationState, AuthState, OtpState, PinState, NotificationState, ThemeState {}
 
 // ─── The Store ──────────────────────────────────────────────────────
 
@@ -133,15 +156,19 @@ export const useAppStore = create<AppStore>()(
 
       // ── Auth ───────────────────────────────────────────────────
       user: null,
+      selectedRole: 'client',
 
       setUser: (user) => set({ user }),
+      setSelectedRole: (role) => set({ selectedRole: role }),
 
       logout: () =>
         set({
           user: null,
+          selectedRole: 'client',
           currentPage: 'welcome',
           pageParams: {},
           navigationStack: [],
+          pendingPinAction: null,
         }),
 
       // ── OTP ────────────────────────────────────────────────────
@@ -152,6 +179,12 @@ export const useAppStore = create<AppStore>()(
       setPhoneNumber: (phone) => set({ phoneNumber: phone }),
       setOtpCode: (code) => set({ otpCode: code }),
       setOtpVerified: (verified) => set({ otpVerified: verified }),
+
+      // ── PIN ────────────────────────────────────────────────────
+      pendingPinAction: null,
+
+      setPendingPinAction: (action) => set({ pendingPinAction: action }),
+      clearPendingPinAction: () => set({ pendingPinAction: null }),
 
       // ── Notifications ──────────────────────────────────────────
       notifications: [],
@@ -188,6 +221,7 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         user: state.user,
         isDarkMode: state.isDarkMode,
+        selectedRole: state.selectedRole,
       }),
     },
   ),

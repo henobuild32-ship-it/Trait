@@ -1,0 +1,163 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Loader2, UserPlus, DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useAppStore } from '@/lib/store';
+import { toast } from 'sonner';
+
+export default function AgentDepositScreen() {
+  const { goBack, user, navigateTo } = useAppStore();
+  const [clientPhone, setClientPhone] = useState('');
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!clientPhone.trim()) {
+      toast.error('Entrez le numéro du client');
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error('Entrez un montant valide');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/transfer/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          amount: parseFloat(amount),
+          method: 'agent',
+          agentPhone: clientPhone.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        toast.error(data.message || 'Erreur lors du dépôt');
+        return;
+      }
+
+      toast.success(`Dépôt de $${amount} effectué avec succès !`);
+      navigateTo('agent-dashboard');
+    } catch {
+      toast.error('Erreur de connexion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const quickAmounts = [5, 10, 25, 50];
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={goBack}>
+            <ArrowLeft className="size-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <UserPlus className="size-5 text-emerald-600" />
+            <h1 className="text-lg font-semibold">Dépôt client</h1>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 px-4 py-4 pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {/* Agent info */}
+          <Card className="bg-amber-50 border-amber-200 mb-6">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <DollarSign className="size-5 text-amber-700" />
+              </div>
+              <div>
+                <p className="text-xs text-amber-600">Agent</p>
+                <p className="text-sm font-semibold text-amber-800">
+                  {user?.agentCode || 'N/A'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <Label className="text-gray-700 font-medium">
+                Numéro du client
+              </Label>
+              <Input
+                type="tel"
+                placeholder="+228 90 11 22 33"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                className="h-12 border-gray-200 focus-visible:border-emerald-500 text-base"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="text-gray-700 font-medium">
+                Montant (USD)
+              </Label>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="h-12 border-gray-200 focus-visible:border-emerald-500 text-base text-2xl font-bold"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Quick amounts */}
+            <div className="flex gap-2">
+              {quickAmounts.map((amt) => (
+                <Button
+                  key={amt}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer"
+                  onClick={() => setAmount(amt.toString())}
+                  disabled={loading}
+                >
+                  ${amt}
+                </Button>
+              ))}
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading || !clientPhone.trim() || !amount}
+              className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 disabled:opacity-50 cursor-pointer mt-4"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Traitement...
+                </>
+              ) : (
+                'Effectuer le dépôt'
+              )}
+            </Button>
+          </form>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

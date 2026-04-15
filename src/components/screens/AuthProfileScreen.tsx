@@ -94,7 +94,7 @@ export default function AuthProfileScreen() {
 
       const updatedUser = data.user as User;
       setUser(updatedUser);
-      navigateTo('home');
+      navigateTo('pin-setup');
     } catch {
       toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {

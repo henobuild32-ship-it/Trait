@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -37,10 +38,14 @@ export default function AuthPhoneScreen() {
   const goBack = useAppStore((s) => s.goBack);
   const navigateTo = useAppStore((s) => s.navigateTo);
   const setPhoneNumber = useAppStore((s) => s.setPhoneNumber);
+  const selectedRole = useAppStore((s) => s.selectedRole);
+  const setSelectedRole = useAppStore((s) => s.setSelectedRole);
 
   const [countryCode, setCountryCode] = useState('+228');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const roleLabel = selectedRole === 'client' ? 'Inscription Client' : 'Inscription Agent';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +63,7 @@ export default function AuthPhoneScreen() {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: fullPhone }),
+        body: JSON.stringify({ phone: fullPhone, role: selectedRole }),
       });
 
       const data = await res.json();
@@ -103,8 +108,20 @@ export default function AuthPhoneScreen() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="flex-1 flex flex-col px-6 pt-4 pb-8"
       >
+        {/* Role badge */}
+        <div className="flex justify-center mb-6">
+          <Badge
+            variant="outline"
+            className="px-4 py-1.5 text-sm font-semibold border-emerald-200 bg-emerald-50 text-emerald-700 cursor-pointer"
+            onClick={() => navigateTo('auth-role')}
+          >
+            {roleLabel}
+            <span className="ml-1.5 text-xs opacity-60">✏️</span>
+          </Badge>
+        </div>
+
         <div className="flex flex-col gap-2 mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Connectez-vous</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Créer un compte</h1>
           <p className="text-gray-500">Entrez votre numéro de téléphone</p>
         </div>
 
@@ -157,8 +174,21 @@ export default function AuthPhoneScreen() {
           </Button>
         </form>
 
-        {/* Info note */}
+        {/* Login link */}
         <div className="mt-8 flex items-center justify-center">
+          <p className="text-sm text-gray-500">
+            Déjà un compte ?{' '}
+            <button
+              onClick={() => navigateTo('auth-role')}
+              className="font-semibold text-emerald-600 hover:text-emerald-700 underline underline-offset-2 cursor-pointer"
+            >
+              Se connecter
+            </button>
+          </p>
+        </div>
+
+        {/* Info note */}
+        <div className="mt-4 flex items-center justify-center">
           <p className="text-xs text-gray-400 text-center">
             En continuant, vous acceptez nos conditions d&apos;utilisation
           </p>

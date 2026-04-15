@@ -2,8 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Send, ArrowDownToLine, ArrowUpFromLine, History, Phone, Store } from 'lucide-react';
+import {
+  Bell,
+  Send,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  History,
+  Phone,
+  Store,
+  BadgeCheck,
+  Activity,
+  UserPlus,
+  ShieldCheck,
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/lib/store';
@@ -20,11 +33,19 @@ interface HistoryItem {
   createdAt: string;
 }
 
-const quickActions = [
+const clientQuickActions = [
   { emoji: '💸', label: 'Envoyer', icon: Send, page: 'send' as const },
   { emoji: '🏧', label: 'Retirer', icon: ArrowDownToLine, page: 'withdraw' as const },
   { emoji: '➕', label: 'Déposer', icon: ArrowUpFromLine, page: 'deposit' as const },
   { emoji: '📜', label: 'Historique', icon: History, page: 'history' as const },
+  { emoji: '📶', label: 'USSD', icon: Phone, page: 'ussd' as const },
+  { emoji: '🛒', label: 'Marketplace', icon: Store, page: 'marketplace' as const },
+];
+
+const agentQuickActions = [
+  { emoji: '💵', label: 'Dépôt client', icon: UserPlus, page: 'agent-deposit' as const },
+  { emoji: '✅', label: 'Valider retrait', icon: ShieldCheck, page: 'agent-withdraw-validate' as const },
+  { emoji: '📊', label: 'Mon activité', icon: Activity, page: 'agent-activity' as const },
   { emoji: '📶', label: 'USSD', icon: Phone, page: 'ussd' as const },
   { emoji: '🛒', label: 'Marketplace', icon: Store, page: 'marketplace' as const },
 ];
@@ -64,9 +85,12 @@ export default function HomeScreen() {
   const [recentTransactions, setRecentTransactions] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isAgent = user?.role === 'agent';
   const realBalance = user?.realBalance ?? 0;
   const bonusBalance = user?.bonusBalance ?? 0;
   const totalBalance = realBalance + bonusBalance;
+
+  const quickActions = isAgent ? agentQuickActions : clientQuickActions;
 
   useEffect(() => {
     fetchRecentTransactions();
@@ -94,11 +118,18 @@ export default function HomeScreen() {
     <div className="min-h-screen bg-background pb-24">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 pt-6 pb-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Bienvenue,</p>
-          <h1 className="text-xl font-bold text-foreground">
-            {user?.name || user?.pseudo || 'Utilisateur'}
-          </h1>
+        <div className="flex items-center gap-2">
+          <div>
+            <p className="text-sm text-muted-foreground">Bienvenue,</p>
+            <h1 className="text-xl font-bold text-foreground">
+              {user?.name || user?.pseudo || 'Utilisateur'}
+            </h1>
+          </div>
+          {isAgent && (
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold px-2 py-0.5">
+              Agent
+            </Badge>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -111,6 +142,41 @@ export default function HomeScreen() {
         </Button>
       </div>
 
+      {/* Agent code display */}
+      {isAgent && user?.agentCode && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="px-4 mb-4"
+        >
+          <Card className="border-emerald-200 bg-emerald-50/50">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <BadgeCheck className="size-5 text-emerald-700" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Code Agent</p>
+                <p className="text-lg font-bold font-mono text-emerald-800 tracking-wider">
+                  {user.agentCode}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto text-emerald-600 hover:text-emerald-700 text-xs"
+                onClick={() => {
+                  navigator.clipboard?.writeText(user.agentCode!);
+                  toast.success('Code copié !');
+                }}
+              >
+                Copier
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Balance Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -118,18 +184,24 @@ export default function HomeScreen() {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="px-4 mb-6"
       >
-        <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 text-white shadow-lg">
-          <p className="text-sm text-emerald-100 mb-1">Solde total</p>
+        <div className={`rounded-2xl p-6 text-white shadow-lg ${
+          isAgent
+            ? 'bg-gradient-to-br from-amber-500 to-amber-700'
+            : 'bg-gradient-to-br from-emerald-600 to-emerald-800'
+        }`}>
+          <p className="text-sm opacity-80 mb-1">
+            {isAgent ? 'Solde du portefeuille' : 'Solde total'}
+          </p>
           <p className="text-4xl font-bold tracking-tight mb-4">
             ${totalBalance.toFixed(2)}
           </p>
           <div className="flex gap-6">
             <div>
-              <p className="text-xs text-emerald-200 mb-0.5">💵 Réel</p>
+              <p className="text-xs opacity-70 mb-0.5">💵 Réel</p>
               <p className="text-lg font-semibold">${realBalance.toFixed(2)}</p>
             </div>
             <div>
-              <p className="text-xs text-emerald-200 mb-0.5">🎁 Bonus</p>
+              <p className="text-xs opacity-70 mb-0.5">🎁 Bonus</p>
               <p className="text-lg font-semibold">${bonusBalance.toFixed(2)}</p>
             </div>
           </div>
@@ -143,17 +215,24 @@ export default function HomeScreen() {
         transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
         className="px-4 mb-6"
       >
-        <div className="grid grid-cols-3 gap-4">
-          {quickActions.map((action) => (
-            <button
-              key={action.page}
-              onClick={() => navigateTo(action.page)}
-              className="flex flex-col items-center gap-2 rounded-xl bg-card p-4 shadow-sm border border-border transition-colors hover:bg-accent active:scale-95"
-            >
-              <span className="text-2xl">{action.emoji}</span>
-              <span className="text-xs font-medium text-foreground">{action.label}</span>
-            </button>
-          ))}
+        <div className={`grid gap-4 ${
+          isAgent ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-3'
+        }`}>
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.page}
+                onClick={() => navigateTo(action.page)}
+                className="flex flex-col items-center gap-2 rounded-xl bg-card p-4 shadow-sm border border-border transition-colors hover:bg-accent active:scale-95"
+              >
+                <span className="text-2xl">{action.emoji}</span>
+                <span className={`text-xs font-medium text-foreground ${isAgent ? 'text-center leading-tight' : ''}`}>
+                  {action.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </motion.div>
 
@@ -165,7 +244,9 @@ export default function HomeScreen() {
         className="px-4"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Transactions récentes</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            {isAgent ? 'Transactions récentes' : 'Transactions récentes'}
+          </h2>
           <Button
             variant="ghost"
             size="sm"
@@ -195,7 +276,9 @@ export default function HomeScreen() {
               <span className="text-4xl mb-3">📭</span>
               <p className="text-sm text-muted-foreground">Aucune transaction</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Vos transactions apparaîtront ici
+                {isAgent
+                  ? 'Les transactions de vos clients apparaîtront ici'
+                  : 'Vos transactions apparaîtront ici'}
               </p>
             </CardContent>
           </Card>

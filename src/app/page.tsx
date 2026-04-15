@@ -4,9 +4,14 @@ import { useAppStore, PageName } from '@/lib/store';
 
 // Auth screens
 import WelcomeScreen from '@/components/screens/WelcomeScreen';
+import AuthRoleScreen from '@/components/screens/AuthRoleScreen';
 import AuthPhoneScreen from '@/components/screens/AuthPhoneScreen';
+import AuthLoginScreen from '@/components/screens/AuthLoginScreen';
 import AuthOtpScreen from '@/components/screens/AuthOtpScreen';
 import AuthProfileScreen from '@/components/screens/AuthProfileScreen';
+import PinSetupScreen from '@/components/screens/PinSetupScreen';
+import PinVerifyScreen from '@/components/screens/PinVerifyScreen';
+import OnboardingScreen from '@/components/screens/OnboardingScreen';
 
 // Main screens
 import HomeScreen from '@/components/screens/HomeScreen';
@@ -24,14 +29,25 @@ import NotificationsScreen from '@/components/screens/NotificationsScreen';
 import SettingsScreen from '@/components/screens/SettingsScreen';
 import ProfileScreen from '@/components/screens/ProfileScreen';
 
+// Agent screens
+import AgentDashboardScreen from '@/components/screens/AgentDashboardScreen';
+import AgentDepositScreen from '@/components/screens/AgentDepositScreen';
+import AgentWithdrawValidateScreen from '@/components/screens/AgentWithdrawValidateScreen';
+import AgentActivityScreen from '@/components/screens/AgentActivityScreen';
+
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const screenMap: Record<PageName, React.ComponentType> = {
   welcome: WelcomeScreen,
+  'auth-role': AuthRoleScreen,
   'auth-phone': AuthPhoneScreen,
+  'auth-login': AuthLoginScreen,
   'auth-otp': AuthOtpScreen,
   'auth-profile': AuthProfileScreen,
+  'pin-setup': PinSetupScreen,
+  'pin-verify': PinVerifyScreen,
+  onboarding: OnboardingScreen,
   home: HomeScreen,
   send: SendScreen,
   withdraw: WithdrawScreen,
@@ -46,10 +62,14 @@ const screenMap: Record<PageName, React.ComponentType> = {
   notifications: NotificationsScreen,
   settings: SettingsScreen,
   profile: ProfileScreen,
+  'agent-dashboard': AgentDashboardScreen,
+  'agent-deposit': AgentDepositScreen,
+  'agent-withdraw-validate': AgentWithdrawValidateScreen,
+  'agent-activity': AgentActivityScreen,
 };
 
 // Pages that show bottom navigation
-const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile'];
+const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity'];
 
 const pageVariants = {
   initial: { opacity: 0, y: 8 },

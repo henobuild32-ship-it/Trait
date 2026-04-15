@@ -8,20 +8,27 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  phone         String   @unique
-  name          String?
-  pseudo        String?
-  country       String   @default("US")
-  realBalance   Float    @default(0)
-  bonusBalance  Float    @default(10)
-  pin           String?
-  isVerified    Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  phone                 String   @unique
+  name                  String?
+  pseudo                String?
+  country               String   @default("US")
+  role                  String   @default("client") // client, agent
+  agentCode             String?  @unique              // 7 digits, starts with 17
+  password              String?
+  pin                   String?
+  realBalance           Float    @default(0)
+  bonusBalance          Float    @default(10)
+  isVerified            Boolean  @default(false)
+  hasCompletedOnboarding Boolean @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   sentTransactions     Transaction[]     @relation("SenderTransactions")
   receivedTransactions Transaction[]     @relation("ReceiverTransactions")
+  agentTransactions    Transaction[]     @relation("AgentTransactions")
+  agentDeposits        Deposit[]         @relation("AgentDeposits")
+  agentWithdrawals     Withdrawal[]      @relation("AgentWithdrawals")
   purchases            Purchase[]
   marketplaceProducts  MarketplaceProduct[]
   barterOffers         BarterOffer[]
@@ -33,7 +40,7 @@ model User {
 
 model Transaction {
   id          String   @id @default(cuid())
-  type        String   // send, receive
+  type        String   // send, receive, deposit, withdrawal
   amount      Float
   fee         Float    @default(0)
   currency    String   @default("USD")
@@ -41,10 +48,16 @@ model Transaction {
   senderId    String
   receiverId  String
   description String?
+  agentId     String?                             // Agent who processed this
   createdAt   DateTime @default(now())
 
   sender   User @relation("SenderTransactions", fields: [senderId], references: [id])
   receiver User @relation("ReceiverTransactions", fields: [receiverId], references: [id])
+  agent    User? @relation("AgentTransactions", fields: [agentId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([agentId])
 }
 
 model Deposit {
@@ -52,11 +65,13 @@ model Deposit {
   userId    String
   amount    Float
   currency  String   @default("USD")
-  method    String   @default("mobile_money") // mobile_money, bank_transfer, card
+  method    String   @default("mobile_money") // mobile_money, bank_transfer, card, agent
   status    String   @default("pending") // pending, completed, failed
+  agentId   String?                             // Agent who processed deposit
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user  User   @relation(fields: [userId], references: [id])
+  agent User?  @relation("AgentDeposits", fields: [agentId], references: [id])
 }
 
 model Withdrawal {
@@ -67,9 +82,11 @@ model Withdrawal {
   currency  String   @default("USD")
   method    String   @default("mobile_money")
   status    String   @default("pending") // pending, completed, failed
+  agentId   String?                             // Agent who processed withdrawal
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user  User   @relation(fields: [userId], references: [id])
+  agent User?  @relation("AgentWithdrawals", fields: [agentId], references: [id])
 }
 
 model MarketplaceProduct {

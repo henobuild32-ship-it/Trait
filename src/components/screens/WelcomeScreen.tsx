@@ -113,13 +113,21 @@ export default function WelcomeScreen() {
           </motion.div>
 
           {/* CTA Button */}
-          <motion.div variants={itemVariants} className="w-full mt-2">
+          <motion.div variants={itemVariants} className="w-full mt-2 flex flex-col gap-3">
             <Button
-              onClick={() => navigateTo('auth-phone')}
+              onClick={() => navigateTo('auth-role')}
               className="w-full h-13 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 cursor-pointer"
               size="lg"
             >
-              Commencer
+              Se connecter
+            </Button>
+            <Button
+              onClick={() => navigateTo('auth-role')}
+              variant="outline"
+              className="w-full h-13 text-base font-semibold border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-xl cursor-pointer"
+              size="lg"
+            >
+              Créer un compte
             </Button>
           </motion.div>
         </motion.div>
@@ -133,7 +141,7 @@ export default function WelcomeScreen() {
         className="py-6 text-center"
       >
         <p className="text-sm text-gray-400">
-          0.7% de frais • Bonus 10 USD
+          0.7% de frais • Bonus 10 USD • USSD *1709#
         </p>
       </motion.footer>
     </div>

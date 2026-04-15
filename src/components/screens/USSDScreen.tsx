@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -13,6 +13,9 @@ import {
   ArrowDownToLine,
   Loader2,
   CheckCircle2,
+  ArrowUpFromLine,
+  Activity,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,18 +37,91 @@ const KEYPAD_KEYS = [
   { num: '#', letters: '' },
 ];
 
-const PRESET_CODES = [
-  { code: '*1709#', label: 'Solde', icon: Wallet, response: 'Votre solde est de $125.50\nSolde bonus: $10.00\nSolde réel: $115.50' },
-  { code: '*1709*1#', label: 'Envoyer', icon: Send, response: 'Envoyer de l\'argent\n\nEntrez le numéro du destinataire:\n________________\n\n0. Retour    00. Suivant' },
-  { code: '*1709*2#', label: 'Retirer', icon: ArrowDownToLine, response: 'Retrait d\'argent\n\nMontants disponibles:\n1. $5\n2. $10\n3. $25\n4. $50\n5. Autre montant\n\n0. Retour' },
+interface PresetCode {
+  code: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  getResponse: (user: { realBalance: number; bonusBalance: number; agentCode: string | null }) => string;
+}
+
+const CLIENT_PRESET_CODES: PresetCode[] = [
+  {
+    code: '*1709#',
+    label: 'Menu Principal',
+    icon: LayoutDashboard,
+    getResponse: (user) =>
+      `TRAIT - Menu Client\n\n1. Consulter solde\n2. Envoyer de l'argent\n3. Retirer de l'argent\n4. Déposer via agent\n0. Quitter`,
+  },
+  {
+    code: '*1709*1#',
+    label: 'Consulter solde',
+    icon: Wallet,
+    getResponse: (user) =>
+      `Votre solde: ${(user.realBalance + user.bonusBalance).toFixed(2)} USD\n\nSolde réel: ${user.realBalance.toFixed(2)} USD\nSolde bonus: ${user.bonusBalance.toFixed(2)} USD`,
+  },
+  {
+    code: '*1709*2#',
+    label: 'Envoyer',
+    icon: Send,
+    getResponse: () =>
+      `Envoyer de l'argent\n\nEntrez le numéro du destinataire:\n________________\n\n0. Retour    00. Suivant`,
+  },
+  {
+    code: '*1709*3#',
+    label: 'Retirer',
+    icon: ArrowDownToLine,
+    getResponse: () =>
+      `Retrait\n\nEntrez le code agent (7 chiffres):\n________________\n\n0. Retour`,
+  },
+  {
+    code: '*1709*4#',
+    label: 'Dépôt via agent',
+    icon: ArrowUpFromLine,
+    getResponse: () =>
+      `Dépôt via agent\n\nRapprochez-vous d'un agent Trait\npour effectuer votre dépôt.\n\nL'agent vous demandera votre\nnuméro de téléphone.\n\n0. Retour`,
+  },
+];
+
+const AGENT_PRESET_CODES: PresetCode[] = [
+  {
+    code: '*1709#',
+    label: 'Menu Principal',
+    icon: LayoutDashboard,
+    getResponse: (user) =>
+      `TRAIT - Menu Agent\nCode: ${user.agentCode || 'N/A'}\n\n1. Dépôt client\n2. Valider retrait\n3. Voir activité\n0. Quitter`,
+  },
+  {
+    code: '*1709*1#',
+    label: 'Dépôt client',
+    icon: ArrowUpFromLine,
+    getResponse: () =>
+      `Dépôt client\n\nEntrez le numéro du client:\n________________\n\n0. Retour    00. Suivant`,
+  },
+  {
+    code: '*1709*2#',
+    label: 'Valider retrait',
+    icon: ArrowDownToLine,
+    getResponse: () =>
+      `Retraits en attente:\n\n1. Aucun retrait en attente\n\n0. Retour`,
+  },
+  {
+    code: '*1709*3#',
+    label: 'Voir activité',
+    icon: Activity,
+    getResponse: () =>
+      `Activité récente:\n\nAucune transaction récente\n\n0. Retour`,
+  },
 ];
 
 export default function USSDScreen() {
-  const { goBack } = useAppStore();
+  const { goBack, user } = useAppStore();
   const [dialInput, setDialInput] = useState('');
   const [isDialing, setIsDialing] = useState(false);
   const [response, setResponse] = useState('');
   const [showResponse, setShowResponse] = useState(false);
+
+  const isAgent = user?.role === 'agent';
+  const presetCodes = useMemo(() => (isAgent ? AGENT_PRESET_CODES : CLIENT_PRESET_CODES), [isAgent]);
 
   const addDigit = useCallback((digit: string) => {
     if (dialInput.length >= 15) return;
@@ -68,9 +144,9 @@ export default function USSDScreen() {
 
     // Simulate dialing delay
     setTimeout(() => {
-      const preset = PRESET_CODES.find((p) => p.code === dialInput);
-      if (preset) {
-        setResponse(preset.response);
+      const preset = presetCodes.find((p) => p.code === dialInput);
+      if (preset && user) {
+        setResponse(preset.getResponse(user));
       } else {
         setResponse(
           `Erreur\n\nLe code ${dialInput} n'est pas reconnu.\nVérifiez le code et réessayez.\n\n0. Retour`
@@ -79,7 +155,7 @@ export default function USSDScreen() {
       setShowResponse(true);
       setIsDialing(false);
     }, 1500);
-  }, [dialInput]);
+  }, [dialInput, presetCodes, user]);
 
   const applyPreset = useCallback((code: string) => {
     setDialInput(code);
@@ -99,6 +175,12 @@ export default function USSDScreen() {
             <Phone className="size-5 text-emerald-600" />
             <h1 className="text-lg font-semibold">USSD</h1>
           </div>
+          <Badge
+            variant="outline"
+            className="ml-auto text-xs border-emerald-200 bg-emerald-50 text-emerald-700"
+          >
+            {isAgent ? 'Agent' : 'Client'}
+          </Badge>
         </div>
       </header>
 
@@ -112,7 +194,7 @@ export default function USSDScreen() {
             <CardContent className="p-3 flex items-start gap-2">
               <Info className="size-4 text-emerald-700 shrink-0 mt-0.5" />
               <p className="text-sm text-emerald-800">
-                Composez un code USSD pour accéder aux services Trait
+                Composez un code USSD pour accéder aux services Trait{isAgent ? ' Agent' : ''}
               </p>
             </CardContent>
           </Card>
@@ -281,7 +363,7 @@ export default function USSDScreen() {
             Codes rapides
           </h3>
           <div className="space-y-2">
-            {PRESET_CODES.map((preset) => {
+            {presetCodes.map((preset) => {
               const Icon = preset.icon;
               return (
                 <Card

@@ -14,6 +14,9 @@ import {
   ChevronRight,
   Smartphone,
   Lock,
+  LayoutDashboard,
+  GraduationCap,
+  BadgeCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +27,8 @@ import { useAppStore } from '@/lib/store';
 export default function SettingsScreen() {
   const { goBack, user, logout, navigateTo, isDarkMode, toggleTheme } =
     useAppStore();
+
+  const isAgent = user?.role === 'agent';
 
   const handleLogout = () => {
     logout();
@@ -73,6 +78,12 @@ export default function SettingsScreen() {
           action: () => toast.info('Langue par défaut : Français'),
         },
         {
+          icon: GraduationCap,
+          label: 'Voir le tutoriel',
+          value: null,
+          action: () => navigateTo('onboarding'),
+        },
+        {
           icon: Download,
           label: 'Installer l\'application',
           value: 'PWA',
@@ -111,15 +122,21 @@ export default function SettingsScreen() {
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 {/* Avatar */}
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xl shrink-0">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0 ${
+                  isAgent
+                    ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+                    : 'bg-gradient-to-br from-emerald-400 to-emerald-600'
+                }`}>
                   {initials}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg truncate">
-                    {user?.name || user?.pseudo || 'Utilisateur'}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-lg truncate">
+                      {user?.name || user?.pseudo || 'Utilisateur'}
+                    </h3>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {user?.phone || 'Non défini'}
                   </p>
@@ -131,14 +148,39 @@ export default function SettingsScreen() {
                 </div>
               </div>
 
-              <Button
-                variant="outline"
-                className="w-full mt-4 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                onClick={() => navigateTo('profile')}
-              >
-                Modifier le profil
-                <ChevronRight className="size-4 ml-auto" />
-              </Button>
+              {/* Agent code display */}
+              {isAgent && user?.agentCode && (
+                <div className="mt-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <BadgeCheck className="size-4 text-amber-600 shrink-0" />
+                  <span className="text-sm text-amber-700">Code Agent :</span>
+                  <span className="text-sm font-bold font-mono text-amber-800 tracking-wider">
+                    {user.agentCode}
+                  </span>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="mt-3 flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                  onClick={() => navigateTo('profile')}
+                >
+                  Modifier le profil
+                  <ChevronRight className="size-4 ml-auto" />
+                </Button>
+                {isAgent && (
+                  <Button
+                    variant="outline"
+                    className="w-full text-amber-700 border-amber-200 hover:bg-amber-50"
+                    onClick={() => navigateTo('agent-dashboard')}
+                  >
+                    <LayoutDashboard className="size-4 mr-2" />
+                    Tableau de bord agent
+                    <ChevronRight className="size-4 ml-auto" />
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         </motion.div>

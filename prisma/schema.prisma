@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  name          String?
+  pseudo        String?
+  country       String   @default("US")
+  realBalance   Float    @default(0)
+  bonusBalance  Float    @default(10)
+  pin           String?
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sentTransactions     Transaction[]     @relation("SenderTransactions")
+  receivedTransactions Transaction[]     @relation("ReceiverTransactions")
+  purchases            Purchase[]
+  marketplaceProducts  MarketplaceProduct[]
+  barterOffers         BarterOffer[]
+  barterChats          BarterChatParticipant[]
+  notifications        Notification[]
+  deposits             Deposit[]
+  withdrawals          Withdrawal[]
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  type        String   // send, receive
+  amount      Float
+  fee         Float    @default(0)
+  currency    String   @default("USD")
+  status      String   @default("pending") // pending, completed, failed
+  senderId    String
+  receiverId  String
+  description String?
+  createdAt   DateTime @default(now())
+
+  sender   User @relation("SenderTransactions", fields: [senderId], references: [id])
+  receiver User @relation("ReceiverTransactions", fields: [receiverId], references: [id])
+}
+
+model Deposit {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  currency  String   @default("USD")
+  method    String   @default("mobile_money") // mobile_money, bank_transfer, card
+  status    String   @default("pending") // pending, completed, failed
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Withdrawal {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  fee       Float    @default(0)
+  currency  String   @default("USD")
+  method    String   @default("mobile_money")
+  status    String   @default("pending") // pending, completed, failed
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model MarketplaceProduct {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  category    String   // design, template, service, digital_product
+  imageUrl    String?
+  sellerId    String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seller    User      @relation(fields: [sellerId], references: [id])
+  purchases Purchase[]
+}
+
+model Purchase {
+  id          String   @id @default(cuid())
+  productId   String
+  buyerId     String
+  amount      Float
+  usedBonus   Float    @default(0)
+  usedReal    Float    @default(0)
+  status      String   @default("completed")
+  createdAt   DateTime @default(now())
+
+  product MarketplaceProduct @relation(fields: [productId], references: [id])
+  buyer   User              @relation(fields: [buyerId], references: [id])
+}
+
+model BarterOffer {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String   // service, product, skill
+  offeredBy   String
+  wantedItem  String?
+  images      String?
+  status      String   @default("active") // active, matched, closed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User          @relation(fields: [offeredBy], references: [id])
+  chats BarterChat[]
+}
+
+model BarterChat {
+  id          String   @id @default(cuid())
+  offerId     String
+  initiatedBy String
+  createdAt   DateTime @default(now())
+
+  offer        BarterOffer             @relation(fields: [offerId], references: [id])
+  participants BarterChatParticipant[]
+  messages     BarterMessage[]
+}
+
+model BarterChatParticipant {
+  id     String   @id @default(cuid())
+  chatId String
+  userId String
+
+  chat BarterChat @relation(fields: [chatId], references: [id])
+  user User       @relation(fields: [userId], references: [id])
+
+  @@unique([chatId, userId])
+}
+
+model BarterMessage {
+  id        String   @id @default(cuid())
+  chatId    String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  chat BarterChat @relation(fields: [chatId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // transfer_received, withdrawal_validated, purchase, barter_accepted, general
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

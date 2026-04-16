@@ -49,7 +49,7 @@ export default function OnboardingScreen() {
       if (user) {
         setUser({ ...user, hasCompletedOnboarding: true });
       }
-      navigateTo('home');
+      navigateTo(user?.role === 'agent' ? 'agent-dashboard' : 'home');
     } else {
       setCurrentSlide((prev) => prev + 1);
     }
@@ -59,7 +59,7 @@ export default function OnboardingScreen() {
     if (user) {
       setUser({ ...user, hasCompletedOnboarding: true });
     }
-    navigateTo('home');
+    navigateTo(user?.role === 'agent' ? 'agent-dashboard' : 'home');
   };
 
   const slide = slides[currentSlide];

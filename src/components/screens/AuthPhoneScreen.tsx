@@ -49,7 +49,6 @@ export default function AuthPhoneScreen() {
   const [loading, setLoading] = useState(false);
 
   const roleLabel = selectedRole === 'client' ? 'Client' : 'Agent';
-  const roleColor = selectedRole === 'client' ? 'emerald' : 'amber';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +94,6 @@ export default function AuthPhoneScreen() {
       navigateTo('auth-profile');
     } catch {
       // If check fails, proceed anyway (network issue, etc.)
-      const fullPhone = `${countryCode}${cleanedPhone}`;
       setPhoneNumber(fullPhone);
       setRegistrationPassword(password.trim());
       navigateTo('auth-profile');
@@ -134,7 +132,10 @@ export default function AuthPhoneScreen() {
         <div className="flex justify-center mb-6">
           <Badge
             variant="outline"
-            className={`px-4 py-1.5 text-sm font-semibold border-${roleColor}-200 bg-${roleColor}-50 text-${roleColor}-700 cursor-pointer`}
+            className={selectedRole === 'agent'
+              ? 'px-4 py-1.5 text-sm font-semibold border-amber-200 bg-amber-50 text-amber-700 cursor-pointer'
+              : 'px-4 py-1.5 text-sm font-semibold border-emerald-200 bg-emerald-50 text-emerald-700 cursor-pointer'
+            }
             onClick={() => navigateTo('auth-role')}
           >
             Inscription {roleLabel}

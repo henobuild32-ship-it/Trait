@@ -169,3 +169,23 @@ Stage Summary:
 - Registration flow: Welcome → AuthRole → AuthPhone (phone + password) → AuthProfile (name, pseudo, country → creates account) → PinSetup (save PIN to DB) → Onboarding → home/agent-dashboard
 - Demo accounts: Client +22890123456/1234, Agent +22897000001/1234 (Code: 1700001), all PINs: 0000
 - No more OTP sent - login uses phone + password directly
+
+---
+Task ID: 2
+Agent: Main
+Task: Fix display errors across the app
+
+Work Log:
+- Found and fixed duplicate `const fullPhone` in AuthPhoneScreen catch block
+- Fixed dynamic Tailwind classes in AuthPhoneScreen Badge (border-${roleColor}-200 doesn't work with Tailwind, replaced with conditional static classes)
+- Removed unused `roleColor` variable from AuthPhoneScreen
+- Fixed OnboardingScreen: agents now navigate to agent-dashboard instead of home
+- Added auto-redirect in page.tsx: if user is logged in but on welcome screen, redirects to correct home
+- Fixed MarketplaceScreen: removed unused goBack import, back button now navigates to home
+- Removed unused `Smartphone` import from SettingsScreen
+- All checks pass: TypeScript 0 errors, ESLint 0 errors, dev server compiles clean
+
+Stage Summary:
+- 5 display/rendering issues fixed
+- App now properly handles logged-in user state persistence
+- Role-based routing works correctly for both Client and Agent

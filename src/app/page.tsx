@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAppStore, PageName } from '@/lib/store';
 
 // Auth screens
@@ -78,8 +79,15 @@ const pageVariants = {
 };
 
 export default function TraitApp() {
-  const { currentPage, user } = useAppStore();
+  const { currentPage, user, navigateTo } = useAppStore();
   const Screen = screenMap[currentPage];
+
+  // Auto-redirect: if user is logged in but on welcome, go to correct home
+  useEffect(() => {
+    if (user && currentPage === 'welcome') {
+      navigateTo(user.role === 'agent' ? 'agent-dashboard' : 'home');
+    }
+  }, [user, currentPage, navigateTo]);
 
   if (!Screen) {
     return (

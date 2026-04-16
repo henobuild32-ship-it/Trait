@@ -12,7 +12,6 @@ import {
   Info,
   LogOut,
   ChevronRight,
-  Smartphone,
   Lock,
   LayoutDashboard,
   GraduationCap,

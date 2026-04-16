@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +18,6 @@ import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
 
 const countryCodes = [
-  { code: '+1', label: '+1', country: 'US/CA' },
-  { code: '+33', label: '+33', country: 'France' },
-  { code: '+44', label: '+44', country: 'UK' },
   { code: '+228', label: '+228', country: 'Togo' },
   { code: '+229', label: '+229', country: 'Bénin' },
   { code: '+225', label: '+225', country: "Côte d'Ivoire" },
@@ -32,20 +29,27 @@ const countryCodes = [
   { code: '+226', label: '+226', country: 'Burkina Faso' },
   { code: '+234', label: '+234', country: 'Nigeria' },
   { code: '+233', label: '+233', country: 'Ghana' },
+  { code: '+1', label: '+1', country: 'US/CA' },
+  { code: '+33', label: '+33', country: 'France' },
+  { code: '+44', label: '+44', country: 'UK' },
 ];
 
 export default function AuthPhoneScreen() {
   const goBack = useAppStore((s) => s.goBack);
   const navigateTo = useAppStore((s) => s.navigateTo);
   const setPhoneNumber = useAppStore((s) => s.setPhoneNumber);
+  const setRegistrationPassword = useAppStore((s) => s.setRegistrationPassword);
   const selectedRole = useAppStore((s) => s.selectedRole);
-  const setSelectedRole = useAppStore((s) => s.setSelectedRole);
 
   const [countryCode, setCountryCode] = useState('+228');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const roleLabel = selectedRole === 'client' ? 'Inscription Client' : 'Inscription Agent';
+  const roleLabel = selectedRole === 'client' ? 'Client' : 'Agent';
+  const roleColor = selectedRole === 'client' ? 'emerald' : 'amber';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,27 +60,45 @@ export default function AuthPhoneScreen() {
       return;
     }
 
+    if (!password.trim() || password.trim().length < 4) {
+      toast.error('Le mot de passe doit contenir au moins 4 caractères');
+      return;
+    }
+
+    if (password.trim() !== confirmPassword.trim()) {
+      toast.error('Les mots de passe ne correspondent pas');
+      return;
+    }
+
     const fullPhone = `${countryCode}${cleanedPhone}`;
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/send-otp', {
+      // Check if phone is already registered
+      const checkRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: fullPhone, role: selectedRole }),
+        body: JSON.stringify({ phone: fullPhone, password: password.trim() }),
       });
 
-      const data = await res.json();
+      const checkData = await checkRes.json();
 
-      if (!res.ok || !data.success) {
-        toast.error(data.message || 'Erreur lors de l\'envoi du code');
+      if (checkData.success) {
+        toast.error('Ce numéro est déjà enregistré. Veuillez vous connecter.');
+        setLoading(false);
         return;
       }
 
+      // Phone not registered — proceed to profile setup
       setPhoneNumber(fullPhone);
-      navigateTo('auth-otp');
+      setRegistrationPassword(password.trim());
+      navigateTo('auth-profile');
     } catch {
-      toast.error('Erreur de connexion. Veuillez réessayer.');
+      // If check fails, proceed anyway (network issue, etc.)
+      const fullPhone = `${countryCode}${cleanedPhone}`;
+      setPhoneNumber(fullPhone);
+      setRegistrationPassword(password.trim());
+      navigateTo('auth-profile');
     } finally {
       setLoading(false);
     }
@@ -112,23 +134,23 @@ export default function AuthPhoneScreen() {
         <div className="flex justify-center mb-6">
           <Badge
             variant="outline"
-            className="px-4 py-1.5 text-sm font-semibold border-emerald-200 bg-emerald-50 text-emerald-700 cursor-pointer"
+            className={`px-4 py-1.5 text-sm font-semibold border-${roleColor}-200 bg-${roleColor}-50 text-${roleColor}-700 cursor-pointer`}
             onClick={() => navigateTo('auth-role')}
           >
-            {roleLabel}
+            Inscription {roleLabel}
             <span className="ml-1.5 text-xs opacity-60">✏️</span>
           </Badge>
         </div>
 
-        <div className="flex flex-col gap-2 mb-8">
+        <div className="flex flex-col gap-2 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Créer un compte</h1>
-          <p className="text-gray-500">Entrez votre numéro de téléphone</p>
+          <p className="text-gray-500">Entrez vos informations de connexion</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          {/* Country code + phone input */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Phone */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="phone" className="text-gray-700 font-medium">
+            <Label htmlFor="reg-phone" className="text-gray-700 font-medium">
               Numéro de téléphone
             </Label>
             <div className="flex gap-2">
@@ -145,7 +167,7 @@ export default function AuthPhoneScreen() {
                 </SelectContent>
               </Select>
               <Input
-                id="phone"
+                id="reg-phone"
                 type="tel"
                 placeholder="90 11 22 33"
                 value={phone}
@@ -157,29 +179,76 @@ export default function AuthPhoneScreen() {
             </div>
           </div>
 
-          {/* Submit button */}
+          {/* Password */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="reg-password" className="text-gray-700 font-medium">
+              Mot de passe
+            </Label>
+            <div className="relative">
+              <Input
+                id="reg-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Minimum 4 caractères"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-12 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base pr-12"
+                autoComplete="new-password"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="reg-confirm-password" className="text-gray-700 font-medium">
+              Confirmer le mot de passe
+            </Label>
+            <Input
+              id="reg-confirm-password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Retapez votre mot de passe"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full h-12 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+              autoComplete="new-password"
+              disabled={loading}
+            />
+          </div>
+
+          {/* Submit */}
           <Button
             type="submit"
-            disabled={loading || !phone.trim()}
+            disabled={loading || !phone.trim() || !password.trim() || !confirmPassword.trim()}
             className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 disabled:opacity-50 cursor-pointer mt-2"
           >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Envoi en cours...
+                Vérification...
               </>
             ) : (
-              'Envoyer le code'
+              'Continuer'
             )}
           </Button>
         </form>
 
         {/* Login link */}
-        <div className="mt-8 flex items-center justify-center">
+        <div className="mt-6 flex items-center justify-center">
           <p className="text-sm text-gray-500">
             Déjà un compte ?{' '}
             <button
-              onClick={() => navigateTo('auth-role')}
+              onClick={() => navigateTo('auth-login')}
               className="font-semibold text-emerald-600 hover:text-emerald-700 underline underline-offset-2 cursor-pointer"
             >
               Se connecter
@@ -187,7 +256,6 @@ export default function AuthPhoneScreen() {
           </p>
         </div>
 
-        {/* Info note */}
         <div className="mt-4 flex items-center justify-center">
           <p className="text-xs text-gray-400 text-center">
             En continuant, vous acceptez nos conditions d&apos;utilisation

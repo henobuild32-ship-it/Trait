@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 const countries = [
   { value: 'Togo', label: '🇹🇬 Togo' },
   { value: 'Bénin', label: '🇧🇯 Bénin' },
-  { value: 'Côte d\'Ivoire', label: '🇨🇮 Côte d\'Ivoire' },
+  { value: "Côte d'Ivoire", label: "🇨🇮 Côte d'Ivoire" },
   { value: 'Sénégal', label: '🇸🇳 Sénégal' },
   { value: 'Mali', label: '🇲🇱 Mali' },
   { value: 'Burkina Faso', label: '🇧🇫 Burkina Faso' },
@@ -38,7 +38,9 @@ const countries = [
 ];
 
 export default function AuthProfileScreen() {
-  const user = useAppStore((s) => s.user);
+  const phoneNumber = useAppStore((s) => s.phoneNumber);
+  const registrationPassword = useAppStore((s) => s.registrationPassword);
+  const selectedRole = useAppStore((s) => s.selectedRole);
   const setUser = useAppStore((s) => s.setUser);
   const navigateTo = useAppStore((s) => s.navigateTo);
 
@@ -65,35 +67,45 @@ export default function AuthProfileScreen() {
       return;
     }
 
-    if (!user?.id) {
-      toast.error('Erreur : utilisateur non trouvé');
-      navigateTo('welcome');
+    if (!phoneNumber) {
+      toast.error('Erreur : numéro de téléphone non trouvé');
+      navigateTo('auth-role');
+      return;
+    }
+
+    if (!registrationPassword) {
+      toast.error('Erreur : mot de passe non trouvé');
+      navigateTo('auth-phone');
       return;
     }
 
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/profile', {
+      // Create the full account via register API
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id,
+          phone: phoneNumber,
+          password: registrationPassword,
+          role: selectedRole,
           name: name.trim(),
           pseudo: pseudo.trim(),
           country,
+          pin: '', // PIN will be set in next step
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || 'Erreur lors de la création du profil');
+        toast.error(data.message || 'Erreur lors de la création du compte');
         return;
       }
 
-      const updatedUser = data.user as User;
-      setUser(updatedUser);
+      const user = data.user as User;
+      setUser(user);
       navigateTo('pin-setup');
     } catch {
       toast.error('Erreur de connexion. Veuillez réessayer.');

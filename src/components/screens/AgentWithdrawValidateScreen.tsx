@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 export default function AgentWithdrawValidateScreen() {
   const { goBack, user } = useAppStore();
 
-  const pendingWithdrawals = [
+  const pendingWithdrawals: Array<{ id: string; [key: string]: unknown }> = [
     // Demo placeholder — in production, fetch from API
   ];
 

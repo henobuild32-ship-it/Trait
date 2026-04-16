@@ -145,3 +145,27 @@ Stage Summary:
 - Dev server: clean, no warnings
 - All 17 screens compile and render correctly
 - All 13 API endpoints responding correctly
+
+---
+Task ID: 1
+Agent: Main
+Task: Redesign auth system - phone+password login with role selection (no OTP)
+
+Work Log:
+- Read all current auth files (store, schema, screens, APIs)
+- Updated Zustand store: added `registrationPassword` field and `setRegistrationPassword` action, renamed OtpState to AuthFormState
+- Rewrote WelcomeScreen: "Se connecter" goes to auth-login, "Créer un compte" goes to auth-role
+- Completely rewrote AuthLoginScreen: role toggle (Client/Agent) at top, phone with country code, password with show/hide, verifies against DB, routes to correct interface based on role
+- Rewrote AuthPhoneScreen: added password + confirm password fields for registration, validates match, checks if phone already registered
+- Updated AuthProfileScreen: now creates full account via register API on submit (collects phone, password, role from store + name, pseudo, country from form)
+- Updated PinSetupScreen: added 'saving' state, calls set-pin API to persist PIN to database
+- Updated login API: now properly verifies password field from database
+- Updated seed: added password (1234), pin (0000), role, agentCode, hasCompletedOnboarding to all users; added demo agent user (Komlan Agent, code 1700001)
+- Fixed TypeScript errors: User icon name conflict in AuthLoginScreen, type annotation in AgentWithdrawValidateScreen
+- ESLint passes clean
+
+Stage Summary:
+- Login flow: Welcome → AuthLogin (select role + phone + password) → home/agent-dashboard
+- Registration flow: Welcome → AuthRole → AuthPhone (phone + password) → AuthProfile (name, pseudo, country → creates account) → PinSetup (save PIN to DB) → Onboarding → home/agent-dashboard
+- Demo accounts: Client +22890123456/1234, Agent +22897000001/1234 (Code: 1700001), all PINs: 0000
+- No more OTP sent - login uses phone + password directly

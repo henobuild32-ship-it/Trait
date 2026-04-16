@@ -112,10 +112,10 @@ export default function WelcomeScreen() {
             })}
           </motion.div>
 
-          {/* CTA Button */}
+          {/* CTA Buttons */}
           <motion.div variants={itemVariants} className="w-full mt-2 flex flex-col gap-3">
             <Button
-              onClick={() => navigateTo('auth-role')}
+              onClick={() => navigateTo('auth-login')}
               className="w-full h-13 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 cursor-pointer"
               size="lg"
             >

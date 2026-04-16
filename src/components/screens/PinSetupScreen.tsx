@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { toast } from 'sonner';
 
 export default function PinSetupScreen() {
   const { navigateTo, user, setUser } = useAppStore();
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
-  const [step, setStep] = useState<'create' | 'confirm' | 'success'>('create');
+  const [step, setStep] = useState<'create' | 'confirm' | 'saving' | 'success'>('create');
   const [error, setError] = useState('');
 
   const handleDigit = (digit: string) => {
@@ -28,15 +29,34 @@ export default function PinSetupScreen() {
       const newConfirm = confirmPin + digit;
       setConfirmPin(newConfirm);
       if (newConfirm.length === 4) {
-        setTimeout(() => {
+        setTimeout(async () => {
           if (newConfirm === pin) {
-            setStep('success');
-            if (user) {
-              setUser({ ...user, pin: newConfirm });
+            setStep('saving');
+            // Save PIN to database
+            try {
+              const res = await fetch('/api/auth/set-pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user?.id, pin: newConfirm }),
+              });
+              const data = await res.json();
+
+              if (data.success && user) {
+                setUser({ ...user, pin: newConfirm });
+                setStep('success');
+                setTimeout(() => {
+                  navigateTo('onboarding');
+                }, 1500);
+              } else {
+                setError(data.message || 'Erreur lors de la sauvegarde');
+                setStep('confirm');
+                setConfirmPin('');
+              }
+            } catch {
+              setError('Erreur de connexion');
+              setStep('confirm');
+              setConfirmPin('');
             }
-            setTimeout(() => {
-              navigateTo('onboarding');
-            }, 1500);
           } else {
             setError('Les codes PIN ne correspondent pas');
             setConfirmPin('');
@@ -85,6 +105,15 @@ export default function PinSetupScreen() {
             <p className="text-sm text-gray-500 text-center">
               Votre code PIN a été enregistré avec succès
             </p>
+          </motion.div>
+        ) : step === 'saving' ? (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+            <p className="text-sm text-gray-500">Sauvegarde en cours...</p>
           </motion.div>
         ) : (
           <>

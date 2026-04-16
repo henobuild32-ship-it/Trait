@@ -76,11 +76,13 @@ interface AuthState {
   logout: () => void;
 }
 
-interface OtpState {
+interface AuthFormState {
   phoneNumber: string;
+  registrationPassword: string;
   otpCode: string;
   otpVerified: boolean;
   setPhoneNumber: (phone: string) => void;
+  setRegistrationPassword: (password: string) => void;
   setOtpCode: (code: string) => void;
   setOtpVerified: (verified: boolean) => void;
 }
@@ -106,7 +108,7 @@ interface ThemeState {
 
 // ─── Combined Store Interface ───────────────────────────────────────
 
-export interface AppStore extends NavigationState, AuthState, OtpState, PinState, NotificationState, ThemeState {}
+export interface AppStore extends NavigationState, AuthState, AuthFormState, PinState, NotificationState, ThemeState {}
 
 // ─── The Store ──────────────────────────────────────────────────────
 
@@ -171,12 +173,14 @@ export const useAppStore = create<AppStore>()(
           pendingPinAction: null,
         }),
 
-      // ── OTP ────────────────────────────────────────────────────
+      // ── Auth Form ────────────────────────────────────────────
       phoneNumber: '',
+      registrationPassword: '',
       otpCode: '',
       otpVerified: false,
 
       setPhoneNumber: (phone) => set({ phoneNumber: phone }),
+      setRegistrationPassword: (password) => set({ registrationPassword: password }),
       setOtpCode: (code) => set({ otpCode: code }),
       setOtpVerified: (verified) => set({ otpVerified: verified }),
 

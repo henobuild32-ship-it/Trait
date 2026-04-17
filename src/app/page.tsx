@@ -37,6 +37,7 @@ import AgentWithdrawValidateScreen from '@/components/screens/AgentWithdrawValid
 import AgentActivityScreen from '@/components/screens/AgentActivityScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
+import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const screenMap: Record<PageName, React.ComponentType> = {
@@ -121,6 +122,7 @@ export default function TraitApp() {
         </AnimatePresence>
       </div>
       {showNav && <BottomNavigation />}
+      <PWAInstallBanner />
     </div>
   );
 }

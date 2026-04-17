@@ -189,3 +189,37 @@ Stage Summary:
 - 5 display/rendering issues fixed
 - App now properly handles logged-in user state persistence
 - Role-based routing works correctly for both Client and Agent
+---
+Task ID: 1
+Agent: Main Agent
+Task: Add PWA download/install buttons for Android and iOS
+
+Work Log:
+- Checked project state and existing PWA setup (manifest.json existed but minimal)
+- Generated professional app icon (1024x1024) using AI image generation
+- Used sharp to resize icons: 192x192, 512x512, 180x180 (apple-touch-icon), 32x32, 16x16
+- Created service worker (/public/sw.js) with network-first caching strategy and offline fallback
+- Created usePWAInstall custom hook (/src/hooks/usePWAInstall.ts) with:
+  - beforeinstallprompt detection for Android/Chrome
+  - iOS detection and Safari detection
+  - Standalone mode detection
+  - Online/offline status monitoring
+  - installApp() and dismiss() functions
+- Created PWAInstallBanner component (/src/components/layout/PWAInstallBanner.tsx) with:
+  - Auto-popup install banner for Android
+  - iOS instruction modal (4-step guide)
+  - Offline indicator bar
+- Updated WelcomeScreen with prominent download section (dark card with Android/iOS buttons, iOS guide modal)
+- Updated SettingsScreen with functional install button, install status badge, Android/iOS buttons card
+- Updated manifest.json with proper icons, categories, shortcuts, scope
+- Updated layout.tsx with apple-mobile-web-app meta tags, favicon sizes, apple-touch-icon, service worker registration
+- Added PWAInstallBanner to main page.tsx
+- Lint passes clean, dev server compiles without errors
+
+Stage Summary:
+- PWA is now fully installable on Android (via browser install prompt) and iOS (via Add to Home Screen instructions)
+- Download buttons visible on Welcome screen (prominent dark card) and Settings screen (dedicated card)
+- Service worker provides offline caching
+- All icon sizes generated: 16, 32, 180, 192, 512, 1024 pixels
+- iOS meta tags added for proper home screen behavior
+

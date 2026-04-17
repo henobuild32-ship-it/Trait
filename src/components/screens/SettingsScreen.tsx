@@ -16,22 +16,45 @@ import {
   LayoutDashboard,
   GraduationCap,
   BadgeCheck,
+  Check,
+  Smartphone,
+  Apple,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/lib/store';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { useState } from 'react';
 
 export default function SettingsScreen() {
   const { goBack, user, logout, navigateTo, isDarkMode, toggleTheme } =
     useAppStore();
+  const { canInstall, isIOS, isInstalled, isStandalone, installApp } = usePWAInstall();
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   const isAgent = user?.role === 'agent';
 
   const handleLogout = () => {
     logout();
     toast.success('Déconnecté avec succès');
+  };
+
+  const handleInstall = async () => {
+    if (isIOS) {
+      setShowIOSGuide(true);
+      return;
+    }
+    setInstalling(true);
+    const success = await installApp();
+    setInstalling(false);
+    if (success) {
+      toast.success('Application installée avec succès !');
+    } else {
+      toast.info('Pour installer, ajoutez cette page à votre écran d\'accueil depuis le menu du navigateur.');
+    }
   };
 
   const initials = user?.name
@@ -84,9 +107,10 @@ export default function SettingsScreen() {
         },
         {
           icon: Download,
-          label: 'Installer l\'application',
-          value: 'PWA',
-          action: () => toast.info('Ajoutez l\'application à votre écran d\'accueil'),
+          label: 'Télécharger l\'application',
+          value: (isInstalled || isStandalone) ? 'Installée' : 'PWA',
+          action: handleInstall,
+          badge: !(isInstalled || isStandalone),
         },
         {
           icon: Info,
@@ -206,10 +230,13 @@ export default function SettingsScreen() {
                       {iIndex > 0 && <Separator />}
                       <button
                         onClick={item.action}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                        disabled={installing && item.icon === Download}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left cursor-pointer disabled:opacity-50"
                       >
-                        <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                          <Icon className="size-4 text-muted-foreground" />
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                          item.badge ? 'bg-emerald-100' : 'bg-muted'
+                        }`}>
+                          <Icon className={`size-4 ${item.badge ? 'text-emerald-600' : 'text-muted-foreground'}`} />
                         </div>
                         <span className="flex-1 text-sm">{item.label}</span>
 
@@ -229,7 +256,9 @@ export default function SettingsScreen() {
                         {item.value &&
                           item.value !== 'toggle' &&
                           item.value !== 'darkMode' && (
-                            <span className="text-sm text-muted-foreground mr-1">
+                            <span className={`text-sm mr-1 ${
+                              item.value === 'Installée' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'
+                            }`}>
                               {item.value}
                             </span>
                           )}
@@ -244,6 +273,46 @@ export default function SettingsScreen() {
             </Card>
           </motion.div>
         ))}
+
+        {/* Install App Card */}
+        {!(isInstalled || isStandalone) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-white overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
+                    <Download className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-gray-900">Télécharger l&apos;application</h3>
+                    <p className="text-xs text-gray-500">Installez Trait sur votre téléphone</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleInstall}
+                    disabled={installing}
+                    className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-xl py-2.5 px-3 hover:bg-emerald-700 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    <span className="text-xs font-semibold">Android</span>
+                  </button>
+                  <button
+                    onClick={() => setShowIOSGuide(true)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white rounded-xl py-2.5 px-3 hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 cursor-pointer"
+                  >
+                    <Apple className="w-4 h-4" />
+                    <span className="text-xs font-semibold">iOS</span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Danger zone */}
         <motion.div
@@ -275,6 +344,59 @@ export default function SettingsScreen() {
           Trait v1.0.0 — Fait avec ❤️ en Afrique
         </motion.p>
       </div>
+
+      {/* iOS Installation Guide Modal */}
+      {showIOSGuide && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setShowIOSGuide(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+                <Apple className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Installer sur iOS</h3>
+                <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 mb-6">
+              {[
+                { step: '1', title: 'Ouvrir dans Safari', desc: 'Copiez le lien et ouvrez-le dans Safari' },
+                { step: '2', title: 'Icône Partager', desc: 'Appuyez sur le bouton partage en bas de Safari' },
+                { step: '3', title: '"Sur l\'écran d\'accueil"', desc: 'Faites défiler et sélectionnez cette option' },
+                { step: '4', title: 'Touchez "Ajouter"', desc: 'Confirmez en haut à droite' },
+              ].map((item) => (
+                <div key={item.step} className="flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-sm font-bold text-emerald-700">{item.step}</span>
+                  </div>
+                  <div className="pt-0.5">
+                    <p className="text-sm font-semibold text-gray-800">{item.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              onClick={() => setShowIOSGuide(false)}
+              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
+            >
+              Compris !
+            </Button>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

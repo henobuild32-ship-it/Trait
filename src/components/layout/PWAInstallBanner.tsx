@@ -35,8 +35,8 @@ export function PWAInstallBanner() {
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
             <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-4 flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
-                <img src="/trait-logo.png" alt="Trait" className="w-8 h-8 object-contain" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900">Installer Trait</p>
@@ -80,8 +80,8 @@ export function PWAInstallBanner() {
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
             <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-4 flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
-                <img src="/trait-logo.png" alt="Trait" className="w-8 h-8 object-contain" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900">Installer sur iPhone</p>

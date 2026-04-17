@@ -75,14 +75,13 @@ export default function WelcomeScreen() {
         >
           {/* Logo */}
           <motion.div variants={itemVariants} className="flex flex-col items-center gap-3">
-            <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-200 flex items-center justify-center overflow-hidden">
+            <div className="relative w-full max-w-[220px] rounded-2xl shadow-lg shadow-emerald-200/50 overflow-hidden">
               <img
                 src="/icon-1024.png"
                 alt="Trait Logo"
-                className="w-full h-full object-contain"
+                className="w-full h-auto object-contain"
               />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Trait</h1>
           </motion.div>
 
           {/* Tagline */}
@@ -149,8 +148,8 @@ export default function WelcomeScreen() {
           >
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 text-white shadow-xl">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shrink-0">
-                  <img src="/icon-1024.png" alt="Trait" className="w-7 h-7 object-contain" />
+                <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0">
+                  <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">Installer Trait</h3>

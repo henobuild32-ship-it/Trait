@@ -1,12 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Send, ArrowLeftRight, Store, Phone, Download, Smartphone, Apple, Chrome, Check } from 'lucide-react';
+import { Send, ArrowLeftRight, Store, Phone, Download, Smartphone, Apple, Chrome, Check, Menu, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAppStore } from '@/lib/store';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 const features = [
   {
@@ -51,16 +52,184 @@ const itemVariants = {
   },
 };
 
+function AndroidGuideModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+            <Smartphone className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Installer sur Android</h3>
+            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">1</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">Ouvrir dans Chrome</p>
+              <p className="text-xs text-gray-500 mt-0.5">Utilisez le navigateur Google Chrome sur votre téléphone</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">2</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">Appuyez sur le menu</p>
+              <p className="text-xs text-gray-500 mt-0.5">Touchez les <Menu className="w-3.5 h-3.5 inline mx-0.5" /> trois points en haut à droite de Chrome</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">3</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">&quot;Installer l&apos;application&quot;</p>
+              <p className="text-xs text-gray-500 mt-0.5">Sélectionnez &quot;Installer l&apos;application&quot; ou &quot;Ajouter à l&apos;écran d&apos;accueil&quot;</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">4</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">Confirmez l&apos;installation</p>
+              <p className="text-xs text-gray-500 mt-0.5">Appuyez sur &quot;Installer&quot; — l&apos;app apparaîtra sur votre écran d&apos;accueil</p>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          onClick={onClose}
+          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
+        >
+          Compris !
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function IOSGuideModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+            <Apple className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Installer sur iOS</h3>
+            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">1</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">Ouvrir dans Safari</p>
+              <p className="text-xs text-gray-500 mt-0.5">Copiez le lien et ouvrez-le dans le navigateur Safari</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">2</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">Touchez l&apos;icône Partager</p>
+              <p className="text-xs text-gray-500 mt-0.5">Appuyez sur le bouton <span className="inline-flex items-center"><svg className="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> en bas de l&apos;écran Safari</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">3</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+              <p className="text-xs text-gray-500 mt-0.5">Faites défiler et tapez &quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-emerald-700">4</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">Touchez &quot;Ajouter&quot;</p>
+              <p className="text-xs text-gray-500 mt-0.5">Confirmez en haut à droite avec &quot;Ajouter&quot;</p>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          onClick={onClose}
+          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
+        >
+          Compris !
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function WelcomeScreen() {
   const navigateTo = useAppStore((s) => s.navigateTo);
   const { canInstall, isIOS, isInstalled, isStandalone, installApp } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [showAndroidGuide, setShowAndroidGuide] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   const handleAndroidInstall = async () => {
     setInstalling(true);
-    await installApp();
+    const success = await installApp();
     setInstalling(false);
+
+    if (success) {
+      toast.success('Application installée avec succès !');
+    } else {
+      // Native install not available — show manual guide
+      setShowAndroidGuide(true);
+    }
   };
 
   return (
@@ -168,13 +337,23 @@ export default function WelcomeScreen() {
                   {/* Android Button */}
                   <button
                     onClick={handleAndroidInstall}
-                    disabled={installing || (canInstall === false && isIOS)}
+                    disabled={installing}
                     className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-900 rounded-xl py-3 px-3 hover:bg-gray-100 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <Smartphone className="w-4 h-4 text-emerald-600" />
+                    {installing ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                        className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full"
+                      />
+                    ) : (
+                      <Smartphone className="w-4 h-4 text-emerald-600" />
+                    )}
                     <div className="text-left">
                       <p className="text-[10px] text-gray-500 leading-tight">Télécharger sur</p>
-                      <p className="text-xs font-bold leading-tight">Android</p>
+                      <p className="text-xs font-bold leading-tight">
+                        {installing ? 'Installation...' : 'Android'}
+                      </p>
                     </div>
                   </button>
 
@@ -211,84 +390,11 @@ export default function WelcomeScreen() {
         </motion.div>
       </main>
 
+      {/* Android Installation Guide Modal */}
+      {showAndroidGuide && <AndroidGuideModal onClose={() => setShowAndroidGuide(false)} />}
+
       {/* iOS Installation Guide Modal */}
-      {showIOSGuide && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setShowIOSGuide(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
-                <Apple className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Installer sur iOS</h3>
-                <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4 mb-6">
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-emerald-700">1</span>
-                </div>
-                <div className="pt-0.5">
-                  <p className="text-sm font-semibold text-gray-800">Ouvrir dans Safari</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Copiez le lien et ouvrez-le dans le navigateur Safari</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-emerald-700">2</span>
-                </div>
-                <div className="pt-0.5">
-                  <p className="text-sm font-semibold text-gray-800">Touchez l&apos;icône Partager</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Appuyez sur le bouton <span className="inline-flex items-center"><svg className="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> en bas de l&apos;écran Safari</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-emerald-700">3</span>
-                </div>
-                <div className="pt-0.5">
-                  <p className="text-sm font-semibold text-gray-800">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Faites défiler et tapez &quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-emerald-700">4</span>
-                </div>
-                <div className="pt-0.5">
-                  <p className="text-sm font-semibold text-gray-800">Touchez &quot;Ajouter&quot;</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Confirmez en haut à droite avec &quot;Ajouter&quot;</p>
-                </div>
-              </div>
-            </div>
-
-            <Button
-              onClick={() => setShowIOSGuide(false)}
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
-            >
-              Compris !
-            </Button>
-          </motion.div>
-        </motion.div>
-      )}
+      {showIOSGuide && <IOSGuideModal onClose={() => setShowIOSGuide(false)} />}
 
       {/* Footer */}
       <motion.footer

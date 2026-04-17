@@ -19,6 +19,7 @@ import {
   Check,
   Smartphone,
   Apple,
+  Menu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,11 +29,120 @@ import { useAppStore } from '@/lib/store';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useState } from 'react';
 
+function AndroidGuideModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+            <Smartphone className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Installer sur Android</h3>
+            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 mb-6">
+          {[
+            { step: '1', title: 'Ouvrir dans Chrome', desc: 'Utilisez le navigateur Google Chrome sur votre téléphone' },
+            { step: '2', title: 'Appuyez sur le menu', desc: 'Touchez les trois points (⋮) en haut à droite de Chrome' },
+            { step: '3', title: '"Installer l\'application"', desc: 'Sélectionnez "Installer l\'application" ou "Ajouter à l\'écran d\'accueil"' },
+            { step: '4', title: 'Confirmez', desc: 'Appuyez sur "Installer" — l\'app sera sur votre écran d\'accueil' },
+          ].map((item) => (
+            <div key={item.step} className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-sm font-bold text-emerald-700">{item.step}</span>
+              </div>
+              <div className="pt-0.5">
+                <p className="text-sm font-semibold text-gray-800">{item.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Button
+          onClick={onClose}
+          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
+        >
+          Compris !
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function IOSGuideModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+            <Apple className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Installer sur iOS</h3>
+            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 mb-6">
+          {[
+            { step: '1', title: 'Ouvrir dans Safari', desc: 'Copiez le lien et ouvrez-le dans Safari' },
+            { step: '2', title: 'Icône Partager', desc: 'Appuyez sur le bouton partage en bas de Safari' },
+            { step: '3', title: '"Sur l\'écran d\'accueil"', desc: 'Faites défiler et sélectionnez cette option' },
+            { step: '4', title: 'Touchez "Ajouter"', desc: 'Confirmez en haut à droite' },
+          ].map((item) => (
+            <div key={item.step} className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-sm font-bold text-emerald-700">{item.step}</span>
+              </div>
+              <div className="pt-0.5">
+                <p className="text-sm font-semibold text-gray-800">{item.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Button
+          onClick={onClose}
+          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
+        >
+          Compris !
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function SettingsScreen() {
   const { goBack, user, logout, navigateTo, isDarkMode, toggleTheme } =
     useAppStore();
   const { canInstall, isIOS, isInstalled, isStandalone, installApp } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [showAndroidGuide, setShowAndroidGuide] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   const isAgent = user?.role === 'agent';
@@ -53,7 +163,8 @@ export default function SettingsScreen() {
     if (success) {
       toast.success('Application installée avec succès !');
     } else {
-      toast.info('Pour installer, ajoutez cette page à votre écran d\'accueil depuis le menu du navigateur.');
+      // Native install not available — show manual guide
+      setShowAndroidGuide(true);
     }
   };
 
@@ -298,8 +409,18 @@ export default function SettingsScreen() {
                     disabled={installing}
                     className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-xl py-2.5 px-3 hover:bg-emerald-700 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
                   >
-                    <Smartphone className="w-4 h-4" />
-                    <span className="text-xs font-semibold">Android</span>
+                    {installing ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                      />
+                    ) : (
+                      <Smartphone className="w-4 h-4" />
+                    )}
+                    <span className="text-xs font-semibold">
+                      {installing ? 'Installation...' : 'Android'}
+                    </span>
                   </button>
                   <button
                     onClick={() => setShowIOSGuide(true)}
@@ -345,58 +466,11 @@ export default function SettingsScreen() {
         </motion.p>
       </div>
 
+      {/* Android Installation Guide Modal */}
+      {showAndroidGuide && <AndroidGuideModal onClose={() => setShowAndroidGuide(false)} />}
+
       {/* iOS Installation Guide Modal */}
-      {showIOSGuide && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setShowIOSGuide(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
-                <Apple className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Installer sur iOS</h3>
-                <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4 mb-6">
-              {[
-                { step: '1', title: 'Ouvrir dans Safari', desc: 'Copiez le lien et ouvrez-le dans Safari' },
-                { step: '2', title: 'Icône Partager', desc: 'Appuyez sur le bouton partage en bas de Safari' },
-                { step: '3', title: '"Sur l\'écran d\'accueil"', desc: 'Faites défiler et sélectionnez cette option' },
-                { step: '4', title: 'Touchez "Ajouter"', desc: 'Confirmez en haut à droite' },
-              ].map((item) => (
-                <div key={item.step} className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-sm font-bold text-emerald-700">{item.step}</span>
-                  </div>
-                  <div className="pt-0.5">
-                    <p className="text-sm font-semibold text-gray-800">{item.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              onClick={() => setShowIOSGuide(false)}
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
-            >
-              Compris !
-            </Button>
-          </motion.div>
-        </motion.div>
-      )}
+      {showIOSGuide && <IOSGuideModal onClose={() => setShowIOSGuide(false)} />}
     </div>
   );
 }

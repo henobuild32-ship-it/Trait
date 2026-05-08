@@ -49,7 +49,6 @@ import AdminActivityLogScreen from '@/components/admin/AdminActivityLogScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
-import { AnimatePresence, motion } from 'framer-motion';
 
 const screenMap: Record<PageName, React.ComponentType> = {
   welcome: WelcomeScreen,
@@ -97,12 +96,6 @@ const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'histor
 // Admin pages that don't show bottom nav
 const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log'];
 
-const pageVariants = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -8 },
-};
-
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();
   const Screen = screenMap[currentPage];
@@ -137,18 +130,7 @@ export default function TraitApp() {
   return (
     <div className="relative min-h-screen bg-background flex flex-col">
       <div className={`flex-1 ${showNav ? 'pb-16' : ''}`}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.2 }}
-          >
-            <Screen />
-          </motion.div>
-        </AnimatePresence>
+        <Screen />
       </div>
       {showNav && <BottomNavigation />}
       {!isAdminPage && <PWAInstallBanner />}

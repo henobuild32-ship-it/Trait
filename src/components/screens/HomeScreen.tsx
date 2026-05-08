@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   Bell,
   Send,
@@ -148,12 +147,7 @@ export default function HomeScreen() {
 
       {/* Agent code display */}
       {isAgent && user?.agentCode && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="px-4 mb-4"
-        >
+        <div className="px-4 mb-4">
           <Card className="border-emerald-200 bg-emerald-50/50">
             <CardContent className="p-3 flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
@@ -178,16 +172,11 @@ export default function HomeScreen() {
               </Button>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       )}
 
       {/* USD Balance Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="px-4 mb-3"
-      >
+      <div className="px-4 mb-3">
         <div className={`rounded-2xl p-5 text-white shadow-lg ${
           isAgent
             ? 'bg-gradient-to-br from-amber-500 to-amber-700'
@@ -203,15 +192,10 @@ export default function HomeScreen() {
             $ {totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* FC Balance Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
-        className="px-4 mb-6"
-      >
+      <div className="px-4 mb-6">
         <div className="rounded-2xl p-5 text-white shadow-lg bg-gradient-to-br from-blue-600 to-blue-800">
           <div className="flex items-center gap-2 mb-1">
             <Wallet className="size-4 opacity-80" />
@@ -223,15 +207,10 @@ export default function HomeScreen() {
             {totalFC.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} FC
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
-        className="px-4 mb-6"
-      >
+      <div className="px-4 mb-6">
         <div className={`grid gap-4 ${
           isAgent ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-3'
         }`}>
@@ -251,15 +230,10 @@ export default function HomeScreen() {
             );
           })}
         </div>
-      </motion.div>
+      </div>
 
       {/* Recent Transactions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3, ease: 'easeOut' }}
-        className="px-4"
-      >
+      <div className="px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-foreground">
             Transactions récentes
@@ -331,7 +305,7 @@ export default function HomeScreen() {
             ))}
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Send, ArrowLeftRight, Store, Phone, Download, Smartphone, Apple, Chrome, Check, Menu, Plus } from 'lucide-react';
+import { Send, ArrowLeftRight, Store, Phone, Download, Smartphone, Apple, Check, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAppStore } from '@/lib/store';
@@ -31,26 +31,6 @@ const features = [
     description: 'Accessible sans internet',
   },
 ];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: 'easeOut' as const },
-  },
-};
 
 function AndroidGuideModal({ onClose }: { onClose: () => void }) {
   return (
@@ -236,14 +216,9 @@ export default function WelcomeScreen() {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-emerald-50/10 to-background dark:from-background dark:via-emerald-950/20 dark:to-background">
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="w-full max-w-sm flex flex-col items-center gap-6"
-        >
+        <div className="w-full max-w-sm flex flex-col items-center gap-6">
           {/* Logo */}
-          <motion.div variants={itemVariants} className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-3">
             <div className="relative w-full max-w-[220px] rounded-2xl shadow-lg shadow-emerald-200/50 overflow-hidden">
               <img
                 src="/icon-1024.png"
@@ -251,21 +226,15 @@ export default function WelcomeScreen() {
                 className="w-full h-auto object-contain"
               />
             </div>
-          </motion.div>
+          </div>
 
           {/* Tagline */}
-          <motion.p
-            variants={itemVariants}
-            className="text-center text-lg text-muted-foreground font-medium"
-          >
+          <p className="text-center text-lg text-muted-foreground font-medium">
             Transfert d&apos;argent, Troc &amp; Marketplace
-          </motion.p>
+          </p>
 
           {/* Feature cards */}
-          <motion.div
-            variants={itemVariants}
-            className="w-full grid grid-cols-2 gap-3"
-          >
+          <div className="w-full grid grid-cols-2 gap-3">
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
@@ -289,10 +258,10 @@ export default function WelcomeScreen() {
                 </Card>
               );
             })}
-          </motion.div>
+          </div>
 
           {/* CTA Buttons */}
-          <motion.div variants={itemVariants} className="w-full flex flex-col gap-3">
+          <div className="w-full flex flex-col gap-3">
             <Button
               onClick={() => navigateTo('auth-login')}
               className="w-full h-13 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 cursor-pointer"
@@ -308,13 +277,10 @@ export default function WelcomeScreen() {
             >
               Créer un compte
             </Button>
-          </motion.div>
+          </div>
 
           {/* Download / Install App Section */}
-          <motion.div
-            variants={itemVariants}
-            className="w-full mt-2"
-          >
+          <div className="w-full mt-2">
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 text-white shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0">
@@ -341,11 +307,7 @@ export default function WelcomeScreen() {
                     className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-900 rounded-xl py-3 px-3 hover:bg-gray-100 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {installing ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                        className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full"
-                      />
+                      <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <Smartphone className="w-4 h-4 text-emerald-600" />
                     )}
@@ -386,8 +348,8 @@ export default function WelcomeScreen() {
                 </div>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </main>
 
       {/* Android Installation Guide Modal */}
@@ -397,16 +359,11 @@ export default function WelcomeScreen() {
       {showIOSGuide && <IOSGuideModal onClose={() => setShowIOSGuide(false)} />}
 
       {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.5 }}
-        className="py-6 text-center"
-      >
+      <footer className="py-6 text-center">
         <p className="text-sm text-muted-foreground">
           0.7% de frais • Bonus 10 USD • USSD *1709#
         </p>
-      </motion.footer>
+      </footer>
     </div>
   );
 }

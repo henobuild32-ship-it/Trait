@@ -28,3 +28,27 @@ Stage Summary:
 - Bonus system works silently: no user-visible restrictions or technical details
 - Withdrawals automatically use only real money (bonus excluded)
 - All operations (transfer, withdraw, deposit, credit, bills) ask for currency before proceeding
+
+---
+Task ID: 2
+Agent: Main
+Task: Fix app not displaying in preview - blank page issue
+
+Work Log:
+- Diagnosed root cause: framer-motion animations with `initial={{ opacity: 0 }}` rendered pages invisible during SSR
+- When dev server starts, it compiles and serves GET / 200 with full HTML (41542 bytes)
+- But all content had `style="opacity:0"` from framer-motion, making page blank until client-side JS loads
+- If dev server dies before JS chunks load, page stays permanently invisible
+- Fixed `src/app/page.tsx`: removed AnimatePresence + motion.div wrapper, now renders Screen directly
+- Fixed `src/components/screens/WelcomeScreen.tsx`: removed all motion.div wrappers from main content
+- Fixed `src/components/screens/HomeScreen.tsx`: removed all motion.div wrappers, content visible by default
+- Added `@keyframes fadeIn` CSS animation for subtle page transitions
+- Modals (Android/iOS guides) still use framer-motion since they only show after user interaction
+- Lint passes clean, build succeeds, page renders correctly with visible content
+
+Stage Summary:
+- Page wrapper no longer uses opacity:0 animations - content visible immediately on SSR
+- WelcomeScreen renders all content (logo, features, buttons, download) without animation wrappers
+- HomeScreen balance cards, quick actions, transactions visible without JS
+- Dev server compiles successfully and serves 200 responses
+- All lint checks pass

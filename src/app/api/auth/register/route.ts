@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       password: string
     }
 
-    if (!phone || !name || !pseudo || !country || !role || !pin || !password) {
+    if (!phone || !name || !pseudo || !country || !role || !password) {
       return NextResponse.json(
         { success: false, message: 'All fields are required' },
         { status: 400 }
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         pseudo,
         country,
         role,
-        pin,
+        pin: pin || null,
         password,
         agentCode,
         realBalance: 0,

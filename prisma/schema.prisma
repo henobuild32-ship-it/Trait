@@ -20,6 +20,8 @@ model User {
   realBalance           Float    @default(0)
   bonusBalance          Float    @default(10)
   isVerified            Boolean  @default(false)
+  suspended             Boolean  @default(false)
+  suspensionReason      String?
   hasCompletedOnboarding Boolean @default(false)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -38,17 +40,62 @@ model User {
   withdrawals          Withdrawal[]
 }
 
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("admin") // admin, super_admin
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activityLogs   AdminActivityLog[]
+  globalNotifications GlobalNotification[]
+}
+
+model AdminActivityLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String   // login, suspend_user, delete_user, create_agent, suspend_agent, delete_agent, publish_product, delete_product, block_transaction, send_notification, etc.
+  target    String?  // ID of the affected entity
+  details   String?  // JSON string with additional info
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model GlobalNotification {
+  id        String   @id @default(cuid())
+  adminId   String
+  title     String
+  message   String
+  type      String   @default("general") // announcement, alert, maintenance, promo
+  sentToAll Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+}
+
 model Transaction {
   id          String   @id @default(cuid())
   type        String   // send, receive, deposit, withdrawal
   amount      Float
   fee         Float    @default(0)
   currency    String   @default("USD")
-  status      String   @default("pending") // pending, completed, failed
+  status      String   @default("pending") // pending, completed, failed, blocked
   senderId    String
   receiverId  String
   description String?
-  agentId     String?                             // Agent who processed this
+  agentId     String?
+  blockReason String?
   createdAt   DateTime @default(now())
 
   sender   User @relation("SenderTransactions", fields: [senderId], references: [id])
@@ -58,6 +105,7 @@ model Transaction {
   @@index([senderId])
   @@index([receiverId])
   @@index([agentId])
+  @@index([status])
 }
 
 model Deposit {
@@ -65,9 +113,9 @@ model Deposit {
   userId    String
   amount    Float
   currency  String   @default("USD")
-  method    String   @default("mobile_money") // mobile_money, bank_transfer, card, agent
-  status    String   @default("pending") // pending, completed, failed
-  agentId   String?                             // Agent who processed deposit
+  method    String   @default("mobile_money")
+  status    String   @default("pending")
+  agentId   String?
   createdAt DateTime @default(now())
 
   user  User   @relation(fields: [userId], references: [id])
@@ -81,8 +129,8 @@ model Withdrawal {
   fee       Float    @default(0)
   currency  String   @default("USD")
   method    String   @default("mobile_money")
-  status    String   @default("pending") // pending, completed, failed
-  agentId   String?                             // Agent who processed withdrawal
+  status    String   @default("pending")
+  agentId   String?
   createdAt DateTime @default(now())
 
   user  User   @relation(fields: [userId], references: [id])
@@ -94,14 +142,14 @@ model MarketplaceProduct {
   name        String
   description String
   price       Float
-  category    String   // design, template, service, digital_product
+  category    String
   imageUrl    String?
-  sellerId    String
+  sellerId    String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  seller    User      @relation(fields: [sellerId], references: [id])
+  seller    User?     @relation(fields: [sellerId], references: [id])
   purchases Purchase[]
 }
 
@@ -123,11 +171,11 @@ model BarterOffer {
   id          String   @id @default(cuid())
   title       String
   description String
-  category    String   // service, product, skill
+  category    String
   offeredBy   String
   wantedItem  String?
   images      String?
-  status      String   @default("active") // active, matched, closed
+  status      String   @default("active") // active, matched, closed, moderated
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -172,7 +220,7 @@ model Notification {
   userId    String
   title     String
   message   String
-  type      String   // transfer_received, withdrawal_validated, purchase, barter_accepted, general
+  type      String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 

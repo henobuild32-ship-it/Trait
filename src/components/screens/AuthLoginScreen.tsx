@@ -116,6 +116,16 @@ export default function AuthLoginScreen() {
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </Button>
+
+        {/* Hidden admin access - $ logo */}
+        <button
+          type="button"
+          onClick={() => navigateTo('admin-login')}
+          className="ml-auto w-8 h-8 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors cursor-pointer"
+          aria-label="Administration"
+        >
+          <span className="text-xs font-bold text-muted-foreground/60">$</span>
+        </button>
       </motion.header>
 
       <motion.main

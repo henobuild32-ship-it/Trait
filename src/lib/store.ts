@@ -11,6 +11,7 @@ export type PageName =
   | 'auth-profile'
   | 'pin-setup'
   | 'auth-login'
+  | 'admin-login'
   | 'pin-verify'
   | 'onboarding'
   | 'home'
@@ -30,7 +31,16 @@ export type PageName =
   | 'agent-dashboard'
   | 'agent-deposit'
   | 'agent-withdraw-validate'
-  | 'agent-activity';
+  | 'agent-activity'
+  // Admin pages
+  | 'admin-dashboard'
+  | 'admin-users'
+  | 'admin-agents'
+  | 'admin-transactions'
+  | 'admin-market'
+  | 'admin-barter'
+  | 'admin-notifications'
+  | 'admin-activity-log';
 
 export type UserRole = 'client' | 'agent';
 
@@ -46,14 +56,22 @@ export interface User {
   bonusBalance: number;
   pin: string;
   isVerified: boolean;
+  suspended: boolean;
   hasCompletedOnboarding: boolean;
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
 }
 
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'transfer_received' | 'transfer_sent' | 'withdrawal_validated' | 'purchase' | 'barter_accepted' | 'general' | 'security' | 'promo' | 'system';
+  type: 'transfer_received' | 'transfer_sent' | 'withdrawal_validated' | 'purchase' | 'barter_accepted' | 'general' | 'security' | 'promo' | 'system' | 'announcement' | 'alert' | 'maintenance';
   read: boolean;
   createdAt: string;
 }
@@ -70,10 +88,13 @@ interface NavigationState {
 
 interface AuthState {
   user: User | null;
+  admin: AdminUser | null;
   selectedRole: UserRole;
   setUser: (user: User | null) => void;
+  setAdmin: (admin: AdminUser | null) => void;
   setSelectedRole: (role: UserRole) => void;
   logout: () => void;
+  adminLogout: () => void;
 }
 
 interface AuthFormState {
@@ -123,7 +144,7 @@ export const useAppStore = create<AppStore>()(
       navigateTo: (page, params) => {
         const { currentPage, pageParams, navigationStack } = get();
 
-        // Don't push duplicate entries if navigating to the same page with same params
+        // Don't push duplicate entries
         if (currentPage !== page) {
           set({
             navigationStack: [
@@ -143,7 +164,6 @@ export const useAppStore = create<AppStore>()(
         const { navigationStack } = get();
 
         if (navigationStack.length === 0) {
-          // Nothing to go back to – stay on welcome
           set({ currentPage: 'welcome', pageParams: {} });
           return;
         }
@@ -158,9 +178,11 @@ export const useAppStore = create<AppStore>()(
 
       // ── Auth ───────────────────────────────────────────────────
       user: null,
+      admin: null,
       selectedRole: 'client',
 
       setUser: (user) => set({ user }),
+      setAdmin: (admin) => set({ admin }),
       setSelectedRole: (role) => set({ selectedRole: role }),
 
       logout: () =>
@@ -171,6 +193,14 @@ export const useAppStore = create<AppStore>()(
           pageParams: {},
           navigationStack: [],
           pendingPinAction: null,
+        }),
+
+      adminLogout: () =>
+        set({
+          admin: null,
+          currentPage: 'admin-login',
+          pageParams: {},
+          navigationStack: [],
         }),
 
       // ── Auth Form ────────────────────────────────────────────
@@ -221,9 +251,9 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'trait-app-storage',
-      // Only persist auth and theme to localStorage
       partialize: (state) => ({
         user: state.user,
+        admin: state.admin,
         isDarkMode: state.isDarkMode,
         selectedRole: state.selectedRole,
       }),

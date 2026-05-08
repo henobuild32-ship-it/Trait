@@ -42,6 +42,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if suspended
+    if (user.suspended) {
+      return NextResponse.json(
+        { success: false, message: `Compte suspendu. Motif: ${user.suspensionReason || 'Contactez le support'}` },
+        { status: 403 }
+      )
+    }
+
     return NextResponse.json({
       success: true,
       user: {

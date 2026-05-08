@@ -36,6 +36,17 @@ import AgentDepositScreen from '@/components/screens/AgentDepositScreen';
 import AgentWithdrawValidateScreen from '@/components/screens/AgentWithdrawValidateScreen';
 import AgentActivityScreen from '@/components/screens/AgentActivityScreen';
 
+// Admin screens
+import AdminLoginScreen from '@/components/admin/AdminLoginScreen';
+import AdminDashboard from '@/components/admin/AdminDashboard';
+import AdminUsersScreen from '@/components/admin/AdminUsersScreen';
+import AdminAgentsScreen from '@/components/admin/AdminAgentsScreen';
+import AdminTransactionsScreen from '@/components/admin/AdminTransactionsScreen';
+import AdminMarketScreen from '@/components/admin/AdminMarketScreen';
+import AdminBarterScreen from '@/components/admin/AdminBarterScreen';
+import AdminNotificationsScreen from '@/components/admin/AdminNotificationsScreen';
+import AdminActivityLogScreen from '@/components/admin/AdminActivityLogScreen';
+
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -45,6 +56,7 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'auth-role': AuthRoleScreen,
   'auth-phone': AuthPhoneScreen,
   'auth-login': AuthLoginScreen,
+  'admin-login': AdminLoginScreen,
   'auth-otp': AuthOtpScreen,
   'auth-profile': AuthProfileScreen,
   'pin-setup': PinSetupScreen,
@@ -68,10 +80,22 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'agent-deposit': AgentDepositScreen,
   'agent-withdraw-validate': AgentWithdrawValidateScreen,
   'agent-activity': AgentActivityScreen,
+  // Admin pages
+  'admin-dashboard': AdminDashboard,
+  'admin-users': AdminUsersScreen,
+  'admin-agents': AdminAgentsScreen,
+  'admin-transactions': AdminTransactionsScreen,
+  'admin-market': AdminMarketScreen,
+  'admin-barter': AdminBarterScreen,
+  'admin-notifications': AdminNotificationsScreen,
+  'admin-activity-log': AdminActivityLogScreen,
 };
 
 // Pages that show bottom navigation
 const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity'];
+
+// Admin pages that don't show bottom nav
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log'];
 
 const pageVariants = {
   initial: { opacity: 0, y: 8 },
@@ -80,7 +104,7 @@ const pageVariants = {
 };
 
 export default function TraitApp() {
-  const { currentPage, user, navigateTo } = useAppStore();
+  const { currentPage, user, admin, navigateTo } = useAppStore();
   const Screen = screenMap[currentPage];
 
   // Auto-redirect: if user is logged in but on welcome, go to correct home
@@ -88,7 +112,11 @@ export default function TraitApp() {
     if (user && currentPage === 'welcome') {
       navigateTo(user.role === 'agent' ? 'agent-dashboard' : 'home');
     }
-  }, [user, currentPage, navigateTo]);
+    // If admin is logged in and on admin-login, go to dashboard
+    if (admin && currentPage === 'admin-login') {
+      navigateTo('admin-dashboard');
+    }
+  }, [user, admin, currentPage, navigateTo]);
 
   if (!Screen) {
     return (
@@ -104,10 +132,11 @@ export default function TraitApp() {
   }
 
   const showNav = user && pagesWithNav.includes(currentPage);
+  const isAdminPage = adminPages.includes(currentPage);
 
   return (
     <div className="relative min-h-screen bg-background flex flex-col">
-      <div className="flex-1 pb-16">
+      <div className={`flex-1 ${showNav ? 'pb-16' : ''}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentPage}
@@ -122,7 +151,7 @@ export default function TraitApp() {
         </AnimatePresence>
       </div>
       {showNav && <BottomNavigation />}
-      <PWAInstallBanner />
+      {!isAdminPage && <PWAInstallBanner />}
     </div>
   );
 }

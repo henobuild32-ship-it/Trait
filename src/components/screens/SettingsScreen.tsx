@@ -339,9 +339,11 @@ export default function SettingsScreen() {
                   return (
                     <div key={item.label}>
                       {iIndex > 0 && <Separator />}
-                      <button
+                      <div
                         onClick={item.action}
-                        disabled={installing && item.icon === Download}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.action(); } }}
                         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left cursor-pointer disabled:opacity-50"
                       >
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
@@ -376,7 +378,7 @@ export default function SettingsScreen() {
                         {item.value !== 'toggle' && item.value !== 'darkMode' && (
                           <ChevronRight className="size-4 text-muted-foreground" />
                         )}
-                      </button>
+                      </div>
                     </div>
                   );
                 })}

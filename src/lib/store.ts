@@ -53,7 +53,9 @@ export interface User {
   role: UserRole;
   agentCode: string | null;
   realBalance: number;
+  realBalanceFC: number;
   bonusBalance: number;
+  bonusBalanceFC: number;
   pin: string;
   isVerified: boolean;
   suspended: boolean;

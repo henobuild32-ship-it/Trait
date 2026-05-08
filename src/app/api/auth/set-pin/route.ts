@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!pin || typeof pin !== 'string' || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 8 || !/^\d{4,8}$/.test(pin)) {
       return NextResponse.json(
-        { success: false, message: 'Le code PIN doit comporter exactement 4 chiffres' },
+        { success: false, message: 'Le code PIN doit comporter entre 4 et 8 chiffres' },
         { status: 400 }
       )
     }

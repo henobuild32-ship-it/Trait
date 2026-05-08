@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
     if (role === 'agent') {
       let unique = false
       while (!unique) {
-        const digits = Math.floor(10000 + Math.random() * 90000).toString()
-        agentCode = `17${digits}`
+        const digits = Math.floor(100000 + Math.random() * 900000).toString()
+        agentCode = `AGT-${digits}`
         const existingCode = await db.user.findUnique({
           where: { agentCode },
         })
@@ -67,7 +67,9 @@ export async function POST(request: NextRequest) {
         password,
         agentCode,
         realBalance: 0,
+        realBalanceFC: 0,
         bonusBalance: 10,
+        bonusBalanceFC: 0,
       },
     })
 
@@ -80,7 +82,9 @@ export async function POST(request: NextRequest) {
       role: user.role,
       agentCode: user.agentCode,
       realBalance: user.realBalance,
+      realBalanceFC: user.realBalanceFC,
       bonusBalance: user.bonusBalance,
+      bonusBalanceFC: user.bonusBalanceFC,
       isVerified: user.isVerified,
       hasCompletedOnboarding: user.hasCompletedOnboarding,
     }

@@ -14,14 +14,18 @@ model User {
   pseudo                String?
   country               String   @default("US")
   role                  String   @default("client") // client, agent
-  agentCode             String?  @unique              // 7 digits, starts with 17
+  agentCode             String?  @unique              // AGT-XXXXXX format
   password              String?
   pin                   String?
   realBalance           Float    @default(0)
+  realBalanceFC         Float    @default(0)
   bonusBalance          Float    @default(10)
+  bonusBalanceFC        Float    @default(0)
   isVerified            Boolean  @default(false)
   suspended             Boolean  @default(false)
   suspensionReason      String?
+  tempBlocked           Boolean  @default(false)
+  pinAttempts           Int      @default(0)
   hasCompletedOnboarding Boolean @default(false)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -38,6 +42,10 @@ model User {
   notifications        Notification[]
   deposits             Deposit[]
   withdrawals          Withdrawal[]
+  ussdFavorites        UssdFavorite[]
+  creditPurchases      CreditPurchase[]
+  billPayments         BillPayment[]
+  userSettings         UserSettings?
 }
 
 model Admin {
@@ -225,4 +233,63 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// ─── USSD System Models ─────────────────────────────────────────────
+
+model UssdFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  phone     String
+  type      String   @default("transfer") // transfer, credit
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserSettings {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  ussdLanguage           String   @default("fr") // fr, en, ln, sw, tl, kg
+  defaultCurrency        String   @default("USD") // USD, FC
+  smsNotifications       Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CreditPurchase {
+  id          String   @id @default(cuid())
+  userId      String
+  network     String   // Vodacom, Airtel, Orange, Africell
+  phoneNumber String
+  amount      Float
+  currency    String   @default("USD")
+  status      String   @default("completed")
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([network])
+}
+
+model BillPayment {
+  id          String   @id @default(cuid())
+  userId      String
+  billType    String   // electricity, water, internet, subscription, other
+  reference   String
+  amount      Float
+  currency    String   @default("USD")
+  status      String   @default("completed")
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([billType])
 }

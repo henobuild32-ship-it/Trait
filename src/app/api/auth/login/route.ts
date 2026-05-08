@@ -50,6 +50,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if temporarily blocked
+    if (user.tempBlocked) {
+      return NextResponse.json(
+        { success: false, message: 'Votre compte est temporairement bloqué. Contactez le support TRAIT.' },
+        { status: 403 }
+      )
+    }
+
     return NextResponse.json({
       success: true,
       user: {
@@ -61,7 +69,9 @@ export async function POST(request: NextRequest) {
         role: user.role,
         agentCode: user.agentCode,
         realBalance: user.realBalance,
+        realBalanceFC: user.realBalanceFC,
         bonusBalance: user.bonusBalance,
+        bonusBalanceFC: user.bonusBalanceFC,
         pin: user.pin,
         isVerified: user.isVerified,
         hasCompletedOnboarding: user.hasCompletedOnboarding,

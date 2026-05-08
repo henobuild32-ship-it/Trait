@@ -199,19 +199,9 @@ export default function HomeScreen() {
               {isAgent ? 'Portefeuille USD' : 'Solde USD'}
             </p>
           </div>
-          <p className="text-3xl font-bold tracking-tight mb-3">
-            {totalUSD.toFixed(2)} <span className="text-lg opacity-80">USD</span>
+          <p className="text-4xl font-bold tracking-tight">
+            $ {totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
-          <div className="flex gap-5">
-            <div>
-              <p className="text-xs opacity-70 mb-0.5">Réel</p>
-              <p className="text-base font-semibold">{realBalanceUSD.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-xs opacity-70 mb-0.5">Bonus</p>
-              <p className="text-base font-semibold">{bonusBalanceUSD.toFixed(2)}</p>
-            </div>
-          </div>
         </div>
       </motion.div>
 
@@ -229,19 +219,9 @@ export default function HomeScreen() {
               {isAgent ? 'Portefeuille FC' : 'Solde FC'}
             </p>
           </div>
-          <p className="text-3xl font-bold tracking-tight mb-3">
-            {totalFC.toFixed(2)} <span className="text-lg opacity-80">FC</span>
+          <p className="text-4xl font-bold tracking-tight">
+            {totalFC.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} FC
           </p>
-          <div className="flex gap-5">
-            <div>
-              <p className="text-xs opacity-70 mb-0.5">Réel</p>
-              <p className="text-base font-semibold">{realBalanceFC.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-xs opacity-70 mb-0.5">Bonus</p>
-              <p className="text-base font-semibold">{bonusBalanceFC.toFixed(2)}</p>
-            </div>
-          </div>
         </div>
       </motion.div>
 

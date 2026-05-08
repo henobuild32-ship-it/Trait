@@ -44,27 +44,34 @@ import { toast } from 'sonner';
 type UssdStep =
   | 'welcome'
   | 'main-menu'
+  | 'balance-fc'
+  | 'balance-usd'
   | 'balance'
+  | 'transfer-currency'
   | 'transfer-phone'
   | 'transfer-amount'
   | 'transfer-confirm'
   | 'transfer-pin'
   | 'transfer-done'
+  | 'withdraw-currency'
   | 'withdraw-agent'
   | 'withdraw-amount'
   | 'withdraw-confirm'
   | 'withdraw-pin'
   | 'withdraw-done'
+  | 'deposit-currency'
   | 'deposit-agent'
   | 'deposit-amount'
   | 'deposit-confirm'
   | 'deposit-done'
+  | 'credit-currency'
   | 'credit-network'
   | 'credit-phone'
   | 'credit-amount'
   | 'credit-confirm'
   | 'credit-pin'
   | 'credit-done'
+  | 'bill-currency'
   | 'bill-type'
   | 'bill-reference'
   | 'bill-amount'
@@ -79,7 +86,6 @@ type UssdStep =
   | 'quick-confirm'
   | 'quick-pin'
   | 'quick-done'
-  | 'change-currency'
   | 'account-info'
   | 'change-pin-current'
   | 'change-pin-new'
@@ -153,14 +159,14 @@ const LANGUAGES = [
 ];
 
 const MAIN_MENU = [
-  { id: '1', label: 'Consulter le solde', icon: Wallet, step: 'balance' as UssdStep },
-  { id: '2', label: "Transférer de l'argent", icon: Send, step: 'transfer-phone' as UssdStep },
-  { id: '3', label: 'Retrait via agent', icon: ArrowDownToLine, step: 'withdraw-agent' as UssdStep },
-  { id: '4', label: 'Dépôt via agent', icon: ArrowUpFromLine, step: 'deposit-agent' as UssdStep },
-  { id: '5', label: 'Achat de crédit', icon: CreditCard, step: 'credit-network' as UssdStep },
-  { id: '6', label: 'Paiement de factures', icon: FileText, step: 'bill-type' as UssdStep },
-  { id: '7', label: 'Historique rapide', icon: Clock, step: 'history' as UssdStep },
-  { id: '8', label: 'Changer de devise', icon: Globe, step: 'change-currency' as UssdStep },
+  { id: '1', label: 'Voir Solde FC', icon: Wallet, step: 'balance-fc' as UssdStep },
+  { id: '2', label: 'Voir Solde USD', icon: Wallet, step: 'balance-usd' as UssdStep },
+  { id: '3', label: "Transférer de l'argent", icon: Send, step: 'transfer-currency' as UssdStep },
+  { id: '4', label: 'Retrait via agent', icon: ArrowDownToLine, step: 'withdraw-currency' as UssdStep },
+  { id: '5', label: 'Dépôt via agent', icon: ArrowUpFromLine, step: 'deposit-currency' as UssdStep },
+  { id: '6', label: 'Achat de crédit', icon: CreditCard, step: 'credit-currency' as UssdStep },
+  { id: '7', label: 'Paiement de factures', icon: FileText, step: 'bill-currency' as UssdStep },
+  { id: '8', label: 'Historique rapide', icon: Clock, step: 'history' as UssdStep },
   { id: '9', label: 'Mon compte', icon: ShieldCheck, step: 'account-info' as UssdStep },
   { id: '10', label: 'Favoris', icon: Star, step: 'favorites-list' as UssdStep },
   { id: '11', label: 'Paramètres', icon: Settings, step: 'settings' as UssdStep },
@@ -241,17 +247,15 @@ export default function USSDScreen() {
 
   // ─── API Calls ──────────────────────────────────────────────────
 
-  const fetchBalance = useCallback(async () => {
+  const fetchBalance = useCallback(async (cur: UssdCurrency) => {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/ussd/balance?userId=${user.id}&currency=${currency}`);
+      const res = await fetch(`/api/ussd/balance?userId=${user.id}&currency=${cur}`);
       const data = await res.json();
       if (data.success) {
         setResultMessage(
-          `Solde réel:   ${data.realBalance.toFixed(2)} ${currency}\n` +
-          `Solde bonus:  ${data.bonusBalance.toFixed(2)} ${currency}\n\n` +
-          `TOTAL:  ${data.totalBalance.toFixed(2)} ${currency}`
+          `Solde disponible:  ${data.totalBalance.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`
         );
       } else {
         setResultMessage(`Erreur: ${data.message}`);
@@ -261,7 +265,7 @@ export default function USSDScreen() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, currency]);
+  }, [user?.id]);
 
   const fetchHistory = useCallback(async () => {
     if (!user?.id) return;
@@ -534,19 +538,9 @@ export default function USSDScreen() {
           <h2 className="text-3xl font-black text-emerald-600 mb-1">TRAIT USSD</h2>
           <p className="text-sm text-muted-foreground font-mono mb-8">*1709#</p>
 
-          <Card className="bg-emerald-50 border-emerald-200 max-w-[300px] mx-auto">
-            <CardContent className="p-5">
-              <p className="text-sm text-emerald-800 font-medium mb-4">Choisissez votre devise :</p>
-              <div className="space-y-3">
-                <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold" onClick={() => { setCurrency('FC'); setStep('main-menu'); }}>
-                  Franc Congolais (FC)
-                </Button>
-                <Button variant="outline" className="w-full h-12 rounded-xl font-semibold border-emerald-200 hover:bg-emerald-50" onClick={() => { setCurrency('USD'); setStep('main-menu'); }}>
-                  Dollar Américain (USD)
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <Button className="w-full max-w-[300px] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-lg" onClick={() => setStep('main-menu')}>
+            Accéder au menu
+          </Button>
         </motion.div>
       </div>
     );
@@ -563,10 +557,9 @@ export default function USSDScreen() {
               </div>
               <div>
                 <h2 className="text-base font-bold text-emerald-700">TRAIT USSD</h2>
-                <p className="text-[10px] text-muted-foreground font-mono">*1709# — {currency}</p>
+                <p className="text-[10px] text-muted-foreground font-mono">*1709#</p>
               </div>
             </div>
-            <Badge variant="outline" className="text-xs border-emerald-200 bg-emerald-50 text-emerald-700 font-mono">{currency}</Badge>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-6">
@@ -579,7 +572,9 @@ export default function USSDScreen() {
                   <button
                     onClick={() => {
                       // Special handlers for steps needing async data
-                      if (item.step === 'balance') { fetchBalance(); setStep('balance'); }
+                      if (item.step === 'balance-fc') { fetchBalance('FC'); setStep('balance-fc'); }
+                      else if (item.step === 'balance-usd') { fetchBalance('USD'); setStep('balance-usd'); }
+                      else if (item.step === 'balance') { fetchBalance(currency); setStep('balance'); }
                       else if (item.step === 'history') { fetchHistory(); setStep('history'); }
                       else if (item.step === 'favorites-list') { fetchFavorites(); setStep('favorites-list'); }
                       else if (item.step === 'settings') { fetchSettings(); setStep('settings'); }
@@ -610,7 +605,7 @@ export default function USSDScreen() {
     if (loading) return <LoadingScreen text="Chargement du solde..." />;
     return (
       <div className="flex flex-col h-full">
-        <Header title="Consulter le solde" onBack={goMenu} />
+        <Header title="Solde disponible" onBack={goMenu} />
         <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
             <Wallet className="size-8 text-emerald-700" />
@@ -622,17 +617,25 @@ export default function USSDScreen() {
     );
   }
 
-  function renderChangeCurrency() {
+  // Currency selection step for all operations
+  function renderCurrencySelection(title: string, nextSteps: { fc: UssdStep; usd: UssdStep }) {
     return (
       <div className="flex flex-col h-full">
-        <Header title="Changer de devise" onBack={goMenu} />
+        <Header title={title} onBack={goMenu} />
         <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
-          <p className="text-sm text-muted-foreground">Devise actuelle: <strong className="text-foreground">{currency}</strong></p>
+          <p className="text-sm text-muted-foreground">Choisissez la devise :</p>
           <div className="space-y-3 w-full max-w-[280px]">
-            <Button className={`w-full h-14 rounded-xl font-semibold ${currency === 'FC' ? 'bg-muted text-muted-foreground' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`} onClick={() => { setCurrency('FC'); toast.success('Devise: FC'); goMenu(); }} disabled={currency === 'FC'}>
+            <Button
+              className="w-full h-14 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => { setCurrency('FC'); setStep(nextSteps.fc); }}
+            >
               Franc Congolais (FC)
             </Button>
-            <Button className={`w-full h-14 rounded-xl font-semibold ${currency === 'USD' ? 'bg-muted text-muted-foreground' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`} onClick={() => { setCurrency('USD'); toast.success('Devise: USD'); goMenu(); }} disabled={currency === 'USD'}>
+            <Button
+              variant="outline"
+              className="w-full h-14 rounded-xl font-semibold border-emerald-200 hover:bg-emerald-50"
+              onClick={() => { setCurrency('USD'); setStep(nextSteps.usd); }}
+            >
               Dollar Américain (USD)
             </Button>
           </div>
@@ -1600,27 +1603,34 @@ export default function USSDScreen() {
   const stepRenderers: Record<UssdStep, () => React.ReactNode> = {
     'welcome': renderWelcome,
     'main-menu': renderMainMenu,
+    'balance-fc': renderBalance,
+    'balance-usd': renderBalance,
     'balance': renderBalance,
+    'transfer-currency': () => renderCurrencySelection("Transférer de l'argent", { fc: 'transfer-phone', usd: 'transfer-phone' }),
     'transfer-phone': renderTransferPhone,
     'transfer-amount': renderTransferAmount,
     'transfer-confirm': renderTransferConfirm,
     'transfer-pin': renderTransferPin,
     'transfer-done': () => <DoneStep msg={resultMessage} />,
+    'withdraw-currency': () => renderCurrencySelection('Retrait via agent', { fc: 'withdraw-agent', usd: 'withdraw-agent' }),
     'withdraw-agent': renderWithdrawAgent,
     'withdraw-amount': renderWithdrawAmount,
     'withdraw-confirm': renderWithdrawConfirm,
     'withdraw-pin': renderWithdrawPin,
     'withdraw-done': () => <DoneStep msg={resultMessage} />,
+    'deposit-currency': () => renderCurrencySelection('Dépôt via agent', { fc: 'deposit-agent', usd: 'deposit-agent' }),
     'deposit-agent': renderDepositAgent,
     'deposit-amount': renderDepositAmount,
     'deposit-confirm': renderDepositConfirm,
     'deposit-done': () => <DoneStep msg={resultMessage} />,
+    'credit-currency': () => renderCurrencySelection('Achat de crédit', { fc: 'credit-network', usd: 'credit-network' }),
     'credit-network': renderCreditNetwork,
     'credit-phone': renderCreditPhone,
     'credit-amount': renderCreditAmount,
     'credit-confirm': renderCreditConfirm,
     'credit-pin': renderCreditPin,
     'credit-done': () => <DoneStep msg={resultMessage} />,
+    'bill-currency': () => renderCurrencySelection('Paiement de factures', { fc: 'bill-type', usd: 'bill-type' }),
     'bill-type': renderBillType,
     'bill-reference': renderBillReference,
     'bill-amount': renderBillAmount,
@@ -1631,11 +1641,10 @@ export default function USSDScreen() {
     'favorites-list': renderFavoritesList,
     'favorites-add': renderFavoritesAdd,
     'quick-send': renderQuickSend,
-    'quick-amount': () => renderQuickSend(), // quick-send handles input
+    'quick-amount': () => renderQuickSend(),
     'quick-confirm': renderQuickConfirm,
     'quick-pin': renderQuickPin,
     'quick-done': () => <DoneStep msg={resultMessage} />,
-    'change-currency': renderChangeCurrency,
     'account-info': renderAccountInfo,
     'change-pin-current': renderChangePinCurrent,
     'change-pin-new': renderChangePinNew,

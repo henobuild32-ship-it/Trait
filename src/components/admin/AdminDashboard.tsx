@@ -67,7 +67,7 @@ const statsConfig: StatCard[] = [
 
 interface QuickAction {
   label: string;
-  page: Parameters<ReturnType<typeof useAppStore>['navigateTo']>[0];
+  page: string;
   icon: React.ElementType;
   color: string;
   bgColor: string;
@@ -339,7 +339,7 @@ export default function AdminDashboard() {
                 >
                   <Card
                     className="border-border hover:shadow-md transition-all cursor-pointer group"
-                    onClick={() => navigateTo(action.page)}
+                    onClick={() => navigateTo(action.page as any)}
                   >
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg ${action.bgColor} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>

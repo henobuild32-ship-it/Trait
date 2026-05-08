@@ -68,3 +68,25 @@ Stage Summary:
 - Page compiles and serves successfully
 - App should now display in preview panel
 
+
+---
+Task ID: 1-fix
+Agent: Main Agent
+Task: Fix app rendering + implement complete Bonus System
+
+Work Log:
+- Diagnosed dev server was crashed
+- Fixed TypeScript errors in AdminDashboard.tsx (navigateTo type)
+- Fixed TypeScript error in USSDScreen.tsx (added createdAt to User type)
+- Fixed TypeScript errors in marketplace/purchase/route.ts (null sellerId)
+- Fixed USSD transfer route to prevent bonus usage in transfers
+- Fixed regular transfer route to prevent bonus usage
+- Updated MarketplaceScreen with bonus filter and bonus badges
+- Updated MarketplaceDetailScreen with full bonus purchase flow
+- Restarted dev server - confirmed 200 OK with 42KB HTML rendered
+
+Stage Summary:
+- App now renders correctly in preview
+- All TypeScript errors in src/ resolved
+- Bonus security enforced: bonus cannot be used for transfers/withdrawals
+- Marketplace supports bonus purchases with currency awareness

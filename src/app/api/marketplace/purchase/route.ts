@@ -214,13 +214,15 @@ export async function POST(request: NextRequest) {
     // ─── Credit seller with real balance ─────────────────────────────
     // The seller always receives real balance, regardless of buyer's payment method
     // (The system absorbs the bonus cost)
-    const sellerRealField = isFC ? 'realBalanceFC' : 'realBalance'
-    await db.user.update({
-      where: { id: product.sellerId },
-      data: {
-        [sellerRealField]: { increment: effectivePrice },
-      },
-    })
+    if (product.sellerId) {
+      const sellerRealField = isFC ? 'realBalanceFC' : 'realBalance'
+      await db.user.update({
+        where: { id: product.sellerId },
+        data: {
+          [sellerRealField]: { increment: effectivePrice },
+        },
+      })
+    }
 
     // ─── Record bonus history if bonus was used ──────────────────────
     if (usedBonus > 0) {
@@ -244,14 +246,16 @@ export async function POST(request: NextRequest) {
     }
 
     // ─── Notify seller ───────────────────────────────────────────────
-    await db.notification.create({
-      data: {
-        userId: product.sellerId,
-        title: 'New Purchase',
-        message: `${buyer.name || buyer.pseudo || 'Someone'} purchased "${product.name}" for ${effectivePrice.toFixed(2)} ${currency}${usedBonus > 0 ? ' (bonus payment)' : ''}`,
-        type: 'purchase',
-      },
-    })
+    if (product.sellerId) {
+      await db.notification.create({
+        data: {
+          userId: product.sellerId,
+          title: 'New Purchase',
+          message: `${buyer.name || buyer.pseudo || 'Someone'} purchased "${product.name}" for ${effectivePrice.toFixed(2)} ${currency}${usedBonus > 0 ? ' (bonus payment)' : ''}`,
+          type: 'purchase',
+        },
+      })
+    }
 
     return NextResponse.json({
       success: true,

@@ -65,6 +65,7 @@ export interface User {
   isVerified: boolean;
   suspended: boolean;
   hasCompletedOnboarding: boolean;
+  createdAt?: string;
 }
 
 export interface AdminUser {

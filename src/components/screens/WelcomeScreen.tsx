@@ -66,7 +66,7 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        className="w-full max-w-sm bg-card rounded-3xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
@@ -74,8 +74,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
             <Smartphone className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Installer sur Android</h3>
-            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+            <h3 className="text-lg font-bold text-foreground">Installer sur Android</h3>
+            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
           </div>
         </div>
 
@@ -85,8 +85,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">1</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">Ouvrir dans Chrome</p>
-              <p className="text-xs text-gray-500 mt-0.5">Utilisez le navigateur Google Chrome sur votre téléphone</p>
+              <p className="text-sm font-semibold text-foreground">Ouvrir dans Chrome</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Utilisez le navigateur Google Chrome sur votre téléphone</p>
             </div>
           </div>
 
@@ -95,8 +95,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">2</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">Appuyez sur le menu</p>
-              <p className="text-xs text-gray-500 mt-0.5">Touchez les <Menu className="w-3.5 h-3.5 inline mx-0.5" /> trois points en haut à droite de Chrome</p>
+              <p className="text-sm font-semibold text-foreground">Appuyez sur le menu</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Touchez les <Menu className="w-3.5 h-3.5 inline mx-0.5" /> trois points en haut à droite de Chrome</p>
             </div>
           </div>
 
@@ -105,8 +105,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">3</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">&quot;Installer l&apos;application&quot;</p>
-              <p className="text-xs text-gray-500 mt-0.5">Sélectionnez &quot;Installer l&apos;application&quot; ou &quot;Ajouter à l&apos;écran d&apos;accueil&quot;</p>
+              <p className="text-sm font-semibold text-foreground">&quot;Installer l&apos;application&quot;</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Sélectionnez &quot;Installer l&apos;application&quot; ou &quot;Ajouter à l&apos;écran d&apos;accueil&quot;</p>
             </div>
           </div>
 
@@ -115,8 +115,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">4</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">Confirmez l&apos;installation</p>
-              <p className="text-xs text-gray-500 mt-0.5">Appuyez sur &quot;Installer&quot; — l&apos;app apparaîtra sur votre écran d&apos;accueil</p>
+              <p className="text-sm font-semibold text-foreground">Confirmez l&apos;installation</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Appuyez sur &quot;Installer&quot; — l&apos;app apparaîtra sur votre écran d&apos;accueil</p>
             </div>
           </div>
         </div>
@@ -146,7 +146,7 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        className="w-full max-w-sm bg-card rounded-3xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
@@ -154,8 +154,8 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
             <Apple className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Installer sur iOS</h3>
-            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+            <h3 className="text-lg font-bold text-foreground">Installer sur iOS</h3>
+            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
           </div>
         </div>
 
@@ -165,8 +165,8 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">1</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">Ouvrir dans Safari</p>
-              <p className="text-xs text-gray-500 mt-0.5">Copiez le lien et ouvrez-le dans le navigateur Safari</p>
+              <p className="text-sm font-semibold text-foreground">Ouvrir dans Safari</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Copiez le lien et ouvrez-le dans le navigateur Safari</p>
             </div>
           </div>
 
@@ -175,8 +175,8 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">2</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">Touchez l&apos;icône Partager</p>
-              <p className="text-xs text-gray-500 mt-0.5">Appuyez sur le bouton <span className="inline-flex items-center"><svg className="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> en bas de l&apos;écran Safari</p>
+              <p className="text-sm font-semibold text-foreground">Touchez l&apos;icône Partager</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Appuyez sur le bouton <span className="inline-flex items-center"><svg className="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> en bas de l&apos;écran Safari</p>
             </div>
           </div>
 
@@ -185,8 +185,8 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">3</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-              <p className="text-xs text-gray-500 mt-0.5">Faites défiler et tapez &quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+              <p className="text-sm font-semibold text-foreground">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Faites défiler et tapez &quot;Sur l&apos;écran d&apos;accueil&quot;</p>
             </div>
           </div>
 
@@ -195,8 +195,8 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
               <span className="text-sm font-bold text-emerald-700">4</span>
             </div>
             <div className="pt-0.5">
-              <p className="text-sm font-semibold text-gray-800">Touchez &quot;Ajouter&quot;</p>
-              <p className="text-xs text-gray-500 mt-0.5">Confirmez en haut à droite avec &quot;Ajouter&quot;</p>
+              <p className="text-sm font-semibold text-foreground">Touchez &quot;Ajouter&quot;</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Confirmez en haut à droite avec &quot;Ajouter&quot;</p>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-emerald-50/30 to-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-emerald-50/10 to-background dark:from-background dark:via-emerald-950/20 dark:to-background">
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         <motion.div
@@ -256,7 +256,7 @@ export default function WelcomeScreen() {
           {/* Tagline */}
           <motion.p
             variants={itemVariants}
-            className="text-center text-lg text-gray-500 font-medium"
+            className="text-center text-lg text-muted-foreground font-medium"
           >
             Transfert d&apos;argent, Troc &amp; Marketplace
           </motion.p>
@@ -271,17 +271,17 @@ export default function WelcomeScreen() {
               return (
                 <Card
                   key={feature.title}
-                  className="bg-white border-emerald-100 hover:border-emerald-200 hover:shadow-md transition-all duration-200 py-4 px-3 gap-3 group"
+                  className="bg-card border-border hover:border-emerald-200 hover:shadow-md transition-all duration-200 py-4 px-3 gap-3 group"
                 >
                   <CardContent className="p-0 flex flex-col items-center text-center gap-2">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-emerald-100 flex items-center justify-center transition-colors">
                       <Icon className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 leading-tight">
+                      <p className="text-sm font-semibold text-foreground leading-tight">
                         {feature.title}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5 leading-tight">
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
                         {feature.description}
                       </p>
                     </div>
@@ -403,7 +403,7 @@ export default function WelcomeScreen() {
         transition={{ delay: 0.8, duration: 0.5 }}
         className="py-6 text-center"
       >
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           0.7% de frais • Bonus 10 USD • USSD *1709#
         </p>
       </motion.footer>

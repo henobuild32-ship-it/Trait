@@ -176,14 +176,12 @@ export default function DepositScreen() {
               </div>
             )}
 
-            {/* Demo Note */}
-            {selectedMethod !== 'agent' && (
-              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 p-3">
-                <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                  Demo : Le dépôt est automatiquement validé et crédité sur votre solde.
-                </p>
-              </div>
-            )}
+            {/* TRAIT info */}
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 p-3">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                Le dépôt est crédité sur votre solde après validation. Ce service USSD *1709# appartient exclusivement à TRAIT et n&apos;est pas lié aux réseaux mobiles classiques.
+              </p>
+            </div>
 
             {/* Submit */}
             <Button

@@ -40,10 +40,10 @@ const NOTIFICATION_COLORS: Record<string, string> = {
   withdrawal_validated: 'bg-emerald-100 text-emerald-600',
   security: 'bg-red-100 text-red-600',
   promo: 'bg-violet-100 text-violet-600',
-  system: 'bg-gray-100 text-gray-600',
+  system: 'bg-muted text-muted-foreground',
   purchase: 'bg-emerald-100 text-emerald-600',
   barter_accepted: 'bg-amber-100 text-amber-600',
-  default: 'bg-gray-100 text-gray-600',
+  default: 'bg-muted text-muted-foreground',
 };
 
 function formatRelativeTime(dateStr: string): string {

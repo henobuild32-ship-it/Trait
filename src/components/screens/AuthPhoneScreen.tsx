@@ -103,7 +103,7 @@ export default function AuthPhoneScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
@@ -117,7 +117,7 @@ export default function AuthPhoneScreen() {
           onClick={goBack}
           className="rounded-full hover:bg-emerald-50 cursor-pointer"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-700" />
+          <ArrowLeft className="h-5 w-5 text-foreground" />
         </Button>
       </motion.header>
 
@@ -144,19 +144,19 @@ export default function AuthPhoneScreen() {
         </div>
 
         <div className="flex flex-col gap-2 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Créer un compte</h1>
-          <p className="text-gray-500">Entrez vos informations de connexion</p>
+          <h1 className="text-2xl font-bold text-foreground">Créer un compte</h1>
+          <p className="text-muted-foreground">Entrez vos informations de connexion</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Phone */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="reg-phone" className="text-gray-700 font-medium">
+            <Label htmlFor="reg-phone" className="text-foreground font-medium">
               Numéro de téléphone
             </Label>
             <div className="flex gap-2">
               <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="w-[100px] shrink-0 border-gray-200">
+                <SelectTrigger className="w-[100px] shrink-0 ">
                   <SelectValue placeholder="Code" />
                 </SelectTrigger>
                 <SelectContent>
@@ -173,7 +173,7 @@ export default function AuthPhoneScreen() {
                 placeholder="90 11 22 33"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="flex-1 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 h-12 text-base"
+                className="flex-1  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 h-12 text-base"
                 autoComplete="tel"
                 disabled={loading}
               />
@@ -182,7 +182,7 @@ export default function AuthPhoneScreen() {
 
           {/* Password */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="reg-password" className="text-gray-700 font-medium">
+            <Label htmlFor="reg-password" className="text-foreground font-medium">
               Mot de passe
             </Label>
             <div className="relative">
@@ -192,14 +192,14 @@ export default function AuthPhoneScreen() {
                 placeholder="Minimum 4 caractères"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base pr-12"
+                className="w-full h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base pr-12"
                 autoComplete="new-password"
                 disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -212,7 +212,7 @@ export default function AuthPhoneScreen() {
 
           {/* Confirm Password */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="reg-confirm-password" className="text-gray-700 font-medium">
+            <Label htmlFor="reg-confirm-password" className="text-foreground font-medium">
               Confirmer le mot de passe
             </Label>
             <Input
@@ -221,7 +221,7 @@ export default function AuthPhoneScreen() {
               placeholder="Retapez votre mot de passe"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full h-12 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+              className="w-full h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
               autoComplete="new-password"
               disabled={loading}
             />
@@ -246,7 +246,7 @@ export default function AuthPhoneScreen() {
 
         {/* Login link */}
         <div className="mt-6 flex items-center justify-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Déjà un compte ?{' '}
             <button
               onClick={() => navigateTo('auth-login')}
@@ -258,7 +258,7 @@ export default function AuthPhoneScreen() {
         </div>
 
         <div className="mt-4 flex items-center justify-center">
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             En continuant, vous acceptez nos conditions d&apos;utilisation
           </p>
         </div>

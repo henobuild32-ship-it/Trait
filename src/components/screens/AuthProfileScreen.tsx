@@ -115,7 +115,7 @@ export default function AuthProfileScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
@@ -123,7 +123,7 @@ export default function AuthProfileScreen() {
         transition={{ duration: 0.3 }}
         className="flex items-center px-4 py-4"
       >
-        <h1 className="text-lg font-bold text-gray-900">Créez votre profil</h1>
+        <h1 className="text-lg font-bold text-foreground">Créez votre profil</h1>
       </motion.header>
 
       {/* Content */}
@@ -151,7 +151,7 @@ export default function AuthProfileScreen() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Full Name */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name" className="text-gray-700 font-medium">
+            <Label htmlFor="name" className="text-foreground font-medium">
               Nom complet
             </Label>
             <Input
@@ -160,7 +160,7 @@ export default function AuthProfileScreen() {
               placeholder="Ex: Kofi Amegah"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-12 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+              className="h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
               autoComplete="name"
               disabled={loading}
             />
@@ -168,7 +168,7 @@ export default function AuthProfileScreen() {
 
           {/* Pseudo */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="pseudo" className="text-gray-700 font-medium">
+            <Label htmlFor="pseudo" className="text-foreground font-medium">
               Pseudo
             </Label>
             <Input
@@ -177,7 +177,7 @@ export default function AuthProfileScreen() {
               placeholder="Ex: @kofi_trader"
               value={pseudo}
               onChange={(e) => setPseudo(e.target.value)}
-              className="h-12 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+              className="h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
               autoComplete="username"
               disabled={loading}
             />
@@ -185,11 +185,11 @@ export default function AuthProfileScreen() {
 
           {/* Country */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="country" className="text-gray-700 font-medium">
+            <Label htmlFor="country" className="text-foreground font-medium">
               Pays
             </Label>
             <Select value={country} onValueChange={setCountry} disabled={loading}>
-              <SelectTrigger className="w-full h-12 border-gray-200 focus:ring-emerald-500/20 text-base">
+              <SelectTrigger className="w-full h-12  focus:ring-emerald-500/20 text-base">
                 <SelectValue placeholder="Sélectionnez votre pays" />
               </SelectTrigger>
               <SelectContent>

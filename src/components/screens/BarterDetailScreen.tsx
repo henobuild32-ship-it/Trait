@@ -320,7 +320,7 @@ export default function BarterDetailScreen() {
                       className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
                         isMine
                           ? 'bg-emerald-600 text-white rounded-br-md'
-                          : 'bg-white border rounded-bl-md'
+                          : 'bg-card border rounded-bl-md'
                       }`}
                     >
                       <p>{msg.content}</p>

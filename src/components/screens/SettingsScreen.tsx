@@ -40,7 +40,7 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        className="w-full max-w-sm bg-card rounded-3xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
@@ -48,8 +48,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
             <Smartphone className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Installer sur Android</h3>
-            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+            <h3 className="text-lg font-bold text-foreground">Installer sur Android</h3>
+            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
           </div>
         </div>
 
@@ -65,8 +65,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
                 <span className="text-sm font-bold text-emerald-700">{item.step}</span>
               </div>
               <div className="pt-0.5">
-                <p className="text-sm font-semibold text-gray-800">{item.title}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -94,7 +94,7 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+        className="w-full max-w-sm bg-card rounded-3xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
@@ -102,8 +102,8 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
             <Apple className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Installer sur iOS</h3>
-            <p className="text-xs text-gray-500">Suivez ces étapes simples</p>
+            <h3 className="text-lg font-bold text-foreground">Installer sur iOS</h3>
+            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
           </div>
         </div>
 
@@ -119,8 +119,8 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
                 <span className="text-sm font-bold text-emerald-700">{item.step}</span>
               </div>
               <div className="pt-0.5">
-                <p className="text-sm font-semibold text-gray-800">{item.title}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -394,15 +394,15 @@ export default function SettingsScreen() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
           >
-            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-white overflow-hidden">
+            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-background overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
                     <Download className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-bold text-gray-900">Télécharger l&apos;application</h3>
-                    <p className="text-xs text-gray-500">Installez Trait sur votre téléphone</p>
+                    <h3 className="text-sm font-bold text-foreground">Télécharger l&apos;application</h3>
+                    <p className="text-xs text-muted-foreground">Installez Trait sur votre téléphone</p>
                   </div>
                 </div>
                 <div className="flex gap-2">

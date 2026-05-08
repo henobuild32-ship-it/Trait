@@ -84,7 +84,7 @@ export default function PinSetupScreen() {
   const dotIndices = [0, 1, 2, 3];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <motion.main
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -101,8 +101,8 @@ export default function PinSetupScreen() {
             <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10 text-emerald-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Code PIN configuré !</h2>
-            <p className="text-sm text-gray-500 text-center">
+            <h2 className="text-xl font-bold text-foreground">Code PIN configuré !</h2>
+            <p className="text-sm text-muted-foreground text-center">
               Votre code PIN a été enregistré avec succès
             </p>
           </motion.div>
@@ -113,15 +113,15 @@ export default function PinSetupScreen() {
             className="flex flex-col items-center gap-4"
           >
             <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
-            <p className="text-sm text-gray-500">Sauvegarde en cours...</p>
+            <p className="text-sm text-muted-foreground">Sauvegarde en cours...</p>
           </motion.div>
         ) : (
           <>
             <div className="flex flex-col items-center gap-2 mb-10">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-foreground">
                 {step === 'create' ? 'Créez votre code PIN' : 'Confirmez votre PIN'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {step === 'create'
                   ? 'Choisissez un code PIN à 4 chiffres'
                   : 'Entrez à nouveau votre code PIN'}
@@ -165,7 +165,7 @@ export default function PinSetupScreen() {
                     <button
                       key="del"
                       onClick={handleDelete}
-                      className="h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 text-sm font-medium transition-colors cursor-pointer"
+                      className="h-14 rounded-xl bg-muted hover:bg-accent flex items-center justify-center text-muted-foreground text-sm font-medium transition-colors cursor-pointer"
                     >
                       ←
                     </button>
@@ -175,7 +175,7 @@ export default function PinSetupScreen() {
                   <button
                     key={key}
                     onClick={() => handleDigit(key)}
-                    className="h-14 rounded-xl bg-white border border-gray-200 hover:bg-emerald-50 hover:border-emerald-200 flex items-center justify-center text-xl font-semibold transition-colors active:scale-95 cursor-pointer"
+                    className="h-14 rounded-xl bg-background border border-border hover:bg-emerald-50 hover:border-emerald-200 flex items-center justify-center text-xl font-semibold transition-colors active:scale-95 cursor-pointer"
                   >
                     {key}
                   </button>

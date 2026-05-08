@@ -101,7 +101,7 @@ export default function AuthLoginScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -114,7 +114,7 @@ export default function AuthLoginScreen() {
           onClick={() => navigateTo('welcome')}
           className="rounded-full hover:bg-emerald-50 cursor-pointer"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-700" />
+          <ArrowLeft className="h-5 w-5 text-foreground" />
         </Button>
       </motion.header>
 
@@ -125,19 +125,19 @@ export default function AuthLoginScreen() {
         className="flex-1 flex flex-col px-6 pt-4 pb-8"
       >
         <div className="flex flex-col gap-2 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Se connecter</h1>
-          <p className="text-gray-500">Choisissez votre type de compte et connectez-vous</p>
+          <h1 className="text-2xl font-bold text-foreground">Se connecter</h1>
+          <p className="text-muted-foreground">Choisissez votre type de compte et connectez-vous</p>
         </div>
 
         {/* Role Toggle */}
-        <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl">
+        <div className="flex gap-2 mb-6 p-1 bg-muted rounded-xl">
           <button
             type="button"
             onClick={() => setSelectedRole('client')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${
               selectedRole === 'client'
                 ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <UserIcon className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function AuthLoginScreen() {
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${
               selectedRole === 'agent'
                 ? 'bg-amber-500 text-white shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Building2 className="w-4 h-4" />
@@ -160,12 +160,12 @@ export default function AuthLoginScreen() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Phone Number */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="login-phone" className="text-gray-700 font-medium">
+            <Label htmlFor="login-phone" className="text-foreground font-medium">
               Numéro de téléphone
             </Label>
             <div className="flex gap-2">
               <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="w-[100px] shrink-0 border-gray-200">
+                <SelectTrigger className="w-[100px] shrink-0 ">
                   <SelectValue placeholder="Code" />
                 </SelectTrigger>
                 <SelectContent>
@@ -182,7 +182,7 @@ export default function AuthLoginScreen() {
                 placeholder="90 11 22 33"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="flex-1 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 h-12 text-base"
+                className="flex-1  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 h-12 text-base"
                 autoComplete="tel"
                 disabled={loading}
               />
@@ -191,7 +191,7 @@ export default function AuthLoginScreen() {
 
           {/* Password */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="login-password" className="text-gray-700 font-medium">
+            <Label htmlFor="login-password" className="text-foreground font-medium">
               Mot de passe
             </Label>
             <div className="relative">
@@ -201,14 +201,14 @@ export default function AuthLoginScreen() {
                 placeholder="Entrez votre mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base pr-12"
+                className="w-full h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base pr-12"
                 autoComplete="current-password"
                 disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -238,7 +238,7 @@ export default function AuthLoginScreen() {
 
         {/* Register link */}
         <div className="mt-6 flex items-center justify-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Pas de compte ?{' '}
             <button
               onClick={() => navigateTo('auth-role')}
@@ -250,7 +250,7 @@ export default function AuthLoginScreen() {
         </div>
 
         <div className="mt-4 flex items-center justify-center">
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             En continuant, vous acceptez nos conditions d&apos;utilisation
           </p>
         </div>

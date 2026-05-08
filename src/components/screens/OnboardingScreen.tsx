@@ -65,7 +65,7 @@ export default function OnboardingScreen() {
   const slide = slides[currentSlide];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
@@ -80,7 +80,7 @@ export default function OnboardingScreen() {
             {!isLast && (
               <Button
                 variant="ghost"
-                className="text-gray-500 cursor-pointer"
+                className="text-muted-foreground cursor-pointer"
                 onClick={handleSkip}
               >
                 Passer
@@ -94,7 +94,7 @@ export default function OnboardingScreen() {
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     i === currentSlide
                       ? 'w-6 bg-emerald-500'
-                      : 'w-1.5 bg-gray-200'
+                      : 'w-1.5 bg-border'
                   }`}
                 />
               ))}
@@ -113,10 +113,10 @@ export default function OnboardingScreen() {
               <span className="text-6xl">{slide.emoji}</span>
             </motion.div>
 
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-3">
+            <h2 className="text-2xl font-bold text-foreground text-center mb-3">
               {slide.title}
             </h2>
-            <p className="text-gray-500 text-center text-base max-w-xs leading-relaxed">
+            <p className="text-muted-foreground text-center text-base max-w-xs leading-relaxed">
               {slide.description}
             </p>
           </div>

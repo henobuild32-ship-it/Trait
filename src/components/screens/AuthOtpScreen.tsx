@@ -105,7 +105,7 @@ export default function AuthOtpScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
@@ -119,7 +119,7 @@ export default function AuthOtpScreen() {
           onClick={goBack}
           className="rounded-full hover:bg-emerald-50 cursor-pointer"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-700" />
+          <ArrowLeft className="h-5 w-5 text-foreground" />
         </Button>
       </motion.header>
 
@@ -131,10 +131,10 @@ export default function AuthOtpScreen() {
         className="flex-1 flex flex-col px-6 pt-4 pb-8"
       >
         <div className="flex flex-col gap-2 mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Vérification</h1>
-          <p className="text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">Vérification</h1>
+          <p className="text-muted-foreground">
             Entrez le code envoyé au{' '}
-            <span className="font-medium text-gray-700">{maskedPhone}</span>
+            <span className="font-medium text-foreground">{maskedPhone}</span>
           </p>
         </div>
 
@@ -149,15 +149,15 @@ export default function AuthOtpScreen() {
               className="justify-center"
             >
               <InputOTPGroup>
-                <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-lg border-gray-200 data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-lg border-gray-200 data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-lg border-gray-200 data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
               </InputOTPGroup>
-              <InputOTPSeparator className="mx-2 text-gray-300" />
+              <InputOTPSeparator className="mx-2 text-muted-foreground" />
               <InputOTPGroup>
-                <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-lg border-gray-200 data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={4} className="h-14 w-12 text-xl rounded-lg border-gray-200 data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={5} className="h-14 w-12 text-xl rounded-lg border-gray-200 data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={4} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={5} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
               </InputOTPGroup>
             </InputOTP>
 
@@ -189,7 +189,7 @@ export default function AuthOtpScreen() {
         {/* Resend */}
         <div className="mt-8 flex items-center justify-center">
           {countdown > 0 ? (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Renvoyer le code dans{' '}
               <span className="font-medium text-emerald-600">{countdown}s</span>
             </p>

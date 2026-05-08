@@ -40,7 +40,7 @@ export default function AgentWithdrawValidateScreen() {
                 <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                 </div>
-                <p className="text-lg font-semibold text-gray-900">Tout est à jour !</p>
+                <p className="text-lg font-semibold text-foreground">Tout est à jour !</p>
                 <p className="text-sm text-muted-foreground mt-2 text-center">
                   Aucun retrait en attente de validation
                 </p>

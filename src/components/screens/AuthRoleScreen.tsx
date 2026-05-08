@@ -10,7 +10,7 @@ export default function AuthRoleScreen() {
   const { navigateTo, setSelectedRole, selectedRole } = useAppStore();
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -23,7 +23,7 @@ export default function AuthRoleScreen() {
           onClick={() => navigateTo('welcome')}
           className="rounded-full hover:bg-emerald-50 cursor-pointer"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-700" />
+          <ArrowLeft className="h-5 w-5 text-foreground" />
         </Button>
       </motion.header>
 
@@ -34,8 +34,8 @@ export default function AuthRoleScreen() {
         className="flex-1 flex flex-col px-6 pt-4 pb-8"
       >
         <div className="flex flex-col items-center gap-2 mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Bienvenue</h1>
-          <p className="text-gray-500 text-center">Choisissez votre type de compte</p>
+          <h1 className="text-2xl font-bold text-foreground">Bienvenue</h1>
+          <p className="text-muted-foreground text-center">Choisissez votre type de compte</p>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -49,7 +49,7 @@ export default function AuthRoleScreen() {
               className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
                 selectedRole === 'client'
                   ? 'border-emerald-500 bg-emerald-50/50 shadow-md ring-2 ring-emerald-200'
-                  : 'border-gray-200 hover:border-emerald-200'
+                  : ' hover:border-emerald-200'
               }`}
               onClick={() => setSelectedRole('client')}
             >
@@ -62,8 +62,8 @@ export default function AuthRoleScreen() {
                   <User className="w-8 h-8" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Client</h3>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h3 className="text-lg font-semibold text-foreground">Client</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
                     Envoyez, recevez et gérez votre argent
                   </p>
                 </div>
@@ -90,7 +90,7 @@ export default function AuthRoleScreen() {
               className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
                 selectedRole === 'agent'
                   ? 'border-amber-500 bg-amber-50/50 shadow-md ring-2 ring-amber-200'
-                  : 'border-gray-200 hover:border-amber-200'
+                  : ' hover:border-amber-200'
               }`}
               onClick={() => setSelectedRole('agent')}
             >
@@ -103,8 +103,8 @@ export default function AuthRoleScreen() {
                   <Building2 className="w-8 h-8" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Agent</h3>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h3 className="text-lg font-semibold text-foreground">Agent</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
                     Déposez et validez pour vos clients
                   </p>
                 </div>
@@ -140,7 +140,7 @@ export default function AuthRoleScreen() {
 
         {/* Login link */}
         <div className="mt-4 flex items-center justify-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Vous avez déjà un compte ?{' '}
             <button
               onClick={() => navigateTo('auth-login')}

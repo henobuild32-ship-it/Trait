@@ -185,11 +185,11 @@ export default function BarterScreen() {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <RefreshCw className="size-8 text-muted-foreground" />
             </div>
-            <h3 className="font-medium text-lg">Aucune offre</h3>
+            <h3 className="font-medium text-lg">Aucune publication</h3>
             <p className="text-muted-foreground text-sm mt-1">
               {search
                 ? 'Aucune offre ne correspond à votre recherche'
-                : 'Aucune offre de troc disponible'}
+                : 'Aucune publication disponible pour le moment.'}
             </p>
           </motion.div>
         ) : (

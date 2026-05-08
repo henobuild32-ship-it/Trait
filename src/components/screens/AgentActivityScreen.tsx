@@ -34,7 +34,7 @@ export default function AgentActivityScreen() {
               <div className="w-16 h-16 rounded-full bg-violet-50 flex items-center justify-center mb-4">
                 <Activity className="w-8 h-8 text-violet-500" />
               </div>
-              <p className="text-lg font-semibold text-gray-900">Aucune activité</p>
+              <p className="text-lg font-semibold text-foreground">Aucune activité</p>
               <p className="text-sm text-muted-foreground mt-2 text-center">
                 Les dépôts et validations de retrait apparaîtront ici
               </p>

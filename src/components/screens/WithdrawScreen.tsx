@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft, Lock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +30,7 @@ export default function WithdrawScreen() {
   const [amount, setAmount] = useState('');
   const [agentCode, setAgentCode] = useState('');
   const [currency, setCurrency] = useState('USD');
-  const [method, setMethod] = useState('mobile_money');
+  const [method, setMethod] = useState('agent');
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -43,6 +43,10 @@ export default function WithdrawScreen() {
     e.preventDefault();
     if (numericAmount <= 0) {
       toast.error('Veuillez entrer un montant valide');
+      return;
+    }
+    if (!agentCode.trim() || agentCode.trim().length < 7) {
+      toast.error('Le code agent est obligatoire pour tout retrait');
       return;
     }
     if (total > realBalance) {
@@ -67,6 +71,7 @@ export default function WithdrawScreen() {
             amount: numericAmount,
             currency,
             method,
+            agentCode: agentCode.trim(),
           }),
         });
         const data = await res.json();
@@ -90,13 +95,6 @@ export default function WithdrawScreen() {
     navigateTo('pin-verify');
   }
 
-  const methodLabels: Record<string, string> = {
-    mobile_money: 'Mobile Money',
-    bank_transfer: 'Virement bancaire',
-    card: 'Carte',
-    agent: 'Via Agent',
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -105,6 +103,19 @@ export default function WithdrawScreen() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold text-foreground">Retirer de l&apos;argent</h1>
+      </div>
+
+      {/* Info banner */}
+      <div className="px-4 mb-4">
+        <div className="rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
+          <ShieldCheck className="size-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Code agent obligatoire</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+              Tout retrait nécessite le code d&apos;un agent Trait autorisé. Aucun retrait ne peut être effectué sans un code agent correct.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* PIN info */}
@@ -138,10 +149,10 @@ export default function WithdrawScreen() {
               </div>
             </div>
 
-            {/* Agent Code (optional) */}
+            {/* Agent Code (required) */}
             <div className="space-y-2">
               <Label htmlFor="agentCode" className="text-sm font-medium">
-                Code agent <span className="text-muted-foreground font-normal">(optionnel)</span>
+                Code agent <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="agentCode"
@@ -152,7 +163,7 @@ export default function WithdrawScreen() {
                 className="h-11"
                 maxLength={7}
               />
-              <p className="text-xs text-muted-foreground">Entrez le code agent pour un retrait via agent</p>
+              <p className="text-xs text-muted-foreground">Entrez le code agent à 7 chiffres (commençant par 17)</p>
             </div>
 
             {/* Currency */}
@@ -174,10 +185,9 @@ export default function WithdrawScreen() {
               <Select value={method} onValueChange={setMethod}>
                 <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="agent">Via Agent</SelectItem>
                   <SelectItem value="mobile_money">Mobile Money</SelectItem>
                   <SelectItem value="bank_transfer">Virement bancaire</SelectItem>
-                  <SelectItem value="card">Carte</SelectItem>
-                  <SelectItem value="agent">Via Agent</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -199,9 +209,9 @@ export default function WithdrawScreen() {
 
             {/* Submit */}
             <Button
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-base"
+              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-base cursor-pointer"
               onClick={handleSubmit}
-              disabled={loading || (numericAmount > 0 && total > realBalance)}
+              disabled={loading || !agentCode.trim() || (numericAmount > 0 && total > realBalance)}
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -219,7 +229,7 @@ export default function WithdrawScreen() {
         <DialogContent className="mx-4 rounded-2xl">
           <DialogHeader>
             <DialogTitle>Confirmer le retrait</DialogTitle>
-            <DialogDescription>Vous êtes sur le point de retirer de l&apos;argent.</DialogDescription>
+            <DialogDescription>Vous êtes sur le point de retirer de l&apos;argent via un agent Trait.</DialogDescription>
           </DialogHeader>
           <div className="rounded-xl bg-muted/50 p-4 space-y-2 my-2">
             <div className="flex justify-between text-sm">
@@ -227,8 +237,8 @@ export default function WithdrawScreen() {
               <span className="font-medium">${numericAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Méthode</span>
-              <span className="font-medium">{methodLabels[method] || method}</span>
+              <span className="text-muted-foreground">Code agent</span>
+              <span className="font-medium font-mono">{agentCode}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Frais</span>

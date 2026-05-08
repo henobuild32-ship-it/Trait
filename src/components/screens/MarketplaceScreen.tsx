@@ -170,11 +170,11 @@ export default function MarketplaceScreen() {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <Package className="size-8 text-muted-foreground" />
             </div>
-            <h3 className="font-medium text-lg">Aucun produit</h3>
+            <h3 className="font-medium text-lg">Aucun produit disponible</h3>
             <p className="text-muted-foreground text-sm mt-1">
               {search
                 ? 'Aucun produit ne correspond à votre recherche'
-                : 'Aucun produit disponible dans cette catégorie'}
+                : 'Aucun produit disponible pour le moment.'}
             </p>
           </motion.div>
         ) : (

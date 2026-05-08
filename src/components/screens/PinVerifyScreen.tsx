@@ -40,7 +40,7 @@ export default function PinVerifyScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
@@ -50,9 +50,9 @@ export default function PinVerifyScreen() {
       >
         <button
           onClick={goBack}
-          className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center cursor-pointer"
+          className="w-10 h-10 rounded-full hover:bg-accent flex items-center justify-center cursor-pointer"
         >
-          <X className="h-5 w-5 text-gray-700" />
+          <X className="h-5 w-5 text-foreground" />
         </button>
         <Fingerprint className="h-5 w-5 text-emerald-600" />
       </motion.header>
@@ -64,8 +64,8 @@ export default function PinVerifyScreen() {
         className="flex-1 flex flex-col items-center justify-center px-6 py-12"
       >
         <div className="flex flex-col items-center gap-2 mb-10">
-          <h2 className="text-xl font-bold text-gray-900">Vérification PIN</h2>
-          <p className="text-sm text-gray-500">Entrez votre code PIN</p>
+          <h2 className="text-xl font-bold text-foreground">Vérification PIN</h2>
+          <p className="text-sm text-muted-foreground">Entrez votre code PIN</p>
         </div>
 
         {/* PIN dots */}
@@ -110,7 +110,7 @@ export default function PinVerifyScreen() {
                 <button
                   key="del"
                   onClick={handleDelete}
-                  className="h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 text-sm font-medium transition-colors cursor-pointer"
+                  className="h-14 rounded-xl bg-muted hover:bg-accent flex items-center justify-center text-muted-foreground text-sm font-medium transition-colors cursor-pointer"
                 >
                   ←
                 </button>
@@ -120,7 +120,7 @@ export default function PinVerifyScreen() {
               <button
                 key={key}
                 onClick={() => handleDigit(key)}
-                className="h-14 rounded-xl bg-white border border-gray-200 hover:bg-emerald-50 hover:border-emerald-200 flex items-center justify-center text-xl font-semibold transition-colors active:scale-95 cursor-pointer"
+                className="h-14 rounded-xl bg-background border border-border hover:bg-emerald-50 hover:border-emerald-200 flex items-center justify-center text-xl font-semibold transition-colors active:scale-95 cursor-pointer"
               >
                 {key}
               </button>

@@ -97,7 +97,7 @@ export default function AgentDepositScreen() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <Label className="text-gray-700 font-medium">
+              <Label className="text-foreground font-medium">
                 Numéro du client
               </Label>
               <Input
@@ -105,13 +105,13 @@ export default function AgentDepositScreen() {
                 placeholder="+228 90 11 22 33"
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
-                className="h-12 border-gray-200 focus-visible:border-emerald-500 text-base"
+                className="h-12  focus-visible:border-emerald-500 text-base"
                 disabled={loading}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="text-gray-700 font-medium">
+              <Label className="text-foreground font-medium">
                 Montant (USD)
               </Label>
               <Input
@@ -119,7 +119,7 @@ export default function AgentDepositScreen() {
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="h-12 border-gray-200 focus-visible:border-emerald-500 text-base text-2xl font-bold"
+                className="h-12  focus-visible:border-emerald-500 text-base text-2xl font-bold"
                 disabled={loading}
               />
             </div>

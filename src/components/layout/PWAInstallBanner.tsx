@@ -34,13 +34,13 @@ export function PWAInstallBanner() {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
-            <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-4 flex items-start gap-3">
+            <div className="bg-card rounded-2xl shadow-xl border border-border p-4 flex items-start gap-3">
               <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
                 <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">Installer Trait</p>
-                <p className="text-xs text-gray-500 mt-0.5">Accès rapide depuis votre écran d&apos;accueil</p>
+                <p className="text-sm font-semibold text-foreground">Installer Trait</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Accès rapide depuis votre écran d&apos;accueil</p>
                 <div className="flex gap-2 mt-3">
                   <Button
                     onClick={handleInstall}
@@ -55,7 +55,7 @@ export function PWAInstallBanner() {
                     onClick={dismiss}
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-xs text-gray-500 hover:text-gray-700 rounded-lg px-3 cursor-pointer"
+                    className="h-8 text-xs text-muted-foreground hover:text-foreground rounded-lg px-3 cursor-pointer"
                   >
                     Plus tard
                   </Button>
@@ -63,7 +63,7 @@ export function PWAInstallBanner() {
               </div>
               <button
                 onClick={dismiss}
-                className="text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
+                className="text-muted-foreground hover:text-foreground p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -79,13 +79,13 @@ export function PWAInstallBanner() {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
-            <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-4 flex items-start gap-3">
+            <div className="bg-card rounded-2xl shadow-xl border border-border p-4 flex items-start gap-3">
               <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
                 <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">Installer sur iPhone</p>
-                <p className="text-xs text-gray-500 mt-0.5">Ajoutez Trait à votre écran d&apos;accueil</p>
+                <p className="text-sm font-semibold text-foreground">Installer sur iPhone</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Ajoutez Trait à votre écran d&apos;accueil</p>
                 <div className="flex gap-2 mt-3">
                   <Button
                     onClick={() => setShowIOSInstructions(true)}
@@ -98,7 +98,7 @@ export function PWAInstallBanner() {
                     onClick={dismiss}
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-xs text-gray-500 hover:text-gray-700 rounded-lg px-3 cursor-pointer"
+                    className="h-8 text-xs text-muted-foreground hover:text-foreground rounded-lg px-3 cursor-pointer"
                   >
                     Plus tard
                   </Button>
@@ -106,7 +106,7 @@ export function PWAInstallBanner() {
               </div>
               <button
                 onClick={dismiss}
-                className="text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
+                className="text-muted-foreground hover:text-foreground p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -130,14 +130,14 @@ export function PWAInstallBanner() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-md bg-white rounded-t-3xl p-6"
+              className="w-full max-w-md bg-card rounded-t-3xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-gray-900">Installer sur iPhone</h3>
+                <h3 className="text-lg font-bold text-foreground">Installer sur iPhone</h3>
                 <button
                   onClick={() => setShowIOSInstructions(false)}
-                  className="text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
+                  className="text-muted-foreground hover:text-foreground p-1 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -149,8 +149,8 @@ export function PWAInstallBanner() {
                     <span className="text-sm font-bold text-blue-600">1</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">Ouvrir dans Safari</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Utilisez le navigateur Safari pour ouvrir cette page</p>
+                    <p className="text-sm font-semibold text-foreground">Ouvrir dans Safari</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Utilisez le navigateur Safari pour ouvrir cette page</p>
                   </div>
                 </div>
 
@@ -159,8 +159,8 @@ export function PWAInstallBanner() {
                     <span className="text-sm font-bold text-blue-600">2</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">Appuyez sur l&apos;icône Partager</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm font-semibold text-foreground">Appuyez sur l&apos;icône Partager</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Touchez le bouton <Apple className="inline w-3.5 h-3.5 mx-0.5" /> en bas de l&apos;écran
                     </p>
                   </div>
@@ -171,8 +171,8 @@ export function PWAInstallBanner() {
                     <span className="text-sm font-bold text-blue-600">3</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">Sur l&apos;écran d&apos;accueil</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Sélectionnez &quot;Sur l&apos;écran d&apos;accueil&quot; dans le menu</p>
+                    <p className="text-sm font-semibold text-foreground">Sur l&apos;écran d&apos;accueil</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Sélectionnez &quot;Sur l&apos;écran d&apos;accueil&quot; dans le menu</p>
                   </div>
                 </div>
 
@@ -181,8 +181,8 @@ export function PWAInstallBanner() {
                     <span className="text-sm font-bold text-emerald-600">4</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">Appuyez sur Ajouter</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Confirmez en tapant &quot;Ajouter&quot; en haut à droite</p>
+                    <p className="text-sm font-semibold text-foreground">Appuyez sur Ajouter</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Confirmez en tapant &quot;Ajouter&quot; en haut à droite</p>
                   </div>
                 </div>
               </div>

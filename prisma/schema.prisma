@@ -21,6 +21,8 @@ model User {
   realBalanceFC         Float    @default(0)
   bonusBalance          Float    @default(10)
   bonusBalanceFC        Float    @default(0)
+  bonusBlocked          Boolean  @default(false)       // Block abusive bonus usage
+  bonusBlockedReason    String?                       // Reason for blocking bonus
   isVerified            Boolean  @default(false)
   suspended             Boolean  @default(false)
   suspensionReason      String?
@@ -46,6 +48,7 @@ model User {
   creditPurchases      CreditPurchase[]
   billPayments         BillPayment[]
   userSettings         UserSettings?
+  bonusHistory         BonusHistory[]
 }
 
 model Admin {
@@ -60,6 +63,7 @@ model Admin {
 
   activityLogs   AdminActivityLog[]
   globalNotifications GlobalNotification[]
+  bonusCampaigns  BonusCampaign[]
 }
 
 model AdminActivityLog {
@@ -146,16 +150,23 @@ model Withdrawal {
 }
 
 model MarketplaceProduct {
-  id          String   @id @default(cuid())
-  name        String
-  description String
-  price       Float
-  category    String
-  imageUrl    String?
-  sellerId    String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  description     String
+  price           Float
+  currency        String    @default("USD")        // USD, FC
+  category        String
+  imageUrl        String?
+  sellerId        String?
+  active          Boolean   @default(true)
+  // Bonus fields
+  bonusEnabled    Boolean   @default(false)        // Allow purchase with bonus
+  bonusOnly       Boolean   @default(false)        // Exclusively purchasable with bonus
+  bonusPrice      Float?                           // Specific bonus price (optional)
+  bonusMaxQty     Int?                             // Max quantity purchasable with bonus per user
+  bonusExpiryAt   DateTime?                        // Bonus availability expiry
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   seller    User?     @relation(fields: [sellerId], references: [id])
   purchases Purchase[]
@@ -292,4 +303,50 @@ model BillPayment {
 
   @@index([userId])
   @@index([billType])
+}
+
+// ─── Bonus System Models ───────────────────────────────────────────
+
+model BonusHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // registration, admin_grant, admin_remove, campaign, purchase, adjustment, blocked_unblocked
+  amount      Float    // Positive = added, Negative = removed
+  currency    String   @default("USD") // USD, FC
+  description String?
+  adminId     String?  // If action was by admin
+  campaignId  String?  // If from a campaign
+  metadata    String?  // JSON string with extra info
+  createdAt   DateTime @default(now())
+
+  user     User            @relation(fields: [userId], references: [id])
+  campaign BonusCampaign?  @relation(fields: [campaignId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model BonusCampaign {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  bonusAmount     Float                          // Amount to grant per user
+  currency        String    @default("USD")      // USD, FC
+  targetUsers     String    @default("all")      // all, new, specific
+  targetUserIds   String?                          // JSON array of user IDs (when targetUsers = "specific")
+  status          String    @default("active")    // active, paused, completed, expired
+  maxDistributions Int?                           // Max total distributions
+  currentCount    Int       @default(0)           // Current distributions
+  startDate       DateTime  @default(now())
+  endDate         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  history         BonusHistory[]
+  adminId         String
+  admin           Admin     @relation(fields: [adminId], references: [id])
+
+  @@index([status])
+  @@index([startDate])
 }

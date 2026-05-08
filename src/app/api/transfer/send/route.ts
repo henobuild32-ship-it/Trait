@@ -38,21 +38,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' })
     }
 
+    // BONUS SECURITY: Bonus cannot be used for transfers — only real balance
     const isFC = currency === 'FC'
     const cur = isFC ? 'FC' : (currency || 'USD')
     const realBal = isFC ? sender.realBalanceFC : sender.realBalance
-    const bonusBal = isFC ? sender.bonusBalanceFC : sender.bonusBalance
-    const totalBalance = realBal + bonusBal
 
     // Calculate fee: 0.7%
     const fee = Math.round(amount * 0.007 * 100) / 100
     const totalDeduction = amount + fee
 
-    if (totalBalance < totalDeduction) {
+    if (realBal < totalDeduction) {
       return NextResponse.json(
         {
           success: false,
-          message: `Solde insuffisant. Vous avez ${totalBalance.toFixed(2)} ${cur} mais ${totalDeduction.toFixed(2)} ${cur} est requis.`,
+          message: `Solde insuffisant. Solde réel: ${realBal.toFixed(2)} ${cur}, requis: ${totalDeduction.toFixed(2)} ${cur}. Le bonus ne peut pas être utilisé pour les transferts.`,
         },
         { status: 400 }
       )
@@ -76,24 +75,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Deduct from sender: use bonus first, then real
-    let remainingDeduction = totalDeduction
-    const bonusUsed = Math.min(bonusBal, remainingDeduction)
-    remainingDeduction -= bonusUsed
-    const realUsed = remainingDeduction
-
-    // Update sender balance based on currency
+    // Deduct from sender — REAL balance only, bonus is protected
     await db.user.update({
       where: { id: senderId },
       data: isFC
-        ? {
-            bonusBalanceFC: Math.max(0, sender.bonusBalanceFC - bonusUsed),
-            realBalanceFC: Math.max(0, sender.realBalanceFC - realUsed),
-          }
-        : {
-            bonusBalance: Math.max(0, sender.bonusBalance - bonusUsed),
-            realBalance: Math.max(0, sender.realBalance - realUsed),
-          },
+        ? { realBalanceFC: { decrement: totalDeduction } }
+        : { realBalance: { decrement: totalDeduction } },
     })
 
     // Update receiver balance based on currency

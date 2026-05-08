@@ -17,6 +17,7 @@ import {
   Bell,
   ArrowRight,
   Clock,
+  Gift,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,7 @@ const quickActions: QuickAction[] = [
   { label: 'Troc', page: 'admin-barter', icon: Handshake, color: 'text-teal-600 dark:text-teal-400', bgColor: 'bg-teal-100 dark:bg-teal-900/40' },
   { label: 'Notifications', page: 'admin-notifications', icon: Bell, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-100 dark:bg-orange-900/40' },
   { label: 'Journal d\'Activité', page: 'admin-activity-log', icon: Activity, color: 'text-slate-600 dark:text-slate-400', bgColor: 'bg-slate-100 dark:bg-slate-900/40' },
+  { label: 'Gestion Bonus', page: 'admin-bonus', icon: Gift, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/40' },
 ];
 
 function formatStatValue(key: keyof DashboardStats, value: number): string {

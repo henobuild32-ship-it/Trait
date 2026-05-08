@@ -13,6 +13,7 @@ import {
   Wrench,
   MonitorSmartphone,
   ShoppingBag,
+  Gift,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,16 +37,26 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   default: 'from-emerald-400 to-cyan-400',
 };
 
+interface ProductBonus {
+  enabled: boolean;
+  only: boolean;
+  bonusPrice: number | null;
+  maxQty: number | null;
+  expiryAt: string | null;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
+  currency: string;
   category: string;
   imageUrl: string | null;
   active: boolean;
   createdAt: string;
   seller: { id: string; name: string; pseudo: string } | null;
+  bonus: ProductBonus;
 }
 
 export default function MarketplaceScreen() {
@@ -55,6 +66,7 @@ export default function MarketplaceScreen() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
+  const [bonusFilter, setBonusFilter] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -78,19 +90,27 @@ export default function MarketplaceScreen() {
   }, [fetchProducts]);
 
   useEffect(() => {
+    let result = products;
+
+    // Filter by bonus
+    if (bonusFilter) {
+      result = result.filter((p) => p.bonus.enabled || p.bonus.only);
+    }
+
+    // Filter by search
     if (!search.trim()) {
-      setFiltered(products);
+      setFiltered(result);
       return;
     }
     const q = search.toLowerCase();
     setFiltered(
-      products.filter(
+      result.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.description.toLowerCase().includes(q)
       )
     );
-  }, [search, products]);
+  }, [search, products, bonusFilter]);
 
   const getCategoryIcon = (category: string) => {
     const cat = CATEGORIES.find((c) => c.key === category);
@@ -99,6 +119,13 @@ export default function MarketplaceScreen() {
 
   const getGradient = (category: string) =>
     CATEGORY_GRADIENTS[category] || CATEGORY_GRADIENTS.default;
+
+  const formatPrice = (price: number, currency: string) => {
+    if (currency === 'FC') {
+      return `${price.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} FC`;
+    }
+    return `$${price.toFixed(2)}`;
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -149,6 +176,35 @@ export default function MarketplaceScreen() {
           })}
         </div>
 
+        {/* Bonus filter toggle */}
+        <button
+          onClick={() => setBonusFilter(!bonusFilter)}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${
+            bonusFilter
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-card border-border hover:bg-accent'
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+            bonusFilter ? 'bg-emerald-100' : 'bg-muted'
+          }`}>
+            <Gift className={`size-4 ${bonusFilter ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+          </div>
+          <div className="text-left flex-1">
+            <p className="text-sm font-medium">Achetable avec bonus</p>
+            <p className="text-xs text-muted-foreground">
+              {bonusFilter ? 'Affichage des produits compatibles bonus' : 'Filtrer les produits achetables avec votre bonus'}
+            </p>
+          </div>
+          <div className={`w-10 h-6 rounded-full relative transition-colors ${
+            bonusFilter ? 'bg-emerald-500' : 'bg-muted-foreground/30'
+          }`}>
+            <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${
+              bonusFilter ? 'left-5' : 'left-1'
+            }`} />
+          </div>
+        </button>
+
         {/* Products Grid */}
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -172,10 +228,21 @@ export default function MarketplaceScreen() {
             </div>
             <h3 className="font-medium text-lg">Aucun produit disponible</h3>
             <p className="text-muted-foreground text-sm mt-1">
-              {search
+              {bonusFilter
+                ? 'Aucun produit compatible avec le bonus'
+                : search
                 ? 'Aucun produit ne correspond à votre recherche'
                 : 'Aucun produit disponible pour le moment.'}
             </p>
+            {bonusFilter && (
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setBonusFilter(false)}
+              >
+                Voir tous les produits
+              </Button>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -185,6 +252,12 @@ export default function MarketplaceScreen() {
             <AnimatePresence mode="popLayout">
               {filtered.map((product, index) => {
                 const Icon = getCategoryIcon(product.category);
+                const isBonusProduct = product.bonus.enabled || product.bonus.only;
+                const isExpired = product.bonus.expiryAt && new Date(product.bonus.expiryAt) < new Date();
+                const displayPrice = isBonusProduct && product.bonus.bonusPrice
+                  ? product.bonus.bonusPrice
+                  : product.price;
+
                 return (
                   <motion.div
                     key={product.id}
@@ -195,7 +268,17 @@ export default function MarketplaceScreen() {
                     transition={{ delay: index * 0.05 }}
                     className="group"
                   >
-                    <div className="bg-card rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="bg-card rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
+                      {/* Bonus badge */}
+                      {isBonusProduct && !isExpired && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <Badge className="bg-amber-400 text-amber-900 border-0 text-[10px] font-bold shadow-sm">
+                            <Gift className="size-3 mr-0.5" />
+                            {product.bonus.only ? 'Bonus Only' : 'Bonus OK'}
+                          </Badge>
+                        </div>
+                      )}
+
                       {/* Image placeholder */}
                       <div
                         className={`aspect-square bg-gradient-to-br ${getGradient(
@@ -217,22 +300,42 @@ export default function MarketplaceScreen() {
                         <h3 className="font-medium text-sm leading-tight line-clamp-2">
                           {product.name}
                         </h3>
-                        <p className="text-emerald-600 font-bold text-base">
-                          ${product.price.toFixed(2)}
-                        </p>
+
+                        <div className="flex items-baseline gap-2">
+                          <p className="text-emerald-600 font-bold text-base">
+                            {formatPrice(displayPrice, product.currency)}
+                          </p>
+                          {isBonusProduct && product.bonus.bonusPrice && (
+                            <p className="text-muted-foreground text-xs line-through">
+                              {formatPrice(product.price, product.currency)}
+                            </p>
+                          )}
+                        </div>
+
                         <p className="text-muted-foreground text-xs truncate">
                           par {product.seller?.name || product.seller?.pseudo || 'Anonyme'}
                         </p>
                         <Button
                           size="sm"
-                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                          className={`w-full text-white ${
+                            product.bonus.only
+                              ? 'bg-amber-500 hover:bg-amber-600'
+                              : 'bg-emerald-600 hover:bg-emerald-700'
+                          }`}
                           onClick={() =>
                             navigateTo('marketplace-detail', {
                               productId: product.id,
                             })
                           }
                         >
-                          Acheter
+                          {product.bonus.only ? (
+                            <span className="flex items-center gap-1">
+                              <Gift className="size-3.5" />
+                              Acheter avec bonus
+                            </span>
+                          ) : (
+                            'Acheter'
+                          )}
                         </Button>
                       </div>
                     </div>

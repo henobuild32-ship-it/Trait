@@ -24,16 +24,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' });
     }
 
+    // BONUS SECURITY: Bonus cannot be used for transfers — only real balance
     const isFC = currency === 'FC';
     const realBal = isFC ? sender.realBalanceFC : sender.realBalance;
-    const bonusBal = isFC ? sender.bonusBalanceFC : sender.bonusBalance;
-    const totalBalance = realBal + bonusBal;
 
     const fee = Math.round(amount * 0.007 * 100) / 100;
     const totalDeduction = amount + fee;
 
-    if (totalBalance < totalDeduction) {
-      return NextResponse.json({ success: false, message: `Solde insuffisant. Vous avez ${(totalBalance).toFixed(2)} ${currency} mais ${totalDeduction.toFixed(2)} ${currency} est requis.` });
+    if (realBal < totalDeduction) {
+      return NextResponse.json({ success: false, message: `Solde insuffisant. Solde réel: ${realBal.toFixed(2)} ${currency}, requis: ${totalDeduction.toFixed(2)} ${currency}. Le bonus ne peut pas être utilisé pour les transferts.` });
     }
 
     let receiver = await db.user.findUnique({ where: { phone: receiverPhone.trim() } });
@@ -51,20 +50,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Deduct from sender
-    let remainingDeduction = totalDeduction;
-    const bonusUsed = Math.min(bonusBal, remainingDeduction);
-    remainingDeduction -= bonusUsed;
-    const realUsed = remainingDeduction;
-
+    // Deduct from sender — REAL balance only, bonus is protected
     await db.user.update({
       where: { id: senderId },
-      data: {
-        bonusBalance: Math.max(0, sender.bonusBalance - (isFC ? 0 : bonusUsed)),
-        realBalance: Math.max(0, sender.realBalance - (isFC ? 0 : realUsed)),
-        bonusBalanceFC: Math.max(0, sender.bonusBalanceFC - (isFC ? bonusUsed : 0)),
-        realBalanceFC: Math.max(0, sender.realBalanceFC - (isFC ? realUsed : 0)),
-      },
+      data: isFC
+        ? { realBalanceFC: { decrement: totalDeduction } }
+        : { realBalance: { decrement: totalDeduction } },
     });
 
     await db.user.update({
@@ -112,3 +103,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'Erreur serveur' }, { status: 500 });
   }
 }
+
+// BONUS SECURITY: Bonus cannot be used for transfers. Only real balance is deducted.

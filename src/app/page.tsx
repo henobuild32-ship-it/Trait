@@ -46,6 +46,10 @@ import AdminMarketScreen from '@/components/admin/AdminMarketScreen';
 import AdminBarterScreen from '@/components/admin/AdminBarterScreen';
 import AdminNotificationsScreen from '@/components/admin/AdminNotificationsScreen';
 import AdminActivityLogScreen from '@/components/admin/AdminActivityLogScreen';
+import AdminBonusScreen from '@/components/admin/AdminBonusScreen';
+import AdminBonusAdjustScreen from '@/components/admin/AdminBonusAdjustScreen';
+import AdminBonusHistoryScreen from '@/components/admin/AdminBonusHistoryScreen';
+import AdminBonusCampaignsScreen from '@/components/admin/AdminBonusCampaignsScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
@@ -88,13 +92,17 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'admin-barter': AdminBarterScreen,
   'admin-notifications': AdminNotificationsScreen,
   'admin-activity-log': AdminActivityLogScreen,
+  'admin-bonus': AdminBonusScreen,
+  'admin-bonus-adjust': AdminBonusAdjustScreen,
+  'admin-bonus-history': AdminBonusHistoryScreen,
+  'admin-bonus-campaigns': AdminBonusCampaignsScreen,
 };
 
 // Pages that show bottom navigation
 const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity'];
 
 // Admin pages that don't show bottom nav
-const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log'];
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();

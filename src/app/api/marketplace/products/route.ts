@@ -5,10 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
+    const sellerId = searchParams.get('sellerId')
 
     const whereClause: Record<string, unknown> = { active: true }
     if (category && category.trim() !== '') {
       whereClause.category = category.trim()
+    }
+    if (sellerId && sellerId.trim() !== '') {
+      whereClause.sellerId = sellerId.trim()
     }
 
     const products = await db.marketplaceProduct.findMany({
@@ -28,12 +32,21 @@ export async function GET(request: NextRequest) {
         name: p.name,
         description: p.description,
         price: p.price,
+        currency: p.currency,
         category: p.category,
         imageUrl: p.imageUrl,
         active: p.active,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
         seller: p.seller,
+        // Bonus fields
+        bonus: {
+          enabled: p.bonusEnabled,
+          only: p.bonusOnly,
+          bonusPrice: p.bonusPrice,
+          maxQty: p.bonusMaxQty,
+          expiryAt: p.bonusExpiryAt,
+        },
       })),
     })
   } catch (error) {

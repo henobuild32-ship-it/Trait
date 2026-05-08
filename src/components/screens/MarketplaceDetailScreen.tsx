@@ -15,6 +15,11 @@ import {
   CheckCircle2,
   Loader2,
   User,
+  Gift,
+  ShieldCheck,
+  AlertTriangle,
+  Wallet,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,16 +49,26 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   default: 'from-emerald-400 to-cyan-400',
 };
 
+interface ProductBonus {
+  enabled: boolean;
+  only: boolean;
+  bonusPrice: number | null;
+  maxQty: number | null;
+  expiryAt: string | null;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
+  currency: string;
   category: string;
   imageUrl: string | null;
   active: boolean;
   createdAt: string;
   seller: { id: string; name: string; pseudo: string } | null;
+  bonus: ProductBonus;
 }
 
 interface PurchaseResult {
@@ -73,6 +88,7 @@ export default function MarketplaceDetailScreen() {
   const [purchasing, setPurchasing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [purchaseResult, setPurchaseResult] = useState<PurchaseResult | null>(null);
+  const [paymentMode, setPaymentMode] = useState<'bonus' | 'real'>('real');
 
   useEffect(() => {
     if (!productId) {
@@ -90,6 +106,10 @@ export default function MarketplaceDetailScreen() {
           );
           if (found) {
             setProduct(found);
+            // Auto-select bonus mode if product is bonus-only
+            if (found.bonus.only) {
+              setPaymentMode('bonus');
+            }
           } else {
             toast.error('Produit introuvable');
             goBack();
@@ -105,6 +125,19 @@ export default function MarketplaceDetailScreen() {
     fetchProduct();
   }, [productId, goBack]);
 
+  const isBonusProduct = product?.bonus.enabled || product?.bonus.only;
+  const isBonusOnly = product?.bonus.only;
+  const isExpired = product?.bonus.expiryAt && new Date(product.bonus.expiryAt) < new Date();
+  const displayPrice = isBonusProduct && product?.bonus.bonusPrice && paymentMode === 'bonus'
+    ? product.bonus.bonusPrice!
+    : product?.price ?? 0;
+  const currency = product?.currency ?? 'USD';
+
+  const bonusBalance = currency === 'FC' ? (user?.bonusBalanceFC ?? 0) : (user?.bonusBalance ?? 0);
+  const realBalance = currency === 'FC' ? (user?.realBalanceFC ?? 0) : (user?.realBalance ?? 0);
+  const hasSufficientBonus = bonusBalance >= displayPrice;
+  const hasSufficientReal = realBalance >= displayPrice;
+
   const handlePurchase = async () => {
     if (!product || !user) return;
 
@@ -113,7 +146,12 @@ export default function MarketplaceDetailScreen() {
       const res = await fetch('/api/marketplace/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id, buyerId: user.id }),
+        body: JSON.stringify({
+          productId: product.id,
+          buyerId: user.id,
+          useBonus: paymentMode === 'bonus',
+          useReal: paymentMode === 'real',
+        }),
       });
       const data = await res.json();
 
@@ -123,12 +161,25 @@ export default function MarketplaceDetailScreen() {
 
         // Update user balance in store
         if (user) {
-          const newBonus = Math.max(0, user.bonusBalance - data.purchase.usedBonus);
-          const newReal = Math.max(0, user.realBalance - data.purchase.usedReal);
-          setUser({ ...user, bonusBalance: newBonus, realBalance: newReal });
+          const updatedUser = { ...user };
+          if (data.purchase.usedBonus > 0) {
+            if (currency === 'FC') {
+              updatedUser.bonusBalanceFC = Math.max(0, updatedUser.bonusBalanceFC - data.purchase.usedBonus);
+            } else {
+              updatedUser.bonusBalance = Math.max(0, updatedUser.bonusBalance - data.purchase.usedBonus);
+            }
+          }
+          if (data.purchase.usedReal > 0) {
+            if (currency === 'FC') {
+              updatedUser.realBalanceFC = Math.max(0, updatedUser.realBalanceFC - data.purchase.usedReal);
+            } else {
+              updatedUser.realBalance = Math.max(0, updatedUser.realBalance - data.purchase.usedReal);
+            }
+          }
+          setUser(updatedUser);
         }
       } else {
-        toast.error(data.message || 'Erreur lors de l\'achat');
+        toast.error(data.message || "Erreur lors de l'achat");
       }
     } catch {
       toast.error('Erreur de connexion');
@@ -143,6 +194,13 @@ export default function MarketplaceDetailScreen() {
   const gradient = product
     ? CATEGORY_GRADIENTS[product.category] || CATEGORY_GRADIENTS.default
     : CATEGORY_GRADIENTS.default;
+
+  const formatPrice = (price: number, cur: string) => {
+    if (cur === 'FC') {
+      return `${price.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} FC`;
+    }
+    return `$${price.toFixed(2)}`;
+  };
 
   if (loading) {
     return (
@@ -185,9 +243,17 @@ export default function MarketplaceDetailScreen() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`w-full aspect-[4/3] bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center`}
+          className={`w-full aspect-[4/3] bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center relative`}
         >
           <Icon className="size-20 text-white/80" />
+
+          {/* Bonus badge on image */}
+          {isBonusProduct && !isExpired && (
+            <Badge className="absolute top-3 left-3 bg-amber-400 text-amber-900 border-0 text-xs font-bold shadow-md px-2.5 py-1">
+              <Gift className="size-4 mr-1" />
+              {isBonusOnly ? 'Bonus Exclusif' : 'Compatible Bonus'}
+            </Badge>
+          )}
         </motion.div>
 
         {/* Product info */}
@@ -204,9 +270,20 @@ export default function MarketplaceDetailScreen() {
             </Badge>
           </div>
 
-          <p className="text-2xl font-bold text-emerald-600">
-            ${product.price.toFixed(2)}
-          </p>
+          {/* Price display */}
+          <div className="flex items-baseline gap-3">
+            <p className="text-2xl font-bold text-emerald-600">
+              {formatPrice(displayPrice, currency)}
+            </p>
+            {isBonusProduct && product.bonus.bonusPrice && paymentMode === 'bonus' && (
+              <p className="text-muted-foreground text-base line-through">
+                {formatPrice(product.price, currency)}
+              </p>
+            )}
+            {currency === 'FC' && (
+              <Badge variant="outline" className="text-xs border-blue-200 text-blue-600">FC</Badge>
+            )}
+          </div>
 
           <p className="text-muted-foreground leading-relaxed">
             {product.description}
@@ -217,7 +294,7 @@ export default function MarketplaceDetailScreen() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.15 }}
           className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl"
         >
           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -231,17 +308,127 @@ export default function MarketplaceDetailScreen() {
           </div>
         </motion.div>
 
-        {/* Info notice */}
+        {/* Payment Mode Selection (only if bonus is enabled) */}
+        {isBonusProduct && !isExpired && !isBonusOnly && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-2"
+          >
+            <p className="text-sm font-medium">Mode de paiement</p>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Real money option */}
+              <button
+                onClick={() => setPaymentMode('real')}
+                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                  paymentMode === 'real'
+                    ? 'border-emerald-500 bg-emerald-50'
+                    : 'border-border hover:border-emerald-200'
+                }`}
+              >
+                <Wallet className={`size-5 mx-auto mb-1 ${paymentMode === 'real' ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                <p className="text-xs font-medium">Argent réel</p>
+                <p className="text-sm font-bold text-emerald-600">
+                  {formatPrice(product.price, currency)}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Solde: {formatPrice(realBalance, currency)}
+                </p>
+              </button>
+
+              {/* Bonus option */}
+              <button
+                onClick={() => setPaymentMode('bonus')}
+                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                  paymentMode === 'bonus'
+                    ? 'border-amber-500 bg-amber-50'
+                    : 'border-border hover:border-amber-200'
+                }`}
+              >
+                <Gift className={`size-5 mx-auto mb-1 ${paymentMode === 'bonus' ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                <p className="text-xs font-medium">Bonus</p>
+                <p className="text-sm font-bold text-amber-600">
+                  {formatPrice(product.bonus.bonusPrice ?? product.price, currency)}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Bonus: {formatPrice(bonusBalance, currency)}
+                </p>
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Bonus-only notice */}
+        {isBonusOnly && !isExpired && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800"
+          >
+            <Gift className="size-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">Produit bonus exclusif</p>
+              <p className="text-xs mt-0.5">
+                Ce produit ne peut être acheté qu&apos;avec votre solde bonus.
+                {!hasSufficientBonus && ' Solde bonus insuffisant.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Bonus expired notice */}
+        {isBonusProduct && isExpired && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-800"
+          >
+            <XCircle className="size-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">Bonus expiré</p>
+              <p className="text-xs mt-0.5">
+                La période de bonus pour ce produit est terminée. Vous pouvez l&apos;acheter avec votre solde réel.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Balance info notice */}
+        {isBonusProduct && !isExpired && !isBonusOnly && paymentMode === 'bonus' && !hasSufficientBonus && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 p-3 bg-orange-50 border border-orange-200 rounded-xl text-orange-800"
+          >
+            <AlertTriangle className="size-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">Solde bonus insuffisant</p>
+              <p className="text-xs mt-0.5">
+                Votre bonus ({formatPrice(bonusBalance, currency)}) ne couvre pas ce produit ({formatPrice(displayPrice, currency)}).
+                {hasSufficientReal && ' Utilisez votre argent réel à la place.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Security info */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800"
+          className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800"
         >
-          <Info className="size-5 shrink-0 mt-0.5" />
-          <p className="text-sm">
-            Votre solde bonus sera utilisé en priorité lors de l&apos;achat.
-          </p>
+          <ShieldCheck className="size-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium">Paiement sécurisé</p>
+            <p className="text-xs mt-0.5">
+              {paymentMode === 'bonus'
+                ? "Le bonus est un crédit promotionnel TRAIT. Il ne peut ni être retiré ni transféré."
+                : "Votre achat est protégé par le système de sécurité TRAIT."}
+            </p>
+          </div>
         </motion.div>
 
         {/* Purchase button */}
@@ -249,26 +436,51 @@ export default function MarketplaceDetailScreen() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="pt-2"
+          className="pt-2 space-y-2"
         >
           <Button
             size="lg"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 text-base"
+            className={`w-full text-white h-12 text-base ${
+              isBonusOnly
+                ? 'bg-amber-500 hover:bg-amber-600'
+                : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
             onClick={handlePurchase}
-            disabled={purchasing}
+            disabled={
+              purchasing ||
+              (paymentMode === 'bonus' && !hasSufficientBonus) ||
+              (paymentMode === 'real' && !hasSufficientReal)
+            }
           >
             {purchasing ? (
               <>
                 <Loader2 className="size-5 animate-spin" />
                 Traitement en cours...
               </>
+            ) : isBonusOnly || paymentMode === 'bonus' ? (
+              <>
+                <Gift className="size-5" />
+                Acheter avec bonus — {formatPrice(displayPrice, currency)}
+              </>
             ) : (
               <>
                 <ShoppingCart className="size-5" />
-                Acheter pour ${product.price.toFixed(2)}
+                Acheter — {formatPrice(product.price, currency)}
               </>
             )}
           </Button>
+
+          {/* Insufficient balance hint */}
+          {paymentMode === 'bonus' && !hasSufficientBonus && (
+            <p className="text-xs text-center text-muted-foreground">
+              Solde bonus: {formatPrice(bonusBalance, currency)} — Solde réel: {formatPrice(realBalance, currency)}
+            </p>
+          )}
+          {paymentMode === 'real' && !hasSufficientReal && (
+            <p className="text-xs text-center text-muted-foreground">
+              Solde insuffisant. Faites un dépôt pour continuer.
+            </p>
+          )}
         </motion.div>
       </div>
 
@@ -290,19 +502,41 @@ export default function MarketplaceDetailScreen() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Total</span>
                 <span className="font-semibold">
-                  ${purchaseResult.amount.toFixed(2)}
+                  {formatPrice(purchaseResult.amount, currency)}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Solde bonus utilisé</span>
+              {purchaseResult.usedBonus > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Solde bonus utilisé</span>
+                  <span className="font-medium text-amber-600">
+                    -{formatPrice(purchaseResult.usedBonus, currency)}
+                  </span>
+                </div>
+              )}
+              {purchaseResult.usedReal > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Solde réel utilisé</span>
+                  <span className="font-medium">
+                    -{formatPrice(purchaseResult.usedReal, currency)}
+                  </span>
+                </div>
+              )}
+              <div className="border-t pt-2 flex justify-between text-sm">
+                <span className="text-muted-foreground">Nouveau solde bonus</span>
                 <span className="font-medium text-emerald-600">
-                  ${purchaseResult.usedBonus.toFixed(2)}
+                  {formatPrice(
+                    bonusBalance - purchaseResult.usedBonus,
+                    currency
+                  )}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Solde réel utilisé</span>
+                <span className="text-muted-foreground">Nouveau solde réel</span>
                 <span className="font-medium">
-                  ${purchaseResult.usedReal.toFixed(2)}
+                  {formatPrice(
+                    realBalance - purchaseResult.usedReal,
+                    currency
+                  )}
                 </span>
               </div>
             </div>

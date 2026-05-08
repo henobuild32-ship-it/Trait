@@ -40,7 +40,12 @@ export type PageName =
   | 'admin-market'
   | 'admin-barter'
   | 'admin-notifications'
-  | 'admin-activity-log';
+  | 'admin-activity-log'
+  // Admin bonus pages
+  | 'admin-bonus'
+  | 'admin-bonus-adjust'
+  | 'admin-bonus-history'
+  | 'admin-bonus-campaigns';
 
 export type UserRole = 'client' | 'agent';
 

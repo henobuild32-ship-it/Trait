@@ -371,3 +371,30 @@ Stage Summary:
 - No fake/simulation data - all operations are real database operations
 - Old "Note: Les codes USSD sont disponibles..." simulation message removed
 - Agent code format changed from 7-digit "17xxxxx" to "AGT-XXXXXX"
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Add FC (Franc Congolais) balance support across all app screens
+
+Work Log:
+- Updated 3 backend API routes for dual currency (USD/FC) support:
+  - /api/transfer/send: Now checks/updates realBalanceFC or realBalance based on currency, returns updatedBalances
+  - /api/transfer/withdraw: Deducts from correct FC/USD balance, returns updatedBalances
+  - /api/transfer/deposit: Credits correct FC/USD balance, returns updatedBalances
+  - /api/transfer/history: Updated default descriptions to French, includes currency in descriptions
+- Rewrote HomeScreen: Shows two balance cards (USD green, FC blue) with real+bonus breakdown for each
+- Rewrote SendScreen: Currency selector (USD/FC) first, shows correct balance, dynamic input symbol, proper fee/total display with currency
+- Rewrote WithdrawScreen: Currency selector, correct balance display with color-coded card, agent code format updated to AGT-XXXXXX
+- Rewrote DepositScreen: Currency selector, correct balance display, FC amount input, agent info updated
+- Rewrote HistoryScreen: Dynamic currency display (fmtCur helper shows "FC" or "$"), proper French descriptions
+- All screens now show currency-aware amounts with proper formatting
+- Balance auto-updates after transactions using updatedBalances from API responses
+- All lint checks pass, dev server compiles successfully
+
+Stage Summary:
+- Full dual-currency (USD + FC) support across all financial operations
+- Home screen shows both USD and FC wallet cards with balances
+- Send/Withdraw/Deposit screens support FC currency selection
+- History shows proper currency symbols and amounts
+- API routes handle FC balances correctly (realBalanceFC, bonusBalanceFC)

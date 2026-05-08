@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     if (!senderId || !receiverPhone || !amount || amount <= 0) {
       return NextResponse.json(
-        { success: false, message: 'All fields are required and amount must be positive' },
+        { success: false, message: 'Tous les champs sont requis et le montant doit être positif' },
         { status: 400 }
       )
     }
@@ -25,22 +25,34 @@ export async function POST(request: NextRequest) {
 
     if (!sender) {
       return NextResponse.json(
-        { success: false, message: 'Sender not found' },
+        { success: false, message: 'Expéditeur non trouvé' },
         { status: 404 }
       )
     }
+
+    if (sender.tempBlocked) {
+      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' })
+    }
+
+    if (sender.suspended) {
+      return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' })
+    }
+
+    const isFC = currency === 'FC'
+    const cur = isFC ? 'FC' : (currency || 'USD')
+    const realBal = isFC ? sender.realBalanceFC : sender.realBalance
+    const bonusBal = isFC ? sender.bonusBalanceFC : sender.bonusBalance
+    const totalBalance = realBal + bonusBal
 
     // Calculate fee: 0.7%
     const fee = Math.round(amount * 0.007 * 100) / 100
     const totalDeduction = amount + fee
 
-    // Validate sender has sufficient balance (real + bonus)
-    const totalBalance = sender.realBalance + sender.bonusBalance
     if (totalBalance < totalDeduction) {
       return NextResponse.json(
         {
           success: false,
-          message: `Insufficient balance. You need $${totalDeduction.toFixed(2)} but have $${totalBalance.toFixed(2)}.`,
+          message: `Solde insuffisant. Vous avez ${totalBalance.toFixed(2)} ${cur} mais ${totalDeduction.toFixed(2)} ${cur} est requis.`,
         },
         { status: 400 }
       )
@@ -55,39 +67,41 @@ export async function POST(request: NextRequest) {
       receiver = await db.user.create({
         data: {
           phone: receiverPhone.trim(),
-          bonusBalance: 10,
+          bonusBalance: isFC ? 0 : 10,
+          bonusBalanceFC: 0,
           realBalance: 0,
-          country: 'US',
+          realBalanceFC: 0,
+          country: 'CD',
         },
       })
     }
 
     // Deduct from sender: use bonus first, then real
     let remainingDeduction = totalDeduction
-    let bonusUsed = 0
-    let realUsed = 0
+    const bonusUsed = Math.min(bonusBal, remainingDeduction)
+    remainingDeduction -= bonusUsed
+    const realUsed = remainingDeduction
 
-    if (sender.bonusBalance > 0) {
-      bonusUsed = Math.min(sender.bonusBalance, remainingDeduction)
-      remainingDeduction -= bonusUsed
-    }
-    realUsed = remainingDeduction
-
-    // Update sender balance
+    // Update sender balance based on currency
     await db.user.update({
       where: { id: senderId },
-      data: {
-        bonusBalance: Math.max(0, sender.bonusBalance - bonusUsed),
-        realBalance: Math.max(0, sender.realBalance - realUsed),
-      },
+      data: isFC
+        ? {
+            bonusBalanceFC: Math.max(0, sender.bonusBalanceFC - bonusUsed),
+            realBalanceFC: Math.max(0, sender.realBalanceFC - realUsed),
+          }
+        : {
+            bonusBalance: Math.max(0, sender.bonusBalance - bonusUsed),
+            realBalance: Math.max(0, sender.realBalance - realUsed),
+          },
     })
 
-    // Update receiver balance
+    // Update receiver balance based on currency
     await db.user.update({
       where: { id: receiver.id },
-      data: {
-        realBalance: { increment: amount },
-      },
+      data: isFC
+        ? { realBalanceFC: { increment: amount } }
+        : { realBalance: { increment: amount } },
     })
 
     // Create transaction record
@@ -96,11 +110,11 @@ export async function POST(request: NextRequest) {
         type: 'send',
         amount,
         fee,
-        currency: currency || 'USD',
+        currency: cur,
         status: 'completed',
         senderId,
         receiverId: receiver.id,
-        description: `Transfer of $${amount.toFixed(2)} to ${receiver.phone}`,
+        description: `Transfert de ${amount.toFixed(2)} ${cur} vers ${receiver.phone}`,
       },
     })
 
@@ -108,11 +122,14 @@ export async function POST(request: NextRequest) {
     await db.notification.create({
       data: {
         userId: receiver.id,
-        title: 'Transfer Received',
-        message: `You received $${amount.toFixed(2)} from ${sender.phone || sender.name || 'Unknown'}`,
+        title: 'Transfert reçu',
+        message: `Vous avez reçu ${amount.toFixed(2)} ${cur} de ${sender.phone || sender.name || 'Inconnu'}`,
         type: 'transfer_received',
       },
     })
+
+    // Return updated balances for the sender
+    const updatedSender = await db.user.findUnique({ where: { id: senderId } })
 
     return NextResponse.json({
       success: true,
@@ -128,11 +145,17 @@ export async function POST(request: NextRequest) {
         description: transaction.description,
         createdAt: transaction.createdAt,
       },
+      updatedBalances: updatedSender ? {
+        realBalance: updatedSender.realBalance,
+        realBalanceFC: updatedSender.realBalanceFC,
+        bonusBalance: updatedSender.bonusBalance,
+        bonusBalanceFC: updatedSender.bonusBalanceFC,
+      } : undefined,
     })
   } catch (error) {
     console.error('Send transfer error:', error)
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Erreur interne du serveur' },
       { status: 500 }
     )
   }

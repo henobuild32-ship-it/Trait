@@ -14,6 +14,7 @@ import {
   Activity,
   UserPlus,
   ShieldCheck,
+  Wallet,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,17 +53,17 @@ const agentQuickActions = [
 
 function getTypeIcon(type: string) {
   switch (type) {
-    case 'send':
-      return '💸';
-    case 'receive':
-      return '💰';
-    case 'deposit':
-      return '➕';
-    case 'withdrawal':
-      return '🏧';
-    default:
-      return '📄';
+    case 'send': return '💸';
+    case 'receive': return '💰';
+    case 'deposit': return '➕';
+    case 'withdrawal': return '🏧';
+    default: return '📄';
   }
+}
+
+function fmtCurrency(amount: number, currency: string) {
+  const symbol = currency === 'FC' ? '' : '$';
+  return `${symbol}${amount.toFixed(2)} ${currency === 'FC' ? 'FC' : 'USD'}`;
 }
 
 function formatDate(dateStr: string) {
@@ -86,9 +87,12 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   const isAgent = user?.role === 'agent';
-  const realBalance = user?.realBalance ?? 0;
-  const bonusBalance = user?.bonusBalance ?? 0;
-  const totalBalance = realBalance + bonusBalance;
+  const realBalanceUSD = user?.realBalance ?? 0;
+  const bonusBalanceUSD = user?.bonusBalance ?? 0;
+  const totalUSD = realBalanceUSD + bonusBalanceUSD;
+  const realBalanceFC = user?.realBalanceFC ?? 0;
+  const bonusBalanceFC = user?.bonusBalanceFC ?? 0;
+  const totalFC = realBalanceFC + bonusBalanceFC;
 
   const quickActions = isAgent ? agentQuickActions : clientQuickActions;
 
@@ -177,32 +181,65 @@ export default function HomeScreen() {
         </motion.div>
       )}
 
-      {/* Balance Card */}
+      {/* USD Balance Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="px-4 mb-6"
+        className="px-4 mb-3"
       >
-        <div className={`rounded-2xl p-6 text-white shadow-lg ${
+        <div className={`rounded-2xl p-5 text-white shadow-lg ${
           isAgent
             ? 'bg-gradient-to-br from-amber-500 to-amber-700'
             : 'bg-gradient-to-br from-emerald-600 to-emerald-800'
         }`}>
-          <p className="text-sm opacity-80 mb-1">
-            {isAgent ? 'Solde du portefeuille' : 'Solde total'}
+          <div className="flex items-center gap-2 mb-1">
+            <Wallet className="size-4 opacity-80" />
+            <p className="text-sm opacity-80">
+              {isAgent ? 'Portefeuille USD' : 'Solde USD'}
+            </p>
+          </div>
+          <p className="text-3xl font-bold tracking-tight mb-3">
+            {totalUSD.toFixed(2)} <span className="text-lg opacity-80">USD</span>
           </p>
-          <p className="text-4xl font-bold tracking-tight mb-4">
-            ${totalBalance.toFixed(2)}
-          </p>
-          <div className="flex gap-6">
+          <div className="flex gap-5">
             <div>
-              <p className="text-xs opacity-70 mb-0.5">💵 Réel</p>
-              <p className="text-lg font-semibold">${realBalance.toFixed(2)}</p>
+              <p className="text-xs opacity-70 mb-0.5">Réel</p>
+              <p className="text-base font-semibold">{realBalanceUSD.toFixed(2)}</p>
             </div>
             <div>
-              <p className="text-xs opacity-70 mb-0.5">🎁 Bonus</p>
-              <p className="text-lg font-semibold">${bonusBalance.toFixed(2)}</p>
+              <p className="text-xs opacity-70 mb-0.5">Bonus</p>
+              <p className="text-base font-semibold">{bonusBalanceUSD.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* FC Balance Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
+        className="px-4 mb-6"
+      >
+        <div className="rounded-2xl p-5 text-white shadow-lg bg-gradient-to-br from-blue-600 to-blue-800">
+          <div className="flex items-center gap-2 mb-1">
+            <Wallet className="size-4 opacity-80" />
+            <p className="text-sm opacity-80">
+              {isAgent ? 'Portefeuille FC' : 'Solde FC'}
+            </p>
+          </div>
+          <p className="text-3xl font-bold tracking-tight mb-3">
+            {totalFC.toFixed(2)} <span className="text-lg opacity-80">FC</span>
+          </p>
+          <div className="flex gap-5">
+            <div>
+              <p className="text-xs opacity-70 mb-0.5">Réel</p>
+              <p className="text-base font-semibold">{realBalanceFC.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs opacity-70 mb-0.5">Bonus</p>
+              <p className="text-base font-semibold">{bonusBalanceFC.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -212,7 +249,7 @@ export default function HomeScreen() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
+        transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
         className="px-4 mb-6"
       >
         <div className={`grid gap-4 ${
@@ -245,7 +282,7 @@ export default function HomeScreen() {
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-foreground">
-            {isAgent ? 'Transactions récentes' : 'Transactions récentes'}
+            Transactions récentes
           </h2>
           <Button
             variant="ghost"
@@ -306,8 +343,8 @@ export default function HomeScreen() {
                         : 'text-red-500'
                     }`}
                   >
-                    {tx.type === 'receive' || tx.type === 'deposit' ? '+' : '-'}$
-                    {tx.amount.toFixed(2)}
+                    {tx.type === 'receive' || tx.type === 'deposit' ? '+' : '-'}
+                    {fmtCurrency(tx.amount, tx.currency)}
                   </p>
                 </div>
               </div>

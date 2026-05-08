@@ -25,6 +25,11 @@ import {
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
 
+function fmtCur(amount: number, currency: string) {
+  if (currency === 'FC') return `${amount.toFixed(2)} FC`;
+  return `$${amount.toFixed(2)}`;
+}
+
 export default function SendScreen() {
   const { user, navigateTo, setUser, setPendingPinAction } = useAppStore();
   const [receiverPhone, setReceiverPhone] = useState('');
@@ -34,9 +39,16 @@ export default function SendScreen() {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const isFC = currency === 'FC';
   const numericAmount = parseFloat(amount) || 0;
   const fee = Math.round(numericAmount * 0.007 * 100) / 100;
   const total = numericAmount + fee;
+
+  const availableBalance = isFC
+    ? (user?.realBalanceFC ?? 0) + (user?.bonusBalanceFC ?? 0)
+    : (user?.realBalance ?? 0) + (user?.bonusBalance ?? 0);
+
+  const curSymbol = isFC ? 'FC' : '$';
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,8 +60,8 @@ export default function SendScreen() {
       toast.error('Veuillez entrer un montant valide');
       return;
     }
-    if (total > (user?.realBalance ?? 0)) {
-      toast.error('Solde insuffisant');
+    if (total > availableBalance) {
+      toast.error(`Solde insuffisant en ${isFC ? 'FC' : 'USD'}. Disponible: ${fmtCur(availableBalance, currency)}`);
       return;
     }
     setShowConfirm(true);
@@ -74,8 +86,16 @@ export default function SendScreen() {
         });
         const data = await res.json();
         if (data.success) {
-          const updatedUser = { ...user, realBalance: Math.max(0, user.realBalance - total) };
-          setUser(updatedUser);
+          // Update local user state with new balances from server
+          if (data.updatedBalances) {
+            setUser({
+              ...user,
+              realBalance: data.updatedBalances.realBalance,
+              realBalanceFC: data.updatedBalances.realBalanceFC,
+              bonusBalance: data.updatedBalances.bonusBalance,
+              bonusBalanceFC: data.updatedBalances.bonusBalanceFC,
+            } as any);
+          }
           toast.success('Transfert envoyé avec succès !');
           setReceiverPhone('');
           setAmount('');
@@ -109,6 +129,20 @@ export default function SendScreen() {
         <h1 className="text-xl font-bold text-foreground">Envoyer de l&apos;argent</h1>
       </div>
 
+      {/* Balance Info */}
+      <div className="px-4 mb-4">
+        <Card className="border-border bg-gradient-to-br from-emerald-50 to-emerald-100">
+          <CardContent className="p-4">
+            <p className="text-sm text-emerald-600 mb-1">
+              Solde disponible ({isFC ? 'FC' : 'USD'})
+            </p>
+            <p className="text-2xl font-bold text-emerald-700">
+              {fmtCur(availableBalance, currency)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* PIN info */}
       <div className="px-4 mb-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -126,6 +160,20 @@ export default function SendScreen() {
       >
         <Card className="border-border shadow-sm">
           <CardContent className="p-6 space-y-5">
+            {/* Currency - first so user picks before entering amount */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Devise</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="w-full h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD - Dollar US</SelectItem>
+                  <SelectItem value="FC">FC - Franc Congolais</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Receiver Phone */}
             <div className="space-y-2">
               <Label htmlFor="receiver" className="text-sm font-medium">
@@ -134,7 +182,7 @@ export default function SendScreen() {
               <Input
                 id="receiver"
                 type="tel"
-                placeholder="+1 234 567 8900"
+                placeholder="+243 000 000 000"
                 value={receiverPhone}
                 onChange={(e) => setReceiverPhone(e.target.value)}
                 className="h-11"
@@ -147,7 +195,9 @@ export default function SendScreen() {
                 Montant
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                  {isFC ? '' : '$'}
+                </span>
                 <Input
                   id="amount"
                   type="number"
@@ -156,24 +206,12 @@ export default function SendScreen() {
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="h-11 pl-7"
+                  className={`h-11 ${isFC ? 'pl-3' : 'pl-7'}`}
                 />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                  {currency}
+                </span>
               </div>
-            </div>
-
-            {/* Currency */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Devise</Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-full h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD - Dollar US</SelectItem>
-                  <SelectItem value="XOF">XOF - Franc CFA</SelectItem>
-                  <SelectItem value="EUR">EUR - Euro</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Note */}
@@ -196,13 +234,13 @@ export default function SendScreen() {
               <div className="rounded-xl bg-muted/50 p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frais ({0.7}%)</span>
-                  <span className="font-medium">${fee.toFixed(2)}</span>
+                  <span className="font-medium">{fmtCur(fee, currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total</span>
-                  <span className="font-bold text-foreground">${total.toFixed(2)}</span>
+                  <span className="font-bold text-foreground">{fmtCur(total, currency)}</span>
                 </div>
-                {total > (user?.realBalance ?? 0) && (
+                {total > availableBalance && (
                   <p className="text-xs text-red-500 mt-1">Solde insuffisant</p>
                 )}
               </div>
@@ -241,15 +279,15 @@ export default function SendScreen() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Montant</span>
-              <span className="font-medium">${numericAmount.toFixed(2)}</span>
+              <span className="font-medium">{fmtCur(numericAmount, currency)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Frais</span>
-              <span className="font-medium">${fee.toFixed(2)}</span>
+              <span className="font-medium">{fmtCur(fee, currency)}</span>
             </div>
             <div className="border-t pt-2 flex justify-between text-sm">
               <span className="font-medium">Total</span>
-              <span className="font-bold text-emerald-600">${total.toFixed(2)}</span>
+              <span className="font-bold text-emerald-600">{fmtCur(total, currency)}</span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground flex items-center gap-1">

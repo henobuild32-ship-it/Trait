@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !amount || amount <= 0) {
       return NextResponse.json(
-        { success: false, message: 'User ID and a positive amount are required' },
+        { success: false, message: 'ID utilisateur et montant positif requis' },
         { status: 400 }
       )
     }
@@ -25,39 +25,49 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
+        { success: false, message: 'Utilisateur non trouvé' },
         { status: 404 }
       )
     }
 
-    // Demo mode: auto-complete the deposit
+    if (user.tempBlocked) {
+      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' })
+    }
+
+    const isFC = currency === 'FC'
+    const cur = isFC ? 'FC' : (currency || 'USD')
+
+    // Create deposit
     const deposit = await db.deposit.create({
       data: {
         userId,
         amount,
-        currency: currency || 'USD',
+        currency: cur,
         method: method || 'mobile_money',
         status: 'completed',
       },
     })
 
-    // Add amount to user's realBalance
+    // Add amount to correct balance based on currency
     await db.user.update({
       where: { id: userId },
-      data: {
-        realBalance: { increment: amount },
-      },
+      data: isFC
+        ? { realBalanceFC: { increment: amount } }
+        : { realBalance: { increment: amount } },
     })
 
     // Create notification
     await db.notification.create({
       data: {
         userId,
-        title: 'Deposit Completed',
-        message: `Your deposit of $${amount.toFixed(2)} via ${method || 'mobile money'} has been completed.`,
+        title: 'Dépôt effectué',
+        message: `Votre dépôt de ${amount.toFixed(2)} ${cur} via ${method || 'mobile money'} a été effectué.`,
         type: 'general',
       },
     })
+
+    // Return updated balances
+    const updatedUser = await db.user.findUnique({ where: { id: userId } })
 
     return NextResponse.json({
       success: true,
@@ -70,11 +80,17 @@ export async function POST(request: NextRequest) {
         status: deposit.status,
         createdAt: deposit.createdAt,
       },
+      updatedBalances: updatedUser ? {
+        realBalance: updatedUser.realBalance,
+        realBalanceFC: updatedUser.realBalanceFC,
+        bonusBalance: updatedUser.bonusBalance,
+        bonusBalanceFC: updatedUser.bonusBalanceFC,
+      } : undefined,
     })
   } catch (error) {
     console.error('Deposit error:', error)
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Erreur interne du serveur' },
       { status: 500 }
     )
   }

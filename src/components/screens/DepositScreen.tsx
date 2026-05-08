@@ -25,8 +25,13 @@ import {
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
 
+function fmtCur(amount: number, currency: string) {
+  if (currency === 'FC') return `${amount.toFixed(2)} FC`;
+  return `$${amount.toFixed(2)}`;
+}
+
 const depositMethods = [
-  { id: 'mobile_money', label: 'Mobile Money', icon: Phone, description: 'Orange Money, MTN, Moov' },
+  { id: 'mobile_money', label: 'Mobile Money', icon: Phone, description: 'Orange Money, Vodacom, Airtel, Africell' },
   { id: 'bank_transfer', label: 'Virement bancaire', icon: Building2, description: 'Transfert direct vers votre compte' },
   { id: 'card', label: 'Carte bancaire', icon: CreditCard, description: 'Visa, Mastercard' },
   { id: 'agent', label: 'Via Agent', icon: Users, description: 'Dépôt via un agent Trait' },
@@ -41,8 +46,11 @@ export default function DepositScreen() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showAgentInfo, setShowAgentInfo] = useState(false);
 
+  const isFC = currency === 'FC';
   const numericAmount = parseFloat(amount) || 0;
-  const realBalance = user?.realBalance ?? 0;
+  const currentBalance = isFC
+    ? (user?.realBalanceFC ?? 0)
+    : (user?.realBalance ?? 0);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,8 +78,15 @@ export default function DepositScreen() {
       });
       const data = await res.json();
       if (data.success) {
-        const updatedUser = { ...user, realBalance: realBalance + numericAmount };
-        setUser(updatedUser);
+        if (data.updatedBalances) {
+          setUser({
+            ...user,
+            realBalance: data.updatedBalances.realBalance,
+            realBalanceFC: data.updatedBalances.realBalanceFC,
+            bonusBalance: data.updatedBalances.bonusBalance,
+            bonusBalanceFC: data.updatedBalances.bonusBalanceFC,
+          } as any);
+        }
         toast.success('Dépôt effectué avec succès !');
         setAmount('');
         navigateTo('home');
@@ -97,10 +112,14 @@ export default function DepositScreen() {
 
       {/* Current Balance */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }} className="px-4 mb-6">
-        <Card className="border-border bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900">
+        <Card className={`border-border ${isFC ? 'bg-gradient-to-br from-blue-50 to-blue-100' : 'bg-gradient-to-br from-emerald-50 to-emerald-100'}`}>
           <CardContent className="p-4 text-center">
-            <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-1">Solde actuel</p>
-            <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">${realBalance.toFixed(2)}</p>
+            <p className={`text-sm ${isFC ? 'text-blue-600' : 'text-emerald-600'} mb-1`}>
+              Solde actuel ({currency})
+            </p>
+            <p className={`text-3xl font-bold ${isFC ? 'text-blue-700' : 'text-emerald-300'}`}>
+              {fmtCur(currentBalance, currency)}
+            </p>
           </CardContent>
         </Card>
       </motion.div>
@@ -117,14 +136,14 @@ export default function DepositScreen() {
                 key={m.id}
                 onClick={() => setSelectedMethod(m.id)}
                 className={`flex flex-col items-center gap-2 rounded-xl p-4 border-2 transition-all active:scale-95 ${
-                  isSelected ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950' : 'border-border bg-card hover:border-emerald-300'
+                  isSelected ? 'border-emerald-600 bg-emerald-50' : 'border-border bg-card hover:border-emerald-300'
                 }`}
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isSelected ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="text-center">
-                  <p className={`text-xs font-medium ${isSelected ? 'text-emerald-700 dark:text-emerald-300' : 'text-foreground'}`}>{m.label}</p>
+                  <p className={`text-xs font-medium ${isSelected ? 'text-emerald-700' : 'text-foreground'}`}>{m.label}</p>
                 </div>
               </button>
             );
@@ -136,15 +155,6 @@ export default function DepositScreen() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2, ease: 'easeOut' }} className="px-4">
         <Card className="border-border shadow-sm">
           <CardContent className="p-6 space-y-5">
-            {/* Amount */}
-            <div className="space-y-2">
-              <Label htmlFor="depositAmount" className="text-sm font-medium">Montant</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
-                <Input id="depositAmount" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-11 pl-7" />
-              </div>
-            </div>
-
             {/* Currency */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Devise</Label>
@@ -152,24 +162,35 @@ export default function DepositScreen() {
                 <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USD">USD - Dollar US</SelectItem>
-                  <SelectItem value="XOF">XOF - Franc CFA</SelectItem>
-                  <SelectItem value="EUR">EUR - Euro</SelectItem>
+                  <SelectItem value="FC">FC - Franc Congolais</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
+            {/* Amount */}
+            <div className="space-y-2">
+              <Label htmlFor="depositAmount" className="text-sm font-medium">Montant</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                  {isFC ? '' : '$'}
+                </span>
+                <Input id="depositAmount" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className={`h-11 ${isFC ? 'pl-3' : 'pl-7'}`} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">{currency}</span>
+              </div>
+            </div>
+
             {/* Agent info for agent method */}
             {selectedMethod === 'agent' && (
-              <div className="rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-4">
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
                 <div className="flex items-start gap-3">
                   <Users className="size-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Dépôt via Agent</p>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                    <p className="text-sm font-medium text-amber-800">Dépôt via Agent</p>
+                    <p className="text-xs text-amber-700 mt-1">
                       Rapprochez-vous d&apos;un agent Trait avec votre montant. L&apos;agent effectuera le dépôt directement sur votre compte.
                     </p>
-                    <p className="text-xs text-amber-600 dark:text-amber-500 mt-2 font-medium">
-                      Demandez le code agent : <span className="font-mono">17xxxxx</span>
+                    <p className="text-xs text-amber-600 mt-2 font-medium">
+                      Code agent : <span className="font-mono">AGT-XXXXXX</span>
                     </p>
                   </div>
                 </div>
@@ -177,9 +198,9 @@ export default function DepositScreen() {
             )}
 
             {/* TRAIT info */}
-            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 p-3">
-              <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                Le dépôt est crédité sur votre solde après validation. Ce service USSD *1709# appartient exclusivement à TRAIT et n&apos;est pas lié aux réseaux mobiles classiques.
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3">
+              <p className="text-xs text-emerald-700">
+                Le dépôt est crédité sur votre solde après validation. Ce service USSD *1709# appartient exclusivement à TRAIT.
               </p>
             </div>
 
@@ -226,8 +247,8 @@ export default function DepositScreen() {
                 <p className="text-sm text-foreground">Recevez la confirmation sur votre téléphone</p>
               </div>
             </div>
-            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 p-3">
-              <p className="text-xs text-emerald-700 dark:text-emerald-300 text-center">
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3">
+              <p className="text-xs text-emerald-700 text-center">
                 Ou utilisez le code USSD <span className="font-mono font-bold">*1709#</span> → Option 4
               </p>
             </div>
@@ -249,7 +270,7 @@ export default function DepositScreen() {
           <div className="rounded-xl bg-muted/50 p-4 space-y-2 my-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Montant</span>
-              <span className="font-medium text-emerald-600">+${numericAmount.toFixed(2)}</span>
+              <span className="font-medium text-emerald-600">+{fmtCur(numericAmount, currency)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Méthode</span>

@@ -33,45 +33,40 @@ const filterTabs: { id: FilterTab; label: string }[] = [
 
 function getTypeIcon(type: string) {
   switch (type) {
-    case 'send':
-      return '💸';
-    case 'receive':
-      return '💰';
-    case 'deposit':
-      return '➕';
-    case 'withdrawal':
-      return '🏧';
-    default:
-      return '📄';
+    case 'send': return '💸';
+    case 'receive': return '💰';
+    case 'deposit': return '➕';
+    case 'withdrawal': return '🏧';
+    default: return '📄';
   }
 }
 
 function getTypeBg(type: string) {
   switch (type) {
-    case 'send':
-      return 'bg-red-50 dark:bg-red-950';
-    case 'receive':
-      return 'bg-emerald-50 dark:bg-emerald-950';
-    case 'deposit':
-      return 'bg-emerald-50 dark:bg-emerald-950';
-    case 'withdrawal':
-      return 'bg-orange-50 dark:bg-orange-950';
-    default:
-      return 'bg-muted';
+    case 'send': return 'bg-red-50';
+    case 'receive': return 'bg-emerald-50';
+    case 'deposit': return 'bg-emerald-50';
+    case 'withdrawal': return 'bg-orange-50';
+    default: return 'bg-muted';
   }
 }
 
 function getStatusBadge(status: string) {
   switch (status) {
     case 'completed':
-      return <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-0 text-[10px]">Terminé</Badge>;
+      return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Terminé</Badge>;
     case 'pending':
-      return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 border-0 text-[10px]">En attente</Badge>;
+      return <Badge className="bg-amber-100 text-amber-700 border-0 text-[10px]">En attente</Badge>;
     case 'failed':
-      return <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-0 text-[10px]">Échoué</Badge>;
+      return <Badge className="bg-red-100 text-red-700 border-0 text-[10px]">Échoué</Badge>;
     default:
       return <Badge variant="secondary" className="text-[10px]">{status}</Badge>;
   }
+}
+
+function fmtCur(amount: number, currency: string) {
+  if (currency === 'FC') return `${amount.toFixed(2)} FC`;
+  return `$${amount.toFixed(2)}`;
 }
 
 function formatDate(dateStr: string) {
@@ -274,11 +269,11 @@ export default function HistoryScreen() {
                       {tx.type === 'receive' || tx.type === 'deposit'
                         ? '+'
                         : '-'}
-                      ${tx.amount.toFixed(2)}
+                      {fmtCur(tx.amount, tx.currency)}
                     </p>
                     {tx.fee > 0 && (
                       <p className="text-[10px] text-muted-foreground">
-                        Frais: ${tx.fee.toFixed(2)}
+                        Frais: {fmtCur(tx.fee, tx.currency)}
                       </p>
                     )}
                   </div>

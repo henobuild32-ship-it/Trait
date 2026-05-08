@@ -25,6 +25,11 @@ import {
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
 
+function fmtCur(amount: number, currency: string) {
+  if (currency === 'FC') return `${amount.toFixed(2)} FC`;
+  return `$${amount.toFixed(2)}`;
+}
+
 export default function WithdrawScreen() {
   const { user, navigateTo, setUser, setPendingPinAction } = useAppStore();
   const [amount, setAmount] = useState('');
@@ -34,10 +39,13 @@ export default function WithdrawScreen() {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const isFC = currency === 'FC';
   const numericAmount = parseFloat(amount) || 0;
   const fee = Math.round(numericAmount * 0.007 * 100) / 100;
   const total = numericAmount + fee;
-  const realBalance = user?.realBalance ?? 0;
+  const realBalance = isFC
+    ? (user?.realBalanceFC ?? 0)
+    : (user?.realBalance ?? 0);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,12 +53,12 @@ export default function WithdrawScreen() {
       toast.error('Veuillez entrer un montant valide');
       return;
     }
-    if (!agentCode.trim() || agentCode.trim().length < 7) {
+    if (!agentCode.trim()) {
       toast.error('Le code agent est obligatoire pour tout retrait');
       return;
     }
     if (total > realBalance) {
-      toast.error(`Solde insuffisant. Solde réel: $${realBalance.toFixed(2)}`);
+      toast.error(`Solde insuffisant. Solde réel: ${fmtCur(realBalance, currency)}`);
       return;
     }
     setShowConfirm(true);
@@ -76,8 +84,15 @@ export default function WithdrawScreen() {
         });
         const data = await res.json();
         if (data.success) {
-          const updatedUser = { ...user, realBalance: Math.max(0, realBalance - total) };
-          setUser(updatedUser);
+          if (data.updatedBalances) {
+            setUser({
+              ...user,
+              realBalance: data.updatedBalances.realBalance,
+              realBalanceFC: data.updatedBalances.realBalanceFC,
+              bonusBalance: data.updatedBalances.bonusBalance,
+              bonusBalanceFC: data.updatedBalances.bonusBalanceFC,
+            } as any);
+          }
           toast.success('Retrait effectué avec succès !');
           setAmount('');
           setAgentCode('');
@@ -107,12 +122,12 @@ export default function WithdrawScreen() {
 
       {/* Info banner */}
       <div className="px-4 mb-4">
-        <div className="rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 flex items-start gap-3">
           <ShieldCheck className="size-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Code agent obligatoire</p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-              Tout retrait nécessite le code d&apos;un agent Trait autorisé. Aucun retrait ne peut être effectué sans un code agent correct.
+            <p className="text-sm font-medium text-amber-800">Code agent obligatoire</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Tout retrait nécessite le code d&apos;un agent Trait autorisé.
             </p>
           </div>
         </div>
@@ -128,10 +143,14 @@ export default function WithdrawScreen() {
 
       {/* Current Balance */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }} className="px-4 mb-6">
-        <Card className="border-border bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900">
+        <Card className={`border-border ${isFC ? 'bg-gradient-to-br from-blue-50 to-blue-100' : 'bg-gradient-to-br from-emerald-50 to-emerald-100'}`}>
           <CardContent className="p-4 text-center">
-            <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-1">Solde disponible</p>
-            <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">${realBalance.toFixed(2)}</p>
+            <p className={`text-sm ${isFC ? 'text-blue-600' : 'text-emerald-600'} mb-1`}>
+              Solde disponible ({currency})
+            </p>
+            <p className={`text-3xl font-bold ${isFC ? 'text-blue-700' : 'text-emerald-700'}`}>
+              {fmtCur(realBalance, currency)}
+            </p>
           </CardContent>
         </Card>
       </motion.div>
@@ -140,12 +159,27 @@ export default function WithdrawScreen() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }} className="px-4">
         <Card className="border-border shadow-sm">
           <CardContent className="p-6 space-y-5">
+            {/* Currency */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Devise</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD - Dollar US</SelectItem>
+                  <SelectItem value="FC">FC - Franc Congolais</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Amount */}
             <div className="space-y-2">
               <Label htmlFor="withdrawAmount" className="text-sm font-medium">Montant</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
-                <Input id="withdrawAmount" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-11 pl-7" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                  {isFC ? '' : '$'}
+                </span>
+                <Input id="withdrawAmount" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className={`h-11 ${isFC ? 'pl-3' : 'pl-7'}`} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">{currency}</span>
               </div>
             </div>
 
@@ -157,26 +191,13 @@ export default function WithdrawScreen() {
               <Input
                 id="agentCode"
                 type="text"
-                placeholder="1704567"
+                placeholder="AGT-000001"
                 value={agentCode}
                 onChange={(e) => setAgentCode(e.target.value)}
                 className="h-11"
-                maxLength={7}
+                maxLength={12}
               />
-              <p className="text-xs text-muted-foreground">Entrez le code agent à 7 chiffres (commençant par 17)</p>
-            </div>
-
-            {/* Currency */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Devise</Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD - Dollar US</SelectItem>
-                  <SelectItem value="XOF">XOF - Franc CFA</SelectItem>
-                  <SelectItem value="EUR">EUR - Euro</SelectItem>
-                </SelectContent>
-              </Select>
+              <p className="text-xs text-muted-foreground">Entrez le code agent (ex: AGT-XXXXXX)</p>
             </div>
 
             {/* Withdrawal Method */}
@@ -197,11 +218,11 @@ export default function WithdrawScreen() {
               <div className="rounded-xl bg-muted/50 p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frais ({0.7}%)</span>
-                  <span className="font-medium">${fee.toFixed(2)}</span>
+                  <span className="font-medium">{fmtCur(fee, currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total débité</span>
-                  <span className="font-bold text-foreground">${total.toFixed(2)}</span>
+                  <span className="font-bold text-foreground">{fmtCur(total, currency)}</span>
                 </div>
                 {total > realBalance && <p className="text-xs text-red-500 mt-1">Solde insuffisant</p>}
               </div>
@@ -234,7 +255,7 @@ export default function WithdrawScreen() {
           <div className="rounded-xl bg-muted/50 p-4 space-y-2 my-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Montant</span>
-              <span className="font-medium">${numericAmount.toFixed(2)}</span>
+              <span className="font-medium">{fmtCur(numericAmount, currency)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Code agent</span>
@@ -242,11 +263,11 @@ export default function WithdrawScreen() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Frais</span>
-              <span className="font-medium">${fee.toFixed(2)}</span>
+              <span className="font-medium">{fmtCur(fee, currency)}</span>
             </div>
             <div className="border-t pt-2 flex justify-between text-sm">
               <span className="font-medium">Total débité</span>
-              <span className="font-bold text-red-500">-${total.toFixed(2)}</span>
+              <span className="font-bold text-red-500">-{fmtCur(total, currency)}</span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground flex items-center gap-1">

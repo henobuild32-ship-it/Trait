@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !amount || amount <= 0) {
       return NextResponse.json(
-        { success: false, message: 'User ID and a positive amount are required' },
+        { success: false, message: 'ID utilisateur et montant positif requis' },
         { status: 400 }
       )
     }
@@ -25,55 +25,65 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
+        { success: false, message: 'Utilisateur non trouvé' },
         { status: 404 }
       )
     }
+
+    if (user.tempBlocked) {
+      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' })
+    }
+
+    const isFC = currency === 'FC'
+    const cur = isFC ? 'FC' : (currency || 'USD')
+    const realBal = isFC ? user.realBalanceFC : user.realBalance
 
     // Calculate fee: 0.7%
     const fee = Math.round(amount * 0.007 * 100) / 100
     const totalDeduction = amount + fee
 
-    // Validate sufficient balance
-    if (user.realBalance < totalDeduction) {
+    if (realBal < totalDeduction) {
       return NextResponse.json(
         {
           success: false,
-          message: `Insufficient real balance. You need $${totalDeduction.toFixed(2)} but have $${user.realBalance.toFixed(2)}.`,
+          message: `Solde insuffisant. Solde: ${realBal.toFixed(2)} ${cur}, Requis: ${totalDeduction.toFixed(2)} ${cur}`,
         },
         { status: 400 }
       )
     }
 
-    // Demo mode: auto-complete the withdrawal
+    // Create withdrawal
     const withdrawal = await db.withdrawal.create({
       data: {
         userId,
         amount,
         fee,
-        currency: currency || 'USD',
+        currency: cur,
         method: method || 'mobile_money',
         status: 'completed',
       },
     })
 
-    // Deduct (amount + fee) from realBalance
+    // Deduct from correct balance based on currency
     await db.user.update({
       where: { id: userId },
-      data: {
-        realBalance: { decrement: totalDeduction },
-      },
+      data: isFC
+        ? { realBalanceFC: { decrement: totalDeduction } }
+        : { realBalance: { decrement: totalDeduction } },
     })
 
     // Create notification
     await db.notification.create({
       data: {
         userId,
-        title: 'Withdrawal Completed',
-        message: `Your withdrawal of $${amount.toFixed(2)} (fee: $${fee.toFixed(2)}) via ${method || 'mobile money'} has been completed.`,
+        title: 'Retrait effectué',
+        message: `Votre retrait de ${amount.toFixed(2)} ${cur} (frais: ${fee.toFixed(2)} ${cur}) via ${method || 'mobile money'} a été effectué.`,
         type: 'withdrawal_validated',
       },
     })
+
+    // Return updated balances
+    const updatedUser = await db.user.findUnique({ where: { id: userId } })
 
     return NextResponse.json({
       success: true,
@@ -87,11 +97,17 @@ export async function POST(request: NextRequest) {
         status: withdrawal.status,
         createdAt: withdrawal.createdAt,
       },
+      updatedBalances: updatedUser ? {
+        realBalance: updatedUser.realBalance,
+        realBalanceFC: updatedUser.realBalanceFC,
+        bonusBalance: updatedUser.bonusBalance,
+        bonusBalanceFC: updatedUser.bonusBalanceFC,
+      } : undefined,
     })
   } catch (error) {
     console.error('Withdrawal error:', error)
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Erreur interne du serveur' },
       { status: 500 }
     )
   }

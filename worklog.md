@@ -112,3 +112,23 @@ Stage Summary:
 - Admin password set to 123456adm17$
 - Dev server running on port 3000
 - All bonus system features from previous session intact (schema, APIs, frontend, security)
+
+---
+Task ID: 2
+Agent: Main
+Task: Fix all runtime errors + admin bonus product publishing + real-time balance
+
+Work Log:
+- Fixed `amount.toFixed is not a function` in AdminBonusScreen.tsx: The /api/bonus/stats API returned nested objects {USD: number} but frontend expected plain numbers. Fixed API to return flat stats with activeCampaigns count. Also added `typeof raw === 'number'` safety check.
+- Fixed `Select.Item empty value` in AdminActivityLogScreen.tsx: Changed first filter from `{value: '', ...}` to `{value: 'all', ...}` and updated filter logic to skip 'all' when building query params.
+- Fixed JSON parse errors: AdminBonusScreen was fetching from /api/bonus/history (separate endpoint returning `entries` key) AND /api/bonus/stats, reading `historyData.history` which didn't exist. Consolidated to single /api/bonus/stats call which now returns `history` and `topUsers` arrays with correct format.
+- Added bonus fields to admin product create/edit: Updated /api/admin/market to accept bonusEnabled, bonusOnly, bonusPrice, bonusMaxQty, bonusExpiryAt, currency on create and update. Rewrote AdminMarketScreen with full bonus configuration section including Switch toggles, bonus price input, max quantity, expiry date.
+- Added GET endpoint to /api/auth/profile that returns fresh user balance data.
+- Updated MarketplaceDetailScreen to fetch fresh balance from server after purchase (real-time deduction).
+- Updated HomeScreen to refresh user balance from server on every mount.
+
+Stage Summary:
+- All 5 runtime errors fixed
+- Admin can now publish products with bonus settings (bonus payment enabled, bonus-only mode, custom bonus price, max quantity, expiry date)
+- Bonus balance deducted in real-time from DB on purchase, verified via server-side profile fetch
+- Lint passes clean

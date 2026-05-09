@@ -111,24 +111,15 @@ export default function AdminBonusScreen() {
   const fetchBonusData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, historyRes] = await Promise.all([
-        fetch('/api/bonus/stats'),
-        fetch('/api/bonus/history?limit=10'),
-      ]);
+      const statsRes = await fetch('/api/bonus/stats');
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         if (statsData.success) {
           setStats(statsData.stats);
-        }
-      }
-
-      if (historyRes.ok) {
-        const historyData = await historyRes.json();
-        if (historyData.success) {
-          setRecentActivity(historyData.history || []);
-          if (historyData.topUsers) {
-            setTopUsers(historyData.topUsers);
+          setRecentActivity(statsData.history || []);
+          if (statsData.topUsers) {
+            setTopUsers(statsData.topUsers);
           }
         }
       }
@@ -212,7 +203,8 @@ export default function AdminBonusScreen() {
             <div className="grid grid-cols-2 gap-3">
               {statCards.map((stat, index) => {
                 const Icon = stat.icon;
-                const value = stats?.[stat.key as keyof BonusStats] ?? 0;
+                const raw = stats?.[stat.key as keyof BonusStats] ?? 0;
+                const value = typeof raw === 'number' ? raw : 0;
                 return (
                   <motion.div
                     key={stat.key}

@@ -159,8 +159,23 @@ export default function MarketplaceDetailScreen() {
         setPurchaseResult(data.purchase);
         setShowSuccess(true);
 
-        // Update user balance in store
-        if (user) {
+        // Fetch fresh user data from server (real-time balance update)
+        try {
+          const profileRes = await fetch(`/api/auth/profile?userId=${user.id}`);
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            if (profileData.success && profileData.user) {
+              setUser({
+                ...user,
+                realBalance: profileData.user.realBalance,
+                realBalanceFC: profileData.user.realBalanceFC,
+                bonusBalance: profileData.user.bonusBalance,
+                bonusBalanceFC: profileData.user.bonusBalanceFC,
+              } as any);
+            }
+          }
+        } catch {
+          // Fallback: use local calculation
           const updatedUser = { ...user };
           if (data.purchase.usedBonus > 0) {
             if (currency === 'FC') {
@@ -176,7 +191,7 @@ export default function MarketplaceDetailScreen() {
               updatedUser.realBalance = Math.max(0, updatedUser.realBalance - data.purchase.usedReal);
             }
           }
-          setUser(updatedUser);
+          setUser(updatedUser as any);
         }
       } else {
         toast.error(data.message || "Erreur lors de l'achat");

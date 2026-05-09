@@ -58,7 +58,7 @@ type ActionType =
   | 'send_notification';
 
 const actionFilters: { value: string; label: string }[] = [
-  { value: '', label: 'Toutes les actions' },
+  { value: 'all', label: 'Toutes les actions' },
   { value: 'login', label: 'Connexion' },
   { value: 'suspend_user', label: 'Suspendre utilisateur' },
   { value: 'delete_user', label: 'Supprimer utilisateur' },
@@ -192,7 +192,7 @@ export default function AdminActivityLogScreen() {
       params.set('page', String(p));
       params.set('limit', '20');
 
-      if (actionFilter) {
+      if (actionFilter && actionFilter !== 'all') {
         params.set('action', actionFilter);
       }
 
@@ -319,7 +319,7 @@ export default function AdminActivityLogScreen() {
                   Aucune activité enregistrée
                 </p>
                 <p className="text-sm text-muted-foreground text-center">
-                  {actionFilter
+                  {actionFilter && actionFilter !== 'all'
                     ? 'Aucune activité ne correspond à ce filtre'
                     : "Aucune action n'a encore été enregistrée"}
                 </p>

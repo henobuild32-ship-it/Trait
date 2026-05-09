@@ -80,50 +80,36 @@ export async function GET() {
       totalAmount: u._sum.amount ?? 0,
     }))
 
-    // Summary stats per currency
-    const bonusUSD = await db.user.aggregate({
-      _sum: { bonusBalance: true },
-    })
-    const bonusFC = await db.user.aggregate({
-      _sum: { bonusBalanceFC: true },
+    const activeCampaigns = await db.bonusCampaign.count({
+      where: { status: 'active' },
     })
 
     return NextResponse.json({
       success: true,
       stats: {
-        totalDistributed: {
-          USD: totalBonusDistributed._sum.amount ?? 0,
-        },
-        totalUsed: {
-          USD: Math.abs(totalBonusUsed._sum.amount ?? 0),
-        },
-        totalRemaining: {
-          USD: totalBonusRemaining._sum.bonusBalance ?? 0,
-          FC: totalBonusRemaining._sum.bonusBalanceFC ?? 0,
-        },
+        totalDistributed: totalBonusDistributed._sum.amount ?? 0,
+        totalUsed: Math.abs(totalBonusUsed._sum.amount ?? 0),
+        totalRemaining: totalBonusRemaining._sum.bonusBalance ?? 0,
+        activeCampaigns,
         bonusCompatibleProducts,
-        topUsers,
-        recentActivity: recentActivity.map((entry) => ({
-          id: entry.id,
-          userId: entry.userId,
-          user: entry.user,
-          type: entry.type,
-          amount: entry.amount,
-          currency: entry.currency,
-          description: entry.description,
-          campaign: entry.campaign,
-          createdAt: entry.createdAt,
-        })),
-        distributionSummary: {
-          usersWithBonus: await db.user.count({
-            where: { bonusBalance: { gt: 0 } },
-          }),
-          usersWithBonusFC: await db.user.count({
-            where: { bonusBalanceFC: { gt: 0 } },
-          }),
-          totalUsers: await db.user.count(),
-        },
       },
+      topUsers: topUsers.map((u) => ({
+        id: u.userId,
+        name: u.userInfo?.name || u.userInfo?.pseudo || 'Anonyme',
+        phone: u.userInfo?.phone || '—',
+        totalBonusReceived: Math.abs(u.totalAmount),
+        currency: 'USD',
+      })),
+      history: recentActivity.map((entry) => ({
+        id: entry.id,
+        userId: entry.userId,
+        userName: entry.user?.name || entry.user?.pseudo || 'Utilisateur',
+        type: entry.type,
+        amount: entry.amount,
+        currency: entry.currency,
+        description: entry.description,
+        createdAt: entry.createdAt,
+      })),
     })
   } catch (error) {
     console.error('Bonus stats error:', error)

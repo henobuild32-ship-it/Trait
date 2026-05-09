@@ -15,6 +15,8 @@ import {
   ShoppingBag,
   Tag,
   User,
+  Gift,
+  Info,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -47,11 +50,17 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  currency: string;
   category: string;
   imageUrl: string | null;
   active: boolean;
   sellerId: string | null;
-  sellerName: string | null;
+  seller: { id: string; name: string; pseudo: string } | null;
+  bonusEnabled: boolean;
+  bonusOnly: boolean;
+  bonusPrice: number | null;
+  bonusMaxQty: number | null;
+  bonusExpiryAt: string | null;
   createdAt: string;
 }
 
@@ -60,6 +69,12 @@ const categories = [
   { value: 'template', label: 'Template' },
   { value: 'service', label: 'Service' },
   { value: 'digital_product', label: 'Produit Digital' },
+  { value: 'other', label: 'Autre' },
+];
+
+const currencies = [
+  { value: 'USD', label: 'USD ($)' },
+  { value: 'FC', label: 'FC (Franc Congolais)' },
 ];
 
 function getCategoryConfig(cat: string) {
@@ -86,7 +101,10 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatPrice(amount: number): string {
+function formatPrice(amount: number, currency: string): string {
+  if (currency === 'FC') {
+    return `${amount.toLocaleString('fr-FR')} FC`;
+  }
   return `$${amount.toFixed(2)}`;
 }
 
@@ -94,8 +112,14 @@ const emptyForm = {
   name: '',
   description: '',
   price: '',
+  currency: 'USD',
   category: '',
   imageUrl: '',
+  bonusEnabled: false,
+  bonusOnly: false,
+  bonusPrice: '',
+  bonusMaxQty: '',
+  bonusExpiryAt: '',
 };
 
 export default function AdminMarketScreen() {
@@ -179,8 +203,16 @@ export default function AdminMarketScreen() {
       name: product.name,
       description: product.description,
       price: String(product.price),
+      currency: product.currency || 'USD',
       category: product.category,
       imageUrl: product.imageUrl ?? '',
+      bonusEnabled: product.bonusEnabled || false,
+      bonusOnly: product.bonusOnly || false,
+      bonusPrice: product.bonusPrice ? String(product.bonusPrice) : '',
+      bonusMaxQty: product.bonusMaxQty ? String(product.bonusMaxQty) : '',
+      bonusExpiryAt: product.bonusExpiryAt
+        ? new Date(product.bonusExpiryAt).toISOString().split('T')[0]
+        : '',
     });
     setFormDialogOpen(true);
   }
@@ -201,6 +233,14 @@ export default function AdminMarketScreen() {
       return;
     }
 
+    if (form.bonusEnabled && form.bonusPrice) {
+      const bp = parseFloat(form.bonusPrice);
+      if (isNaN(bp) || bp <= 0) {
+        toast.error('Le prix bonus doit être un nombre positif');
+        return;
+      }
+    }
+
     setFormLoading(true);
     try {
       const isEdit = !!editingProduct;
@@ -214,8 +254,14 @@ export default function AdminMarketScreen() {
           name: form.name.trim(),
           description: form.description.trim(),
           price,
+          currency: form.currency,
           category: form.category,
           imageUrl: form.imageUrl.trim() || undefined,
+          bonusEnabled: form.bonusEnabled,
+          bonusOnly: form.bonusEnabled && form.bonusOnly,
+          bonusPrice: form.bonusEnabled && form.bonusPrice ? parseFloat(form.bonusPrice) : undefined,
+          bonusMaxQty: form.bonusEnabled && form.bonusMaxQty ? parseInt(form.bonusMaxQty, 10) : undefined,
+          bonusExpiryAt: form.bonusEnabled && form.bonusExpiryAt ? new Date(form.bonusExpiryAt).toISOString() : undefined,
         }),
       });
 
@@ -392,6 +438,7 @@ export default function AdminMarketScreen() {
             <div className="space-y-3">
               {products.map((product, index) => {
                 const catConfig = getCategoryConfig(product.category);
+                const isExpired = product.bonusExpiryAt && new Date(product.bonusExpiryAt) < new Date();
 
                 return (
                   <motion.div
@@ -402,9 +449,9 @@ export default function AdminMarketScreen() {
                   >
                     <Card className="border-border hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
-                        {/* Top row: name + category + actions */}
+                        {/* Top row: name + badges + actions */}
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2 flex-wrap min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                             <h3 className="text-sm font-semibold text-foreground truncate">
                               {product.name}
                             </h3>
@@ -418,6 +465,12 @@ export default function AdminMarketScreen() {
                             }`}>
                               {product.active ? 'Actif' : 'Inactif'}
                             </Badge>
+                            {product.bonusEnabled && !isExpired && (
+                              <Badge className="text-xs font-medium bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800/40">
+                                <Gift className="h-3 w-3 mr-0.5" />
+                                {product.bonusOnly ? 'Bonus Only' : 'Bonus'}
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <Button
@@ -464,18 +517,27 @@ export default function AdminMarketScreen() {
 
                         <Separator className="my-2" />
 
-                        {/* Bottom row: price, seller, date */}
+                        {/* Bottom row: price, bonus price, seller, date */}
                         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            {formatPrice(product.price)}
-                          </span>
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <User className="h-3.5 w-3.5" />
-                            <span>{product.sellerName || 'TRAIT Admin'}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                              {formatPrice(product.price, product.currency || 'USD')}
+                            </span>
+                            {product.bonusEnabled && product.bonusPrice && !isExpired && (
+                              <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                                Bonus: {formatPrice(product.bonusPrice, product.currency || 'USD')}
+                              </span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span>{formatDate(product.createdAt)}</span>
+                          <div className="flex items-center gap-3 text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5" />
+                              <span>{product.seller?.name || product.seller?.pseudo || 'TRAIT Admin'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>{formatDate(product.createdAt)}</span>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -543,23 +605,43 @@ export default function AdminMarketScreen() {
                 placeholder="Décrivez le produit..."
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={4}
+                rows={3}
                 className="bg-muted/50 resize-none"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="product-price">Prix ($) <span className="text-red-500">*</span></Label>
-              <Input
-                id="product-price"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={form.price}
-                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                className="bg-muted/50"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="product-price">Prix <span className="text-red-500">*</span></Label>
+                <Input
+                  id="product-price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Devise</Label>
+                <Select
+                  value={form.currency}
+                  onValueChange={(val) => setForm((f) => ({ ...f, currency: val }))}
+                >
+                  <SelectTrigger className="bg-muted/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencies.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -590,6 +672,97 @@ export default function AdminMarketScreen() {
                 onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
                 className="bg-muted/50"
               />
+            </div>
+
+            <Separator />
+
+            {/* ─── Bonus Settings ─────────────────────────────── */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-amber-500" />
+                <Label className="text-base font-semibold">Paramètres Bonus</Label>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
+                <div>
+                  <p className="text-sm font-medium">Paiement avec bonus</p>
+                  <p className="text-xs text-muted-foreground">
+                    Permettre l&apos;achat avec le solde bonus
+                  </p>
+                </div>
+                <Switch
+                  checked={form.bonusEnabled}
+                  onCheckedChange={(checked) => setForm((f) => ({
+                    ...f,
+                    bonusEnabled: checked,
+                    bonusOnly: checked ? f.bonusOnly : false,
+                  }))}
+                />
+              </div>
+
+              {form.bonusEnabled && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-3 pl-2"
+                >
+                  <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl">
+                    <div>
+                      <p className="text-sm font-medium">Exclusif bonus</p>
+                      <p className="text-xs text-muted-foreground">
+                        Uniquement achetable avec le bonus
+                      </p>
+                    </div>
+                    <Switch
+                      checked={form.bonusOnly}
+                      onCheckedChange={(checked) => setForm((f) => ({ ...f, bonusOnly: checked }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bonus-price">Prix bonus (optionnel)</Label>
+                    <Input
+                      id="bonus-price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Prix spécial pour paiement bonus"
+                      value={form.bonusPrice}
+                      onChange={(e) => setForm((f) => ({ ...f, bonusPrice: e.target.value }))}
+                      className="bg-muted/50"
+                    />
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Info className="h-3 w-3" />
+                      Si vide, le prix normal sera utilisé
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bonus-max-qty">Max achats par utilisateur (optionnel)</Label>
+                    <Input
+                      id="bonus-max-qty"
+                      type="number"
+                      min="1"
+                      placeholder="Limite d'achats avec bonus"
+                      value={form.bonusMaxQty}
+                      onChange={(e) => setForm((f) => ({ ...f, bonusMaxQty: e.target.value }))}
+                      className="bg-muted/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bonus-expiry">Date d&apos;expiration bonus (optionnel)</Label>
+                    <Input
+                      id="bonus-expiry"
+                      type="date"
+                      value={form.bonusExpiryAt}
+                      onChange={(e) => setForm((f) => ({ ...f, bonusExpiryAt: e.target.value }))}
+                      className="bg-muted/50"
+                    />
+                  </div>
+                </motion.div>
+              )}
             </div>
           </div>
 

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // CREATE product
     if (action === 'create') {
-      const { name, description, price, category, imageUrl } = body;
+      const { name, description, price, category, imageUrl, currency, bonusEnabled, bonusOnly, bonusPrice, bonusMaxQty, bonusExpiryAt } = body;
 
       if (!name || !description || !price || !category) {
         return NextResponse.json(
@@ -76,7 +76,13 @@ export async function POST(request: NextRequest) {
           price: parseFloat(price),
           category,
           imageUrl: imageUrl || null,
+          currency: currency || 'USD',
           active: true,
+          bonusEnabled: bonusEnabled === true,
+          bonusOnly: bonusOnly === true,
+          bonusPrice: bonusPrice ? parseFloat(bonusPrice) : null,
+          bonusMaxQty: bonusMaxQty ? parseInt(bonusMaxQty, 10) : null,
+          bonusExpiryAt: bonusExpiryAt ? new Date(bonusExpiryAt) : null,
         },
       });
 
@@ -85,7 +91,7 @@ export async function POST(request: NextRequest) {
           adminId,
           action: 'publish_product',
           target: product.id,
-          details: `Produit publié: "${name}" - ${price} USD (${category})`,
+          details: `Produit publié: "${name}" - ${price} ${currency || 'USD'} (${category})${bonusEnabled ? ' [Bonus activé]' : ''}`,
         },
       });
 
@@ -98,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     // UPDATE product
     if (action === 'update') {
-      const { productId, name, description, price, category, imageUrl } = body;
+      const { productId, name, description, price, category, imageUrl, currency, bonusEnabled, bonusOnly, bonusPrice, bonusMaxQty, bonusExpiryAt } = body;
 
       if (!productId) {
         return NextResponse.json(
@@ -113,6 +119,12 @@ export async function POST(request: NextRequest) {
       if (price) updateData.price = parseFloat(price);
       if (category) updateData.category = category;
       if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+      if (currency) updateData.currency = currency;
+      if (bonusEnabled !== undefined) updateData.bonusEnabled = bonusEnabled === true;
+      if (bonusOnly !== undefined) updateData.bonusOnly = bonusOnly === true;
+      if (bonusPrice !== undefined) updateData.bonusPrice = bonusPrice ? parseFloat(bonusPrice) : null;
+      if (bonusMaxQty !== undefined) updateData.bonusMaxQty = bonusMaxQty ? parseInt(bonusMaxQty, 10) : null;
+      if (bonusExpiryAt !== undefined) updateData.bonusExpiryAt = bonusExpiryAt ? new Date(bonusExpiryAt) : null;
 
       const product = await db.marketplaceProduct.update({
         where: { id: productId },

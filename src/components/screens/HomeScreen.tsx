@@ -81,7 +81,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function HomeScreen() {
-  const { user, navigateTo } = useAppStore();
+  const { user, navigateTo, setUser } = useAppStore();
   const [recentTransactions, setRecentTransactions] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +97,29 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchRecentTransactions();
+    refreshUserBalance();
   }, [user?.id]);
+
+  async function refreshUserBalance() {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/auth/profile?userId=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.user) {
+          setUser({
+            ...user,
+            realBalance: data.user.realBalance,
+            realBalanceFC: data.user.realBalanceFC,
+            bonusBalance: data.user.bonusBalance,
+            bonusBalanceFC: data.user.bonusBalanceFC,
+          } as any);
+        }
+      }
+    } catch {
+      // Silently fail - use cached data
+    }
+  }
 
   async function fetchRecentTransactions() {
     if (!user?.id) {

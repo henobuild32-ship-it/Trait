@@ -90,3 +90,25 @@ Stage Summary:
 - All TypeScript errors in src/ resolved
 - Bonus security enforced: bonus cannot be used for transfers/withdrawals
 - Marketplace supports bonus purchases with currency awareness
+
+---
+Task ID: 1
+Agent: Main
+Task: Fix app not displaying in preview + set admin password
+
+Work Log:
+- Diagnosed root cause: `allowedDevOrigins` in next.config.ts had typo `space.z.ai` instead of `space-z.ai` (dot vs dash)
+- This caused cross-origin blocking of `/_next/*` CSS/JS resources in the preview iframe, resulting in blank screen
+- Fixed next.config.ts: changed to `preview-chat-0869a9a4-fb6d-4efa-9fff-a2bf58bf67a0.space-z.ai`
+- Cleared `.next` cache and regenerated Prisma client
+- Set admin account password to `123456adm17$` via direct DB update
+- Restarted dev server with auto-restart watchdog for stability
+- Verified server is running and stable (confirmed alive after 2+ minutes)
+- Verified all screens compile without errors (lint passes clean)
+- Verified admin credentials: username=admin, password=123456adm17$, role=super_admin
+
+Stage Summary:
+- App display issue FIXED (cross-origin blocking was the root cause)
+- Admin password set to 123456adm17$
+- Dev server running on port 3000
+- All bonus system features from previous session intact (schema, APIs, frontend, security)

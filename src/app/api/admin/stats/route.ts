@@ -16,6 +16,7 @@ export async function GET() {
       activeBarterOffers,
       todayTransactions,
       todayUsers,
+      pendingAgents,
     ] = await Promise.all([
       db.user.count({ where: { role: 'client' } }),
       db.user.count({ where: { role: 'agent' } }),
@@ -27,7 +28,6 @@ export async function GET() {
       db.marketplaceProduct.count({ where: { active: true } }),
       db.barterOffer.count(),
       db.barterOffer.count({ where: { status: 'active' } }),
-      // Today's stats
       db.transaction.count({
         where: {
           createdAt: {
@@ -42,6 +42,7 @@ export async function GET() {
           },
         },
       }),
+      db.user.count({ where: { role: 'agent', validationStatus: 'pending' } }),
     ]);
 
     // Calculate total volume
@@ -93,6 +94,7 @@ export async function GET() {
         activeBarterOffers,
         todayTransactions,
         todayUsers,
+        pendingAgents,
         totalVolume,
         sendVolume,
         monthlyTransactions,

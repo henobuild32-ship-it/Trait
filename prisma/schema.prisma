@@ -12,9 +12,15 @@ model User {
   phone                 String   @unique
   name                  String?
   pseudo                String?
+  email                 String?
+  gender                String?                         // male, female, other
+  city                  String?
   country               String   @default("US")
   role                  String   @default("client") // client, agent
-  agentCode             String?  @unique              // AGT-XXXXXX format
+  agentCode             String?  @unique              // AGT-XXXXXX format (old)
+  agentNumber           String?  @unique              // AGT-2026-XXXXX format (official)
+  validationStatus      String   @default("validated") // pending, validated, rejected (agents only)
+  validationRejectReason String?
   password              String?
   pin                   String?
   realBalance           Float    @default(0)
@@ -49,6 +55,7 @@ model User {
   billPayments         BillPayment[]
   userSettings         UserSettings?
   bonusHistory         BonusHistory[]
+  receivedAgentMessages AgentMessage[]   @relation("ReceivedAgentMessages")
 }
 
 model Admin {
@@ -64,6 +71,7 @@ model Admin {
   activityLogs   AdminActivityLog[]
   globalNotifications GlobalNotification[]
   bonusCampaigns  BonusCampaign[]
+  sentAgentMessages AgentMessage[]
 }
 
 model AdminActivityLog {
@@ -349,4 +357,36 @@ model BonusCampaign {
 
   @@index([status])
   @@index([startDate])
+}
+
+// ─── Agent Messaging System ──────────────────────────────────────
+
+model AgentMessage {
+  id          String   @id @default(cuid())
+  adminId     String
+  recipientId String                         // User ID of the agent
+  title       String
+  message     String
+  type        String   @default("individual") // individual, broadcast
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  admin    Admin @relation(fields: [adminId], references: [id])
+  recipient User  @relation("ReceivedAgentMessages", fields: [recipientId], references: [id])
+
+  @@index([recipientId])
+  @@index([adminId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ─── App Version ─────────────────────────────────────────────────
+
+model AppVersion {
+  id          String   @id @default(cuid())
+  version     String   @unique               // e.g. "1.0.0"
+  description String?
+  downloadUrl String?
+  isCurrent   Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }

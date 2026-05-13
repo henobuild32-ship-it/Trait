@@ -20,6 +20,7 @@ import {
   Smartphone,
   Apple,
   Menu,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,6 +145,7 @@ export default function SettingsScreen() {
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [showAndroidGuide, setShowAndroidGuide] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   const isAgent = user?.role === 'agent';
 
@@ -165,6 +167,27 @@ export default function SettingsScreen() {
     } else {
       // Native install not available — show manual guide
       setShowAndroidGuide(true);
+    }
+  };
+
+  const checkForUpdates = async () => {
+    setUpdateLoading(true);
+    try {
+      const res = await fetch('/api/app/version?currentVersion=1.0.0');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasUpdate) {
+          toast.success(`Nouvelle mise à jour disponible: v${data.latestVersion}`);
+        } else {
+          toast.success('Application à jour');
+        }
+      } else {
+        toast.error('Erreur lors de la vérification des mises à jour');
+      }
+    } catch {
+      toast.error('Erreur de connexion');
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
@@ -229,6 +252,12 @@ export default function SettingsScreen() {
           value: 'v1.0',
           action: () =>
             toast.info('Trait v1.0 — Votre partenaire financier digital'),
+        },
+        {
+          icon: RefreshCw,
+          label: 'Vérifier les mises à jour',
+          value: updateLoading ? 'Vérification...' : null,
+          action: checkForUpdates,
         },
       ],
     },

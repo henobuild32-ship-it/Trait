@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppStore, PageName } from '@/lib/store';
-import { Home, ArrowLeftRight, Store, Settings, Phone } from 'lucide-react';
+import { Home, ArrowLeftRight, Store, Settings, Phone, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -22,7 +22,7 @@ const agentNavItems: NavItem[] = [
   { page: 'agent-dashboard', label: 'Accueil', icon: Home },
   { page: 'agent-deposit', label: 'Dépôt', icon: Store },
   { page: 'agent-withdraw-validate', label: 'Retrait', icon: ArrowLeftRight },
-  { page: 'ussd', label: 'USSD', icon: Phone },
+  { page: 'agent-messages', label: 'Messages', icon: MessageSquare },
   { page: 'settings', label: 'Plus', icon: Settings },
 ];
 

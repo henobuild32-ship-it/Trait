@@ -32,6 +32,7 @@ export type PageName =
   | 'agent-deposit'
   | 'agent-withdraw-validate'
   | 'agent-activity'
+  | 'agent-messages'
   // Admin pages
   | 'admin-dashboard'
   | 'admin-users'
@@ -45,7 +46,9 @@ export type PageName =
   | 'admin-bonus'
   | 'admin-bonus-adjust'
   | 'admin-bonus-history'
-  | 'admin-bonus-campaigns';
+  | 'admin-bonus-campaigns'
+  | 'admin-agent-validation'
+  | 'admin-messages';
 
 export type UserRole = 'client' | 'agent';
 
@@ -54,9 +57,15 @@ export interface User {
   phone: string;
   name: string;
   pseudo: string;
+  email: string | null;
+  gender: string | null;
+  city: string | null;
   country: string;
   role: UserRole;
   agentCode: string | null;
+  agentNumber: string | null;
+  validationStatus: string;
+  validationRejectReason: string | null;
   realBalance: number;
   realBalanceFC: number;
   bonusBalance: number;

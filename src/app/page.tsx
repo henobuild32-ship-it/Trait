@@ -50,6 +50,9 @@ import AdminBonusScreen from '@/components/admin/AdminBonusScreen';
 import AdminBonusAdjustScreen from '@/components/admin/AdminBonusAdjustScreen';
 import AdminBonusHistoryScreen from '@/components/admin/AdminBonusHistoryScreen';
 import AdminBonusCampaignsScreen from '@/components/admin/AdminBonusCampaignsScreen';
+import AdminAgentValidationScreen from '@/components/admin/AdminAgentValidationScreen';
+import AdminMessagesScreen from '@/components/admin/AdminMessagesScreen';
+import AgentMessagesScreen from '@/components/screens/AgentMessagesScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
@@ -96,13 +99,16 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'admin-bonus-adjust': AdminBonusAdjustScreen,
   'admin-bonus-history': AdminBonusHistoryScreen,
   'admin-bonus-campaigns': AdminBonusCampaignsScreen,
+  'admin-agent-validation': AdminAgentValidationScreen,
+  'admin-messages': AdminMessagesScreen,
+  'agent-messages': AgentMessagesScreen,
 };
 
 // Pages that show bottom navigation
-const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity'];
+const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages'];
 
 // Admin pages that don't show bottom nav
-const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns'];
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();

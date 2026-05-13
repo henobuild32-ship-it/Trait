@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { phone, name, pseudo, country, role, pin, password } = body as {
+    const { phone, name, pseudo, country, role, pin, password, email, gender, city } = body as {
       phone: string
       name: string
       pseudo: string
@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
       role: 'client' | 'agent'
       pin: string
       password: string
+      email?: string
+      gender?: string
+      city?: string
     }
 
     if (!phone || !name || !pseudo || !country || !role || !password) {
@@ -40,21 +43,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate agent code if role is agent
-    let agentCode: string | undefined
-    if (role === 'agent') {
-      let unique = false
-      while (!unique) {
-        const digits = Math.floor(100000 + Math.random() * 900000).toString()
-        agentCode = `AGT-${digits}`
-        const existingCode = await db.user.findUnique({
-          where: { agentCode },
-        })
-        if (!existingCode) {
-          unique = true
-        }
-      }
-    }
+    // Agent vs Client settings
+    const isAgent = role === 'agent'
+    const validationStatus = isAgent ? 'pending' : 'validated'
+    const bonusBalance = isAgent ? 0 : 10
+    const bonusBalanceFC = isAgent ? 0 : 0
+
+    // No agentCode generated at registration for agents (generated on validation as agentNumber)
 
     const user = await db.user.create({
       data: {
@@ -65,11 +60,14 @@ export async function POST(request: NextRequest) {
         role,
         pin: pin || null,
         password,
-        agentCode,
+        email: email?.trim() || null,
+        gender: gender || null,
+        city: city?.trim() || null,
         realBalance: 0,
         realBalanceFC: 0,
-        bonusBalance: 10,
-        bonusBalanceFC: 0,
+        bonusBalance,
+        bonusBalanceFC,
+        validationStatus,
       },
     })
 
@@ -78,9 +76,15 @@ export async function POST(request: NextRequest) {
       phone: user.phone,
       name: user.name,
       pseudo: user.pseudo,
+      email: user.email,
+      gender: user.gender,
+      city: user.city,
       country: user.country,
       role: user.role,
       agentCode: user.agentCode,
+      agentNumber: user.agentNumber,
+      validationStatus: user.validationStatus,
+      validationRejectReason: user.validationRejectReason,
       realBalance: user.realBalance,
       realBalanceFC: user.realBalanceFC,
       bonusBalance: user.bonusBalance,

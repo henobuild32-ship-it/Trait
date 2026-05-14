@@ -17,6 +17,10 @@ export async function GET() {
       todayTransactions,
       todayUsers,
       pendingAgents,
+      pendingDevelopers,
+      approvedDevelopers,
+      totalApiCommission,
+      internationalTransfers,
     ] = await Promise.all([
       db.user.count({ where: { role: 'client' } }),
       db.user.count({ where: { role: 'agent' } }),
@@ -43,6 +47,10 @@ export async function GET() {
         },
       }),
       db.user.count({ where: { role: 'agent', validationStatus: 'pending' } }),
+      db.developer.count({ where: { status: 'pending' } }),
+      db.developer.count({ where: { status: 'approved' } }),
+      db.apiCommission.aggregate({ _sum: { amount: true } }),
+      db.internationalTransfer.count(),
     ]);
 
     // Calculate total volume
@@ -95,6 +103,10 @@ export async function GET() {
         todayTransactions,
         todayUsers,
         pendingAgents,
+        pendingDevelopers,
+        approvedDevelopers,
+        totalApiCommission: totalApiCommission._sum.amount || 0,
+        internationalTransfers,
         totalVolume,
         sendVolume,
         monthlyTransactions,

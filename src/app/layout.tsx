@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { I18nProviderWrapper } from "@/components/providers/I18nProviderWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trait - Transfert d'argent, Troc & Marketplace",
+  title: "TRAIT - Transfert d'argent, Troc & Marketplace",
   description: "Plateforme numérique innovante combinant transfert d'argent, troc digital et marketplace. Accessible avec ou sans internet via USSD.",
-  keywords: ["Trait", "transfert", "argent", "troc", "marketplace", "USSD", "fintech", "mobile money"],
+  keywords: ["Trait", "transfert", "argent", "troc", "marketplace", "USSD", "fintech", "mobile money", "RDC", "Congo"],
   authors: [{ name: "Trait Team" }],
   icons: {
     icon: [
@@ -31,10 +32,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Trait",
+    title: "TRAIT",
   },
   openGraph: {
-    title: "Trait - Transfert d'argent, Troc & Marketplace",
+    title: "TRAIT - Transfert d'argent, Troc & Marketplace",
     description: "Plateforme numérique innovante combinant transfert d'argent, troc digital et marketplace.",
     type: "website",
     images: ["/icon-512.png"],
@@ -49,7 +50,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#059669",
+  themeColor: "#1E40AF",
 };
 
 export default function RootLayout({
@@ -62,7 +63,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Trait" />
+        <meta name="apple-mobile-web-app-title" content="TRAIT" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="apple-touch-startup-image" href="/icon-512.png" />
@@ -71,7 +72,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground font-sans`}
       >
         <ThemeProvider>
-          {children}
+          <I18nProviderWrapper>
+            {children}
+          </I18nProviderWrapper>
         </ThemeProvider>
         <Toaster position="top-center" richColors closeButton />
         <script

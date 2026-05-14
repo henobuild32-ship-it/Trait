@@ -53,6 +53,11 @@ import AdminBonusCampaignsScreen from '@/components/admin/AdminBonusCampaignsScr
 import AdminAgentValidationScreen from '@/components/admin/AdminAgentValidationScreen';
 import AdminMessagesScreen from '@/components/admin/AdminMessagesScreen';
 import AgentMessagesScreen from '@/components/screens/AgentMessagesScreen';
+import InternationalTransferScreen from '@/components/screens/InternationalTransferScreen';
+import DeveloperRegisterScreen from '@/components/screens/DeveloperRegisterScreen';
+
+// Admin screens continued
+import AdminDevelopersScreen from '@/components/admin/AdminDevelopersScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
@@ -101,14 +106,17 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'admin-bonus-campaigns': AdminBonusCampaignsScreen,
   'admin-agent-validation': AdminAgentValidationScreen,
   'admin-messages': AdminMessagesScreen,
+  'admin-developers': AdminDevelopersScreen,
   'agent-messages': AgentMessagesScreen,
+  'international-transfer': InternationalTransferScreen,
+  'developer-register': DeveloperRegisterScreen,
 };
 
 // Pages that show bottom navigation
 const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages'];
 
 // Admin pages that don't show bottom nav
-const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages'];
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();

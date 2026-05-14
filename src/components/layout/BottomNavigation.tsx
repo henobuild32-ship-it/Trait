@@ -1,38 +1,41 @@
 'use client';
 
 import { useAppStore, PageName } from '@/lib/store';
-import { Home, ArrowLeftRight, Store, Settings, Phone, MessageSquare } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
+import { Home, ArrowLeftRight, Store, Settings, Phone, MessageSquare, Globe } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
   page: PageName;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const clientNavItems: NavItem[] = [
-  { page: 'home', label: 'Accueil', icon: Home },
-  { page: 'ussd', label: 'USSD', icon: Phone },
-  { page: 'barter', label: 'Troc', icon: ArrowLeftRight },
-  { page: 'marketplace', label: 'Market', icon: Store },
-  { page: 'settings', label: 'Plus', icon: Settings },
+  { page: 'home', labelKey: 'nav.home', icon: Home },
+  { page: 'send', labelKey: 'nav.send', icon: ArrowLeftRight },
+  { page: 'international-transfer', labelKey: 'nav.intl', icon: Globe },
+  { page: 'marketplace', labelKey: 'nav.market', icon: Store },
+  { page: 'settings', labelKey: 'nav.more', icon: Settings },
 ];
 
 const agentNavItems: NavItem[] = [
-  { page: 'agent-dashboard', label: 'Accueil', icon: Home },
-  { page: 'agent-deposit', label: 'Dépôt', icon: Store },
-  { page: 'agent-withdraw-validate', label: 'Retrait', icon: ArrowLeftRight },
-  { page: 'agent-messages', label: 'Messages', icon: MessageSquare },
-  { page: 'settings', label: 'Plus', icon: Settings },
+  { page: 'agent-dashboard', labelKey: 'nav.home', icon: Home },
+  { page: 'agent-deposit', labelKey: 'nav.deposit', icon: Store },
+  { page: 'agent-withdraw-validate', labelKey: 'nav.withdraw', icon: ArrowLeftRight },
+  { page: 'agent-messages', labelKey: 'nav.messages', icon: MessageSquare },
+  { page: 'settings', labelKey: 'nav.more', icon: Settings },
 ];
 
 export default function BottomNavigation() {
   const { currentPage, navigateTo, unreadCount, user } = useAppStore();
+  const { t } = useTranslation();
 
   const isAgent = user?.role === 'agent';
   const navItems = isAgent ? agentNavItems : clientNavItems;
 
-  const clientSubPages = ['send', 'withdraw', 'deposit', 'history', 'notifications', 'profile', 'marketplace-detail', 'barter-detail', 'barter-create'];
+  const clientSubPages = ['send', 'withdraw', 'deposit', 'history', 'notifications', 'profile', 'marketplace-detail', 'barter-detail', 'barter-create', 'ussd', 'international-transfer'];
   const agentSubPages = ['agent-activity'];
 
   return (
@@ -51,23 +54,23 @@ export default function BottomNavigation() {
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 transition-all duration-200 min-w-[52px]',
                 isActive
-                  ? 'text-emerald-600'
+                  ? 'text-[#1E40AF]'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <div className="relative">
                 <item.icon className={cn('h-5 w-5', isActive && 'stroke-[2.5]')} />
                 {item.page === 'home' && unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  <span className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#DC2626] text-[10px] font-bold text-white">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </div>
               <span className={cn('text-[10px] font-medium', isActive && 'font-semibold')}>
-                {item.label}
+                {t(item.labelKey)}
               </span>
               {isActive && (
-                <div className="absolute -bottom-0 h-0.5 w-8 rounded-full bg-emerald-600" />
+                <div className="absolute -bottom-0 h-0.5 w-8 rounded-full bg-[#1E40AF]" />
               )}
             </button>
           );

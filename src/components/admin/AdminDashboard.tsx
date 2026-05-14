@@ -19,6 +19,8 @@ import {
   Clock,
   Gift,
   MessageSquare,
+  Code,
+  Globe,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,6 +67,8 @@ const statsConfig: StatCard[] = [
   { label: 'Comptes Suspendus', key: 'suspendedUsers', icon: Ban, color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-100 dark:bg-red-900/40' },
   { label: 'Utilisateurs Aujourd\'hui', key: 'todayUsers', icon: UserCheck, color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/40' },
   { label: 'Agents en attente', key: 'pendingAgents', icon: Clock, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
+  { label: 'Développeurs', key: 'approvedDevelopers', icon: Code, color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-100 dark:bg-violet-900/40' },
+  { label: 'Revenus API', key: 'totalApiCommission', icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/40' },
 ];
 
 interface QuickAction {
@@ -86,6 +90,8 @@ const quickActions: QuickAction[] = [
   { label: 'Gestion Bonus', page: 'admin-bonus', icon: Gift, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/40' },
   { label: 'Validation Agents', page: 'admin-agent-validation', icon: UserCheck, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
   { label: 'Messagerie', page: 'admin-messages', icon: MessageSquare, color: 'text-cyan-600 dark:text-cyan-400', bgColor: 'bg-cyan-100 dark:bg-cyan-900/40' },
+  { label: 'Développeurs', page: 'admin-developers', icon: Code, color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-100 dark:bg-violet-900/40' },
+  { label: 'Transferts Intl.', page: 'admin-transactions', icon: Globe, color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-100 dark:bg-rose-900/40' },
 ];
 
 function formatStatValue(key: keyof DashboardStats, value: number): string {
@@ -201,7 +207,7 @@ export default function AdminDashboard() {
           </h2>
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {Array.from({ length: 9 }).map((_, i) => (
+              {Array.from({ length: 11 }).map((_, i) => (
                 <Card key={i} className="border-border">
                   <CardContent className="p-4">
                     <Skeleton className="h-8 w-8 rounded-lg mb-3" />

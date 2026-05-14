@@ -14,7 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAppStore, type User } from '@/lib/store';
+import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 const countryCodes = [
   { code: '+228', label: '+228', country: 'Togo' },
@@ -36,6 +38,7 @@ const countryCodes = [
 export default function AuthLoginScreen() {
   const navigateTo = useAppStore((s) => s.navigateTo);
   const setUser = useAppStore((s) => s.setUser);
+  const { t } = useTranslation();
 
   const [selectedRole, setSelectedRole] = useState<'client' | 'agent'>('client');
   const [countryCode, setCountryCode] = useState('+228');
@@ -49,12 +52,12 @@ export default function AuthLoginScreen() {
 
     const cleanedPhone = phone.replace(/\s/g, '');
     if (!cleanedPhone || cleanedPhone.length < 6) {
-      toast.error('Veuillez entrer un numéro de téléphone valide');
+      toast.error(t('validation.phone_required'));
       return;
     }
 
     if (!password.trim()) {
-      toast.error('Veuillez entrer votre mot de passe');
+      toast.error(t('validation.password_required'));
       return;
     }
 
@@ -71,7 +74,7 @@ export default function AuthLoginScreen() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || 'Numéro ou mot de passe incorrect');
+        toast.error(data.message || t('validation.login_error'));
         return;
       }
 
@@ -79,7 +82,7 @@ export default function AuthLoginScreen() {
 
       // Verify role matches
       if (user.role !== selectedRole) {
-        toast.error(`Ce compte est un compte ${user.role === 'agent' ? 'Agent' : 'Client'}. Veuillez sélectionner le bon type.`);
+        toast.error(user.role === 'agent' ? t('validation.role_mismatch_agent') : t('validation.role_mismatch_client'));
         return;
       }
 
@@ -94,7 +97,7 @@ export default function AuthLoginScreen() {
         navigateTo('home');
       }
     } catch {
-      toast.error('Erreur de connexion. Veuillez réessayer.');
+      toast.error(t('validation.connection_error'));
     } finally {
       setLoading(false);
     }
@@ -112,7 +115,7 @@ export default function AuthLoginScreen() {
           variant="ghost"
           size="icon"
           onClick={() => navigateTo('welcome')}
-          className="rounded-full hover:bg-emerald-50 cursor-pointer"
+          className="rounded-full hover:bg-blue-50 cursor-pointer"
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </Button>
@@ -134,9 +137,26 @@ export default function AuthLoginScreen() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="flex-1 flex flex-col px-6 pt-4 pb-8"
       >
+        {/* TRAIT Logo */}
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Image
+              src="/trait-logo.png"
+              alt="TRAIT"
+              width={64}
+              height={64}
+              className="rounded-2xl shadow-lg"
+            />
+          </motion.div>
+        </div>
+
         <div className="flex flex-col gap-2 mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Se connecter</h1>
-          <p className="text-muted-foreground">Choisissez votre type de compte et connectez-vous</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('auth.login')}</h1>
+          <p className="text-muted-foreground">{t('auth.login_subtitle')}</p>
         </div>
 
         {/* Role Toggle */}
@@ -146,12 +166,12 @@ export default function AuthLoginScreen() {
             onClick={() => setSelectedRole('client')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${
               selectedRole === 'client'
-                ? 'bg-emerald-600 text-white shadow-sm'
+                ? 'bg-[#1E40AF] text-white shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <UserIcon className="w-4 h-4" />
-            Client
+            {t('auth.client')}
           </button>
           <button
             type="button"
@@ -163,7 +183,7 @@ export default function AuthLoginScreen() {
             }`}
           >
             <Building2 className="w-4 h-4" />
-            Agent
+            {t('auth.agent')}
           </button>
         </div>
 
@@ -171,12 +191,12 @@ export default function AuthLoginScreen() {
           {/* Phone Number */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="login-phone" className="text-foreground font-medium">
-              Numéro de téléphone
+              {t('auth.phone')}
             </Label>
             <div className="flex gap-2">
               <Select value={countryCode} onValueChange={setCountryCode}>
                 <SelectTrigger className="w-[100px] shrink-0 ">
-                  <SelectValue placeholder="Code" />
+                  <SelectValue placeholder={t('common.code')} />
                 </SelectTrigger>
                 <SelectContent>
                   {countryCodes.map((item) => (
@@ -189,10 +209,10 @@ export default function AuthLoginScreen() {
               <Input
                 id="login-phone"
                 type="tel"
-                placeholder="90 11 22 33"
+                placeholder={t('common.phone_placeholder')}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="flex-1  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 h-12 text-base"
+                className="flex-1  focus-visible:border-blue-500 focus-visible:ring-blue-500/20 h-12 text-base"
                 autoComplete="tel"
                 disabled={loading}
               />
@@ -202,16 +222,16 @@ export default function AuthLoginScreen() {
           {/* Password */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="login-password" className="text-foreground font-medium">
-              Mot de passe
+              {t('auth.password')}
             </Label>
             <div className="relative">
               <Input
                 id="login-password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Entrez votre mot de passe"
+                placeholder={t('auth.password_placeholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base pr-12"
+                className="w-full h-12  focus-visible:border-blue-500 focus-visible:ring-blue-500/20 text-base pr-12"
                 autoComplete="current-password"
                 disabled={loading}
               />
@@ -233,15 +253,15 @@ export default function AuthLoginScreen() {
           <Button
             type="submit"
             disabled={loading || !phone.trim() || !password.trim()}
-            className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 disabled:opacity-50 cursor-pointer mt-2"
+            className="w-full h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-2"
           >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Connexion...
+                {t('auth.connecting')}
               </>
             ) : (
-              'Se connecter'
+              t('auth.login')
             )}
           </Button>
         </form>
@@ -249,19 +269,19 @@ export default function AuthLoginScreen() {
         {/* Register link */}
         <div className="mt-6 flex items-center justify-center">
           <p className="text-sm text-muted-foreground">
-            Pas de compte ?{' '}
+            {t('auth.no_account')}{' '}
             <button
               onClick={() => navigateTo('auth-role')}
-              className="font-semibold text-emerald-600 hover:text-emerald-700 underline underline-offset-2 cursor-pointer"
+              className="font-semibold text-[#1E40AF] hover:text-blue-900 underline underline-offset-2 cursor-pointer"
             >
-              Créer un compte
+              {t('auth.create_account')}
             </button>
           </p>
         </div>
 
         <div className="mt-4 flex items-center justify-center">
           <p className="text-xs text-muted-foreground text-center">
-            En continuant, vous acceptez nos conditions d&apos;utilisation
+            {t('auth.terms')}
           </p>
         </div>
       </motion.main>

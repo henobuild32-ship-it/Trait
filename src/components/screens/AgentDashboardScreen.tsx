@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/lib/store';
+import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
 
 export default function AgentDashboardScreen() {
   const { goBack, user, setUser, navigateTo } = useAppStore();
+  const { t } = useTranslation();
   const [checkingStatus, setCheckingStatus] = useState(false);
 
   const validationStatus = user?.validationStatus;
@@ -24,13 +26,13 @@ export default function AgentDashboardScreen() {
         const data = await res.json();
         if (data.success && data.user) {
           setUser(data.user);
-          toast.info('Statut mis à jour');
+          toast.info(t('agent.status_updated'));
         }
       } else {
-        toast.error('Erreur lors de la vérification du statut');
+        toast.error(t('agent.status_error'));
       }
     } catch {
-      toast.error('Erreur de connexion');
+      toast.error(t('validation.connection_error'));
     } finally {
       setCheckingStatus(false);
     }
@@ -46,7 +48,10 @@ export default function AgentDashboardScreen() {
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">Tableau de bord</h1>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+                <span className="text-white font-bold text-sm">T</span>
+              </div>
+              <h1 className="text-lg font-semibold">{t('agent.dashboard')}</h1>
               <Badge className="bg-amber-200 text-amber-800 border-amber-300 text-xs">
                 Agent
               </Badge>
@@ -64,10 +69,10 @@ export default function AgentDashboardScreen() {
               <Clock className="size-10 text-amber-600 dark:text-amber-400" />
             </div>
             <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100 mb-3">
-              Compte en attente de validation
+              {t('agent.pending_validation')}
             </h2>
             <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed mb-8">
-              Votre compte Agent est en attente de validation par l&apos;administrateur. Vous ne pouvez pas accéder aux fonctionnalités principales tant que votre compte n&apos;est pas validé.
+              {t('agent.pending_validation_desc')}
             </p>
             <Button
               onClick={handleCheckStatus}
@@ -77,7 +82,7 @@ export default function AgentDashboardScreen() {
               {checkingStatus ? (
                 <Loader2 className="size-4 animate-spin mr-2" />
               ) : null}
-              Vérifier le statut
+              {t('agent.check_status')}
             </Button>
           </motion.div>
         </div>
@@ -95,7 +100,10 @@ export default function AgentDashboardScreen() {
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">Tableau de bord</h1>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+                <span className="text-white font-bold text-sm">T</span>
+              </div>
+              <h1 className="text-lg font-semibold">{t('agent.dashboard')}</h1>
               <Badge className="bg-red-200 text-red-800 border-red-300 text-xs">
                 Agent
               </Badge>
@@ -113,10 +121,10 @@ export default function AgentDashboardScreen() {
               <XCircle className="size-10 text-red-600 dark:text-red-400" />
             </div>
             <h2 className="text-xl font-bold text-red-900 dark:text-red-100 mb-3">
-              Compte refusé
+              {t('agent.rejected')}
             </h2>
             <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
-              Votre demande de compte Agent a été refusée. Raison : {user?.validationRejectReason || 'Non spécifiée'}
+              {t('agent.rejected_reason')} {user?.validationRejectReason || 'N/A'}
             </p>
           </motion.div>
         </div>
@@ -134,7 +142,10 @@ export default function AgentDashboardScreen() {
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">Tableau de bord</h1>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+                <span className="text-white font-bold text-sm">T</span>
+              </div>
+              <h1 className="text-lg font-semibold">{t('agent.dashboard')}</h1>
               <Badge className="bg-red-200 text-red-800 border-red-300 text-xs">
                 Agent
               </Badge>
@@ -152,10 +163,10 @@ export default function AgentDashboardScreen() {
               <XCircle className="size-10 text-red-600 dark:text-red-400" />
             </div>
             <h2 className="text-xl font-bold text-red-900 dark:text-red-100 mb-3">
-              Compte suspendu
+              {t('agent.suspended')}
             </h2>
             <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
-              Votre compte a été suspendu. Veuillez contacter l&apos;administrateur pour plus d&apos;informations.
+              {t('agent.suspended_desc')}
             </p>
           </motion.div>
         </div>
@@ -165,32 +176,32 @@ export default function AgentDashboardScreen() {
 
   const stats = [
     {
-      label: 'Dépots aujourd\'hui',
+      label: t('agent.deposits_today'),
       value: '$0.00',
       icon: DollarSign,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
+      color: 'text-[#1E40AF]',
+      bg: 'bg-blue-50',
     },
     {
-      label: 'Retraits validés',
+      label: t('agent.withdrawals_validated'),
       value: '0',
       icon: ShieldCheck,
       color: 'text-amber-600',
       bg: 'bg-amber-50',
     },
     {
-      label: 'Clients actifs',
+      label: t('agent.active_clients'),
       value: '0',
       icon: Users,
       color: 'text-violet-600',
       bg: 'bg-violet-50',
     },
     {
-      label: 'Volume total',
+      label: t('agent.total_volume'),
       value: `$${(user?.realBalance ?? 0).toFixed(2)}`,
       icon: TrendingUp,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      color: 'text-[#DC2626]',
+      bg: 'bg-red-50',
     },
   ];
 
@@ -201,8 +212,11 @@ export default function AgentDashboardScreen() {
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft className="size-5" />
           </Button>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+            <span className="text-white font-bold text-sm">T</span>
+          </div>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold">Tableau de bord</h1>
+            <h1 className="text-lg font-semibold">{t('agent.dashboard')}</h1>
             <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
               Agent
             </Badge>
@@ -211,14 +225,14 @@ export default function AgentDashboardScreen() {
       </header>
 
       <div className="flex-1 px-4 py-4 space-y-5 pb-8">
-        {/* Agent info */}
+        {/* Agent info card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Card className="bg-gradient-to-br from-amber-500 to-amber-700 text-white">
+          <Card className="bg-gradient-to-br from-amber-500 to-amber-700 text-white border-0">
             <CardContent className="p-5">
-              <p className="text-sm text-amber-100">Code Agent</p>
+              <p className="text-sm text-amber-100">{t('agent.agent_code')}</p>
               <p className="text-3xl font-bold font-mono tracking-wider mt-1">
                 {user?.agentNumber || user?.agentCode || 'N/A'}
               </p>
@@ -263,17 +277,17 @@ export default function AgentDashboardScreen() {
           <Card>
             <CardHeader className="pb-2 px-4 pt-4">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Actions rapides
+                {t('agent.quick_actions')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-2">
               <Button
                 variant="outline"
-                className="w-full justify-start gap-3 text-emerald-600 border-emerald-200 hover:bg-emerald-50 cursor-pointer"
+                className="w-full justify-start gap-3 text-[#1E40AF] border-blue-200 hover:bg-blue-50 cursor-pointer"
                 onClick={() => navigateTo('agent-deposit')}
               >
                 <UserPlus className="size-4" />
-                Effectuer un dépôt client
+                {t('action.agent_deposit')}
               </Button>
               <Button
                 variant="outline"
@@ -281,7 +295,7 @@ export default function AgentDashboardScreen() {
                 onClick={() => navigateTo('agent-withdraw-validate')}
               >
                 <ShieldCheck className="size-4" />
-                Valider un retrait
+                {t('action.agent_validate')}
               </Button>
               <Button
                 variant="outline"
@@ -289,7 +303,7 @@ export default function AgentDashboardScreen() {
                 onClick={() => navigateTo('agent-activity')}
               >
                 <Activity className="size-4" />
-                Voir l'activité
+                {t('action.agent_activity')}
               </Button>
             </CardContent>
           </Card>

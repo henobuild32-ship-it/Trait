@@ -19,8 +19,8 @@ import {
   Check,
   Smartphone,
   Apple,
-  Menu,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,9 +28,62 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/lib/store';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { useTranslation, languageNames, languages, type Language } from '@/lib/i18n';
 import { useState } from 'react';
 
+function LanguageModal({ onClose }: { onClose: () => void }) {
+  const { language, setLanguage } = useTranslation();
+  const { t } = useTranslation();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 50 }}
+        className="w-full max-w-sm bg-card rounded-3xl p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-foreground">{t('settings.language')}</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {languages.map((lang) => (
+            <button
+              key={lang}
+              onClick={() => {
+                setLanguage(lang);
+                onClose();
+                toast.success(t('common.success'));
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all cursor-pointer ${
+                language === lang
+                  ? 'bg-[#1E40AF] text-white shadow-md'
+                  : 'bg-muted/50 hover:bg-muted text-foreground'
+              }`}
+            >
+              <span className="text-lg font-medium">{languageNames[lang]}</span>
+              {language === lang && <Check className="w-4 h-4 ml-auto" />}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function AndroidGuideModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -45,25 +98,25 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] flex items-center justify-center">
             <Smartphone className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-foreground">Installer sur Android</h3>
-            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
+            <h3 className="text-lg font-bold text-foreground">{t('install.android_title')}</h3>
+            <p className="text-xs text-muted-foreground">{t('install.android_subtitle')}</p>
           </div>
         </div>
 
         <div className="flex flex-col gap-4 mb-6">
           {[
-            { step: '1', title: 'Ouvrir dans Chrome', desc: 'Utilisez le navigateur Google Chrome sur votre téléphone' },
-            { step: '2', title: 'Appuyez sur le menu', desc: 'Touchez les trois points (⋮) en haut à droite de Chrome' },
-            { step: '3', title: '"Installer l\'application"', desc: 'Sélectionnez "Installer l\'application" ou "Ajouter à l\'écran d\'accueil"' },
-            { step: '4', title: 'Confirmez', desc: 'Appuyez sur "Installer" — l\'app sera sur votre écran d\'accueil' },
+            { step: '1', title: t('install.step1_android'), desc: t('install.step1_android_desc') },
+            { step: '2', title: t('install.step2_android'), desc: t('install.step2_android_desc') },
+            { step: '3', title: t('install.step3_android'), desc: t('install.step3_android_desc') },
+            { step: '4', title: t('install.step4_android'), desc: t('install.step4_android_desc') },
           ].map((item) => (
             <div key={item.step} className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-sm font-bold text-emerald-700">{item.step}</span>
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-sm font-bold text-blue-700">{item.step}</span>
               </div>
               <div className="pt-0.5">
                 <p className="text-sm font-semibold text-foreground">{item.title}</p>
@@ -75,9 +128,9 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
 
         <Button
           onClick={onClose}
-          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
+          className="w-full h-11 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold rounded-xl cursor-pointer"
         >
-          Compris !
+          {t('install.understood')}
         </Button>
       </motion.div>
     </motion.div>
@@ -85,6 +138,8 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
 }
 
 function IOSGuideModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -99,25 +154,25 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] flex items-center justify-center">
             <Apple className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-foreground">Installer sur iOS</h3>
-            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
+            <h3 className="text-lg font-bold text-foreground">{t('install.ios_title')}</h3>
+            <p className="text-xs text-muted-foreground">{t('install.ios_subtitle')}</p>
           </div>
         </div>
 
         <div className="flex flex-col gap-4 mb-6">
           {[
-            { step: '1', title: 'Ouvrir dans Safari', desc: 'Copiez le lien et ouvrez-le dans Safari' },
-            { step: '2', title: 'Icône Partager', desc: 'Appuyez sur le bouton partage en bas de Safari' },
-            { step: '3', title: '"Sur l\'écran d\'accueil"', desc: 'Faites défiler et sélectionnez cette option' },
-            { step: '4', title: 'Touchez "Ajouter"', desc: 'Confirmez en haut à droite' },
+            { step: '1', title: t('install.step1_ios'), desc: t('install.step1_ios_desc') },
+            { step: '2', title: t('install.step2_ios'), desc: t('install.step2_ios_desc') },
+            { step: '3', title: t('install.step3_ios'), desc: t('install.step3_ios_desc') },
+            { step: '4', title: t('install.step4_ios'), desc: t('install.step4_ios_desc') },
           ].map((item) => (
             <div key={item.step} className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-sm font-bold text-emerald-700">{item.step}</span>
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-sm font-bold text-blue-700">{item.step}</span>
               </div>
               <div className="pt-0.5">
                 <p className="text-sm font-semibold text-foreground">{item.title}</p>
@@ -129,9 +184,9 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
 
         <Button
           onClick={onClose}
-          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
+          className="w-full h-11 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold rounded-xl cursor-pointer"
         >
-          Compris !
+          {t('install.understood')}
         </Button>
       </motion.div>
     </motion.div>
@@ -142,8 +197,10 @@ export default function SettingsScreen() {
   const { goBack, user, logout, navigateTo, isDarkMode, toggleTheme } =
     useAppStore();
   const { canInstall, isIOS, isInstalled, isStandalone, installApp } = usePWAInstall();
+  const { t, language, setLanguage } = useTranslation();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [showAndroidGuide, setShowAndroidGuide] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
 
@@ -151,7 +208,7 @@ export default function SettingsScreen() {
 
   const handleLogout = () => {
     logout();
-    toast.success('Déconnecté avec succès');
+    toast.success(t('settings.logout_success'));
   };
 
   const handleInstall = async () => {
@@ -163,9 +220,8 @@ export default function SettingsScreen() {
     const success = await installApp();
     setInstalling(false);
     if (success) {
-      toast.success('Application installée avec succès !');
+      toast.success(t('welcome.install_success'));
     } else {
-      // Native install not available — show manual guide
       setShowAndroidGuide(true);
     }
   };
@@ -177,15 +233,15 @@ export default function SettingsScreen() {
       if (res.ok) {
         const data = await res.json();
         if (data.hasUpdate) {
-          toast.success(`Nouvelle mise à jour disponible: v${data.latestVersion}`);
+          toast.success(t('settings.update_available').replace('{version}', data.latestVersion));
         } else {
-          toast.success('Application à jour');
+          toast.success(t('settings.up_to_date'));
         }
       } else {
-        toast.error('Erreur lors de la vérification des mises à jour');
+        toast.error(t('settings.update_error'));
       }
     } catch {
-      toast.error('Erreur de connexion');
+      toast.error(t('settings.connection_error'));
     } finally {
       setUpdateLoading(false);
     }
@@ -202,61 +258,61 @@ export default function SettingsScreen() {
 
   const settingsItems = [
     {
-      section: 'Sécurité',
+      section: t('settings.security'),
       items: [
         {
           icon: Lock,
-          label: 'Changer le code PIN',
+          label: t('settings.change_pin'),
           value: null,
-          action: () => toast.info('Fonctionnalité à venir'),
+          action: () => toast.info(t('common.coming_soon')),
         },
         {
           icon: Shield,
-          label: 'Activer l\'authentification 2FA',
+          label: t('settings.enable_2fa'),
           value: 'toggle',
-          action: () => toast.info('Fonctionnalité à venir'),
+          action: () => toast.info(t('common.coming_soon')),
         },
       ],
     },
     {
-      section: 'Application',
+      section: t('settings.application'),
       items: [
         {
           icon: Moon,
-          label: 'Mode sombre',
+          label: t('settings.dark_mode'),
           value: 'darkMode',
           action: toggleTheme,
         },
         {
           icon: Globe,
-          label: 'Langue',
-          value: 'Français',
-          action: () => toast.info('Langue par défaut : Français'),
+          label: t('settings.language'),
+          value: languageNames[language],
+          action: () => setShowLanguageModal(true),
         },
         {
           icon: GraduationCap,
-          label: 'Voir le tutoriel',
+          label: t('settings.tutorial'),
           value: null,
           action: () => navigateTo('onboarding'),
         },
         {
           icon: Download,
-          label: 'Télécharger l\'application',
-          value: (isInstalled || isStandalone) ? 'Installée' : 'PWA',
+          label: t('settings.download'),
+          value: (isInstalled || isStandalone) ? t('settings.installed') : 'PWA',
           action: handleInstall,
           badge: !(isInstalled || isStandalone),
         },
         {
           icon: Info,
-          label: 'À propos de Trait',
+          label: t('settings.about'),
           value: 'v1.0',
           action: () =>
             toast.info('Trait v1.0 — Votre partenaire financier digital'),
         },
         {
           icon: RefreshCw,
-          label: 'Vérifier les mises à jour',
-          value: updateLoading ? 'Vérification...' : null,
+          label: t('settings.check_updates'),
+          value: updateLoading ? t('settings.updating') : null,
           action: checkForUpdates,
         },
       ],
@@ -271,7 +327,7 @@ export default function SettingsScreen() {
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft className="size-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Paramètres</h1>
+          <h1 className="text-lg font-semibold">{t('settings.title')}</h1>
         </div>
       </header>
 
@@ -288,7 +344,7 @@ export default function SettingsScreen() {
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0 ${
                   isAgent
                     ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                    : 'bg-gradient-to-br from-emerald-400 to-emerald-600'
+                    : 'bg-gradient-to-br from-blue-400 to-blue-600'
                 }`}>
                   {initials}
                 </div>
@@ -297,7 +353,7 @@ export default function SettingsScreen() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-lg truncate">
-                      {user?.name || user?.pseudo || 'Utilisateur'}
+                      {user?.name || user?.pseudo || t('common.user')}
                     </h3>
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -326,10 +382,10 @@ export default function SettingsScreen() {
               <div className="mt-3 flex flex-col gap-2">
                 <Button
                   variant="outline"
-                  className="w-full text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                  className="w-full text-[#1E40AF] border-blue-200 hover:bg-blue-50"
                   onClick={() => navigateTo('profile')}
                 >
-                  Modifier le profil
+                  {t('settings.edit_profile')}
                   <ChevronRight className="size-4 ml-auto" />
                 </Button>
                 {isAgent && (
@@ -339,7 +395,7 @@ export default function SettingsScreen() {
                     onClick={() => navigateTo('agent-dashboard')}
                   >
                     <LayoutDashboard className="size-4 mr-2" />
-                    Tableau de bord agent
+                    {t('settings.agent_dashboard')}
                     <ChevronRight className="size-4 ml-auto" />
                   </Button>
                 )}
@@ -376,9 +432,9 @@ export default function SettingsScreen() {
                         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left cursor-pointer disabled:opacity-50"
                       >
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                          item.badge ? 'bg-emerald-100' : 'bg-muted'
+                          item.badge ? 'bg-blue-100' : 'bg-muted'
                         }`}>
-                          <Icon className={`size-4 ${item.badge ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                          <Icon className={`size-4 ${item.badge ? 'text-[#1E40AF]' : 'text-muted-foreground'}`} />
                         </div>
                         <span className="flex-1 text-sm">{item.label}</span>
 
@@ -399,7 +455,7 @@ export default function SettingsScreen() {
                           item.value !== 'toggle' &&
                           item.value !== 'darkMode' && (
                             <span className={`text-sm mr-1 ${
-                              item.value === 'Installée' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'
+                              item.value === t('settings.installed') ? 'text-[#1E40AF] font-semibold' : 'text-muted-foreground'
                             }`}>
                               {item.value}
                             </span>
@@ -423,22 +479,22 @@ export default function SettingsScreen() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
           >
-            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-background overflow-hidden">
+            <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-background overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#1E40AF] flex items-center justify-center">
                     <Download className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-bold text-foreground">Télécharger l&apos;application</h3>
-                    <p className="text-xs text-muted-foreground">Installez Trait sur votre téléphone</p>
+                    <h3 className="text-sm font-bold text-foreground">{t('settings.download')}</h3>
+                    <p className="text-xs text-muted-foreground">{t('settings.download_desc')}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleInstall}
                     disabled={installing}
-                    className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-xl py-2.5 px-3 hover:bg-emerald-700 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#1E40AF] text-white rounded-xl py-2.5 px-3 hover:bg-[#1E3A8A] active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
                   >
                     {installing ? (
                       <motion.div
@@ -450,7 +506,7 @@ export default function SettingsScreen() {
                       <Smartphone className="w-4 h-4" />
                     )}
                     <span className="text-xs font-semibold">
-                      {installing ? 'Installation...' : 'Android'}
+                      {installing ? t('welcome.installing') : 'Android'}
                     </span>
                   </button>
                   <button
@@ -480,7 +536,7 @@ export default function SettingsScreen() {
                 onClick={handleLogout}
               >
                 <LogOut className="size-4" />
-                Se déconnecter
+                {t('settings.logout')}
               </Button>
             </CardContent>
           </Card>
@@ -493,7 +549,7 @@ export default function SettingsScreen() {
           transition={{ delay: 0.5 }}
           className="text-center text-xs text-muted-foreground"
         >
-          Trait v1.0.0 — Fait avec ❤️ en Afrique
+          {t('settings.version')}
         </motion.p>
       </div>
 
@@ -502,6 +558,9 @@ export default function SettingsScreen() {
 
       {/* iOS Installation Guide Modal */}
       {showIOSGuide && <IOSGuideModal onClose={() => setShowIOSGuide(false)} />}
+
+      {/* Language Selector Modal */}
+      {showLanguageModal && <LanguageModal onClose={() => setShowLanguageModal(false)} />}
     </div>
   );
 }

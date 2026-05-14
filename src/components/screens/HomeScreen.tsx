@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import {
   Bell,
   Send,
@@ -14,12 +15,21 @@ import {
   UserPlus,
   ShieldCheck,
   Wallet,
+  Globe,
+  MessageSquare,
+  Copy,
+  Check,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/lib/store';
+import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
 
 interface HistoryItem {
@@ -34,29 +44,40 @@ interface HistoryItem {
 }
 
 const clientQuickActions = [
-  { emoji: '💸', label: 'Envoyer', icon: Send, page: 'send' as const },
-  { emoji: '🏧', label: 'Retirer', icon: ArrowDownToLine, page: 'withdraw' as const },
-  { emoji: '➕', label: 'Déposer', icon: ArrowUpFromLine, page: 'deposit' as const },
-  { emoji: '📜', label: 'Historique', icon: History, page: 'history' as const },
-  { emoji: '📶', label: 'USSD', icon: Phone, page: 'ussd' as const },
-  { emoji: '🛒', label: 'Marketplace', icon: Store, page: 'marketplace' as const },
+  { labelKey: 'action.send', icon: Send, page: 'send' as const, color: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
+  { labelKey: 'action.withdraw', icon: ArrowDownToLine, page: 'withdraw' as const, color: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400' },
+  { labelKey: 'action.deposit', icon: ArrowUpFromLine, page: 'deposit' as const, color: 'bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400' },
+  { labelKey: 'action.intl_transfer', icon: Globe, page: 'international-transfer' as const, color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
+  { labelKey: 'action.history', icon: History, page: 'history' as const, color: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
+  { labelKey: 'action.marketplace', icon: Store, page: 'marketplace' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
 ];
 
 const agentQuickActions = [
-  { emoji: '💵', label: 'Dépôt client', icon: UserPlus, page: 'agent-deposit' as const },
-  { emoji: '✅', label: 'Valider retrait', icon: ShieldCheck, page: 'agent-withdraw-validate' as const },
-  { emoji: '📊', label: 'Mon activité', icon: Activity, page: 'agent-activity' as const },
-  { emoji: '📶', label: 'USSD', icon: Phone, page: 'ussd' as const },
-  { emoji: '🛒', label: 'Marketplace', icon: Store, page: 'marketplace' as const },
+  { labelKey: 'action.agent_deposit', icon: UserPlus, page: 'agent-deposit' as const, color: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
+  { labelKey: 'action.agent_validate', icon: ShieldCheck, page: 'agent-withdraw-validate' as const, color: 'bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400' },
+  { labelKey: 'action.agent_activity', icon: Activity, page: 'agent-activity' as const, color: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
+  { labelKey: 'action.ussd', icon: Phone, page: 'ussd' as const, color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
+  { labelKey: 'action.marketplace', icon: Store, page: 'marketplace' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
+  { labelKey: 'action.messages', icon: MessageSquare, page: 'agent-messages' as const, color: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400' },
 ];
 
 function getTypeIcon(type: string) {
   switch (type) {
-    case 'send': return '💸';
-    case 'receive': return '💰';
-    case 'deposit': return '➕';
-    case 'withdrawal': return '🏧';
-    default: return '📄';
+    case 'send': return ArrowUpRight;
+    case 'receive': return ArrowDownLeft;
+    case 'deposit': return ArrowDownLeft;
+    case 'withdrawal': return ArrowUpRight;
+    default: return History;
+  }
+}
+
+function getTypeColor(type: string) {
+  switch (type) {
+    case 'send': return 'bg-red-50 text-red-500 dark:bg-red-950 dark:text-red-400';
+    case 'receive': return 'bg-green-50 text-green-500 dark:bg-green-950 dark:text-green-400';
+    case 'deposit': return 'bg-blue-50 text-blue-500 dark:bg-blue-950 dark:text-blue-400';
+    case 'withdrawal': return 'bg-red-50 text-red-500 dark:bg-red-950 dark:text-red-400';
+    default: return 'bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400';
   }
 }
 
@@ -82,8 +103,10 @@ function formatDate(dateStr: string) {
 
 export default function HomeScreen() {
   const { user, navigateTo, setUser } = useAppStore();
+  const { t } = useTranslation();
   const [recentTransactions, setRecentTransactions] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const isAgent = user?.role === 'agent';
   const realBalanceUSD = user?.realBalance ?? 0;
@@ -94,6 +117,7 @@ export default function HomeScreen() {
   const totalFC = realBalanceFC + bonusBalanceFC;
 
   const quickActions = isAgent ? agentQuickActions : clientQuickActions;
+  const agentCode = user?.agentNumber || user?.agentCode;
 
   useEffect(() => {
     fetchRecentTransactions();
@@ -139,195 +163,262 @@ export default function HomeScreen() {
     }
   }
 
+  function handleCopyCode() {
+    if (!agentCode) return;
+    navigator.clipboard?.writeText(agentCode);
+    setCodeCopied(true);
+    toast.success(t('home.copied'));
+    setTimeout(() => setCodeCopied(false), 2000);
+  }
+
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 pt-6 pb-4">
-        <div className="flex items-center gap-2">
-          <div>
-            <p className="text-sm text-muted-foreground">Bienvenue,</p>
-            <h1 className="text-xl font-bold text-foreground">
-              {user?.name || user?.pseudo || 'Utilisateur'}
-            </h1>
-          </div>
-          {isAgent && (
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold px-2 py-0.5">
-              Agent
-            </Badge>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative rounded-full"
-          onClick={() => navigateTo('notifications')}
-        >
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Notifications</span>
-        </Button>
-      </div>
-
-      {/* Agent code display */}
-      {isAgent && user?.agentCode && (
-        <div className="px-4 mb-4">
-          <Card className="border-emerald-200 bg-emerald-50/50">
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                <BadgeCheck className="size-5 text-emerald-700" />
+      {/* ─── Top Bar ─────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            {/* TRAIT Logo */}
+            <div className="relative h-9 w-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center shrink-0">
+              <Image
+                src="/trait-logo.png"
+                alt="TRAIT"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground leading-none">
+                {t('home.welcome')}
+              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <h1 className="text-base font-bold text-foreground truncate">
+                  {user?.name || user?.pseudo || 'Utilisateur'}
+                </h1>
+                {isAgent && (
+                  <Badge className="bg-[#1E40AF]/10 text-[#1E40AF] border-[#1E40AF]/20 text-[10px] font-semibold px-1.5 py-0 dark:bg-[#1E40AF]/20 dark:text-blue-300 dark:border-[#1E40AF]/30 shrink-0">
+                    Agent
+                  </Badge>
+                )}
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Code Agent</p>
-                <p className="text-lg font-bold font-mono text-emerald-800 tracking-wider">
-                  {user.agentCode}
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative rounded-full h-9 w-9"
+            onClick={() => navigateTo('notifications')}
+          >
+            <Bell className="h-[18px] w-[18px]" />
+            <span className="sr-only">{t('nav.notifications')}</span>
+          </Button>
+        </div>
+      </header>
+
+      <main className="px-4 pt-5 space-y-6">
+        {/* ─── Agent Code Display ────────────────────────────── */}
+        {isAgent && agentCode && (
+          <Card className="border-[#1E40AF]/20 bg-[#1E40AF]/5 dark:border-[#1E40AF]/30 dark:bg-[#1E40AF]/10 shadow-lg shadow-blue-900/5">
+            <CardContent className="p-3.5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#1E40AF]/10 flex items-center justify-center shrink-0">
+                <BadgeCheck className="size-5 text-[#1E40AF]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                  {t('home.agent_code')}
+                </p>
+                <p className="text-lg font-bold font-mono text-[#1E40AF] tracking-wider dark:text-blue-300">
+                  {agentCode}
                 </p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="ml-auto text-emerald-600 hover:text-emerald-700 text-xs"
-                onClick={() => {
-                  navigator.clipboard?.writeText(user.agentCode!);
-                  toast.success('Code copié !');
-                }}
+                className="ml-auto text-[#1E40AF] hover:text-[#1E40AF]/80 hover:bg-[#1E40AF]/10 text-xs font-medium dark:text-blue-300"
+                onClick={handleCopyCode}
               >
-                Copier
+                {codeCopied ? (
+                  <Check className="h-4 w-4 mr-1" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-1" />
+                )}
+                {codeCopied ? 'OK' : t('home.copy')}
               </Button>
             </CardContent>
           </Card>
-        </div>
-      )}
-
-      {/* USD Balance Card */}
-      <div className="px-4 mb-3">
-        <div className={`rounded-2xl p-5 text-white shadow-lg ${
-          isAgent
-            ? 'bg-gradient-to-br from-amber-500 to-amber-700'
-            : 'bg-gradient-to-br from-emerald-600 to-emerald-800'
-        }`}>
-          <div className="flex items-center gap-2 mb-1">
-            <Wallet className="size-4 opacity-80" />
-            <p className="text-sm opacity-80">
-              {isAgent ? 'Portefeuille USD' : 'Solde USD'}
-            </p>
-          </div>
-          <p className="text-4xl font-bold tracking-tight">
-            $ {totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
-      </div>
-
-      {/* FC Balance Card */}
-      <div className="px-4 mb-6">
-        <div className="rounded-2xl p-5 text-white shadow-lg bg-gradient-to-br from-blue-600 to-blue-800">
-          <div className="flex items-center gap-2 mb-1">
-            <Wallet className="size-4 opacity-80" />
-            <p className="text-sm opacity-80">
-              {isAgent ? 'Portefeuille FC' : 'Solde FC'}
-            </p>
-          </div>
-          <p className="text-4xl font-bold tracking-tight">
-            {totalFC.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} FC
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="px-4 mb-6">
-        <div className={`grid gap-4 ${
-          isAgent ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-3'
-        }`}>
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={action.page}
-                onClick={() => navigateTo(action.page)}
-                className="flex flex-col items-center gap-2 rounded-xl bg-card p-4 shadow-sm border border-border transition-colors hover:bg-accent active:scale-95"
-              >
-                <span className="text-2xl">{action.emoji}</span>
-                <span className={`text-xs font-medium text-foreground ${isAgent ? 'text-center leading-tight' : ''}`}>
-                  {action.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recent Transactions */}
-      <div className="px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            Transactions récentes
-          </h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
-            onClick={() => navigateTo('history')}
-          >
-            Voir tout
-          </Button>
-        </div>
-
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-                <Skeleton className="h-4 w-16" />
-              </div>
-            ))}
-          </div>
-        ) : recentTransactions.length === 0 ? (
-          <Card className="border-border">
-            <CardContent className="flex flex-col items-center justify-center py-10">
-              <span className="text-4xl mb-3">📭</span>
-              <p className="text-sm text-muted-foreground">Aucune transaction</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {isAgent
-                  ? 'Les transactions de vos clients apparaîtront ici'
-                  : 'Vos transactions apparaîtront ici'}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {recentTransactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border transition-colors"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-lg">
-                  {getTypeIcon(tx.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {tx.description}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
-                </div>
-                <div className="text-right">
-                  <p
-                    className={`text-sm font-semibold ${
-                      tx.type === 'receive' || tx.type === 'deposit'
-                        ? 'text-emerald-600'
-                        : 'text-red-500'
-                    }`}
-                  >
-                    {tx.type === 'receive' || tx.type === 'deposit' ? '+' : '-'}
-                    {fmtCurrency(tx.amount, tx.currency)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
         )}
-      </div>
+
+        {/* ─── Balance Cards ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* USD Balance */}
+          <div className="rounded-2xl p-4 text-white shadow-lg shadow-blue-900/10 bg-gradient-to-br from-[#1E40AF] to-[#2563EB] relative overflow-hidden">
+            {/* Decorative circles */}
+            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
+            <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/5" />
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-1.5 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <Wallet className="size-3.5" />
+                </div>
+                <p className="text-[11px] font-medium opacity-90">
+                  {isAgent ? t('home.wallet_usd') : t('home.balance_usd')}
+                </p>
+              </div>
+              <p className="text-xl font-bold tracking-tight leading-tight">
+                $ {totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              {(bonusBalanceUSD > 0) && (
+                <div className="mt-2 flex items-center gap-2 text-[10px] opacity-80">
+                  <span>{t('home.real')}: ${realBalanceUSD.toFixed(2)}</span>
+                  <span className="w-px h-3 bg-white/40" />
+                  <span>+{t('home.bonus')}: ${bonusBalanceUSD.toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* FC Balance */}
+          <div className="rounded-2xl p-4 text-white shadow-lg shadow-red-900/10 bg-gradient-to-br from-[#DC2626] to-[#EF4444] relative overflow-hidden">
+            {/* Decorative circles */}
+            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
+            <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/5" />
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-1.5 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <Wallet className="size-3.5" />
+                </div>
+                <p className="text-[11px] font-medium opacity-90">
+                  {isAgent ? t('home.wallet_fc') : t('home.balance_fc')}
+                </p>
+              </div>
+              <p className="text-xl font-bold tracking-tight leading-tight">
+                {totalFC.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span className="text-xs font-medium opacity-80 ml-1">FC</span>
+              </p>
+              {(bonusBalanceFC > 0) && (
+                <div className="mt-2 flex items-center gap-2 text-[10px] opacity-80">
+                  <span>{t('home.real')}: {realBalanceFC.toFixed(2)}</span>
+                  <span className="w-px h-3 bg-white/40" />
+                  <span>+{t('home.bonus')}: {bonusBalanceFC.toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Quick Actions ─────────────────────────────────── */}
+        <section>
+          <div className={`grid gap-3 ${
+            isAgent ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-3'
+          }`}>
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.page}
+                  onClick={() => navigateTo(action.page)}
+                  className="flex flex-col items-center gap-2.5 rounded-2xl bg-card p-4 shadow-sm border border-border hover:shadow-md hover:border-[#1E40AF]/20 transition-all active:scale-[0.97] dark:hover:border-blue-500/30"
+                >
+                  <div className={`w-11 h-11 rounded-xl ${action.color} flex items-center justify-center`}>
+                    <Icon className="size-5" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-foreground text-center leading-tight">
+                    {t(action.labelKey)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ─── Recent Transactions ───────────────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-foreground">
+              {t('home.recent_transactions')}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[#1E40AF] hover:text-[#1E40AF]/80 hover:bg-[#1E40AF]/10 text-xs font-semibold dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/10"
+              onClick={() => navigateTo('history')}
+            >
+              {t('home.view_all')}
+            </Button>
+          </div>
+
+          {loading ? (
+            <div className="space-y-2.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
+                  <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3.5 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : recentTransactions.length === 0 ? (
+            <Card className="border-border">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center mb-3">
+                  <History className="size-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-semibold text-muted-foreground">
+                  {t('home.no_transactions')}
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  {isAgent
+                    ? t('home.no_transactions_agent')
+                    : t('home.no_transactions_client')}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {recentTransactions.map((tx) => {
+                const TypeIcon = getTypeIcon(tx.type);
+                const typeColor = getTypeColor(tx.type);
+                const isReceive = tx.type === 'receive' || tx.type === 'deposit';
+                return (
+                  <div
+                    key={tx.id}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:shadow-sm hover:border-[#1E40AF]/15 transition-all dark:hover:border-blue-500/20"
+                  >
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeColor} shrink-0`}>
+                      <TypeIcon className="size-[18px]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {tx.description}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {formatDate(tx.createdAt)}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p
+                        className={`text-sm font-bold ${
+                          isReceive
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-500 dark:text-red-400'
+                        }`}
+                      >
+                        {isReceive ? '+' : '-'}
+                        {fmtCurrency(tx.amount, tx.currency)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }

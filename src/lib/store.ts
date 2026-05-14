@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Language } from '@/lib/i18n';
 
 // ─── Type Definitions ────────────────────────────────────────────────
 
@@ -48,7 +49,10 @@ export type PageName =
   | 'admin-bonus-history'
   | 'admin-bonus-campaigns'
   | 'admin-agent-validation'
-  | 'admin-messages';
+  | 'admin-messages'
+  | 'admin-developers'
+  | 'developer-register'
+  | 'international-transfer';
 
 export type UserRole = 'client' | 'agent';
 
@@ -144,9 +148,14 @@ interface ThemeState {
   toggleTheme: () => void;
 }
 
+interface LanguageState {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+}
+
 // ─── Combined Store Interface ───────────────────────────────────────
 
-export interface AppStore extends NavigationState, AuthState, AuthFormState, PinState, NotificationState, ThemeState {}
+export interface AppStore extends NavigationState, AuthState, AuthFormState, PinState, NotificationState, ThemeState, LanguageState {}
 
 // ─── The Store ──────────────────────────────────────────────────────
 
@@ -265,6 +274,11 @@ export const useAppStore = create<AppStore>()(
       isDarkMode: false,
 
       toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+
+      // ── Language ───────────────────────────────────────────────
+      language: 'fr' as Language,
+
+      setLanguage: (lang) => set({ language: lang }),
     }),
     {
       name: 'trait-app-storage',
@@ -273,6 +287,7 @@ export const useAppStore = create<AppStore>()(
         admin: state.admin,
         isDarkMode: state.isDarkMode,
         selectedRole: state.selectedRole,
+        language: state.language,
       }),
     },
   ),

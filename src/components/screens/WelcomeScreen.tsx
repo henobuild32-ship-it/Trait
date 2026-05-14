@@ -1,203 +1,168 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, ArrowLeftRight, Store, Phone, Download, Smartphone, Apple, Check, Menu } from 'lucide-react';
+import {
+  Send,
+  Phone,
+  Store,
+  Code,
+  ArrowLeftRight,
+  ShoppingBag,
+  Smartphone,
+  Apple,
+  Check,
+  Bell,
+  Globe,
+  Headphones,
+  Loader2,
+  Shield,
+  Zap,
+  Users,
+  ChevronRight,
+} from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/lib/store';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { useState } from 'react';
+import { useTranslation, languageNames, languages, type Language } from '@/lib/i18n';
 import { toast } from 'sonner';
 
-const features = [
+// ─── Services Data ────────────────────────────────────────────────
+const services = [
   {
     icon: Send,
-    title: 'Transfert d\'argent',
-    description: 'Envoyez de l\'argent instantanément',
-  },
-  {
-    icon: ArrowLeftRight,
-    title: 'Troc Digital',
-    description: 'Échangez des biens et services',
-  },
-  {
-    icon: Store,
-    title: 'Marketplace',
-    description: 'Achetez et vendez facilement',
+    titleKey: 'welcome.services.transfers',
+    descKey: 'welcome.services.transfers_desc',
+    color: 'blue' as const,
   },
   {
     icon: Phone,
-    title: 'USSD Intégré',
-    description: 'Accessible sans internet',
+    titleKey: 'welcome.services.mobile_money',
+    descKey: 'welcome.services.mobile_money_desc',
+    color: 'red' as const,
+  },
+  {
+    icon: Store,
+    titleKey: 'welcome.services.merchant',
+    descKey: 'welcome.services.merchant_desc',
+    color: 'amber' as const,
+  },
+  {
+    icon: Code,
+    titleKey: 'welcome.services.api',
+    descKey: 'welcome.services.api_desc',
+    color: 'emerald' as const,
+  },
+  {
+    icon: ArrowLeftRight,
+    titleKey: 'welcome.services.barter',
+    descKey: 'welcome.services.barter_desc',
+    color: 'violet' as const,
+  },
+  {
+    icon: ShoppingBag,
+    titleKey: 'welcome.services.marketplace',
+    descKey: 'welcome.services.marketplace_desc',
+    color: 'cyan' as const,
   },
 ];
 
-function AndroidGuideModal({ onClose }: { onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm bg-card rounded-3xl p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
-            <Smartphone className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-foreground">Installer sur Android</h3>
-            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
-          </div>
-        </div>
+// ─── Color mapping for service cards ──────────────────────────────
+const colorMap: Record<string, { bg: string; icon: string; border: string; accent: string }> = {
+  blue: {
+    bg: 'bg-blue-50 dark:bg-blue-950/40',
+    icon: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-100 dark:border-blue-900/50',
+    accent: 'bg-blue-500',
+  },
+  red: {
+    bg: 'bg-red-50 dark:bg-red-950/40',
+    icon: 'text-red-600 dark:text-red-400',
+    border: 'border-red-100 dark:border-red-900/50',
+    accent: 'bg-red-500',
+  },
+  amber: {
+    bg: 'bg-amber-50 dark:bg-amber-950/40',
+    icon: 'text-amber-600 dark:text-amber-400',
+    border: 'border-amber-100 dark:border-amber-900/50',
+    accent: 'bg-amber-500',
+  },
+  emerald: {
+    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+    icon: 'text-emerald-600 dark:text-emerald-400',
+    border: 'border-emerald-100 dark:border-emerald-900/50',
+    accent: 'bg-emerald-500',
+  },
+  violet: {
+    bg: 'bg-violet-50 dark:bg-violet-950/40',
+    icon: 'text-violet-600 dark:text-violet-400',
+    border: 'border-violet-100 dark:border-violet-900/50',
+    accent: 'bg-violet-500',
+  },
+  cyan: {
+    bg: 'bg-cyan-50 dark:bg-cyan-950/40',
+    icon: 'text-cyan-600 dark:text-cyan-400',
+    border: 'border-cyan-100 dark:border-cyan-900/50',
+    accent: 'bg-cyan-500',
+  },
+};
 
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">1</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">Ouvrir dans Chrome</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Utilisez le navigateur Google Chrome sur votre téléphone</p>
-            </div>
-          </div>
+// ─── Animation Variants ───────────────────────────────────────────
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+};
 
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">2</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">Appuyez sur le menu</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Touchez les <Menu className="w-3.5 h-3.5 inline mx-0.5" /> trois points en haut à droite de Chrome</p>
-            </div>
-          </div>
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
+};
 
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">3</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">&quot;Installer l&apos;application&quot;</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Sélectionnez &quot;Installer l&apos;application&quot; ou &quot;Ajouter à l&apos;écran d&apos;accueil&quot;</p>
-            </div>
-          </div>
+const heroTextVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.6, ease: 'easeOut' as const },
+  },
+};
 
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">4</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">Confirmez l&apos;installation</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Appuyez sur &quot;Installer&quot; — l&apos;app apparaîtra sur votre écran d&apos;accueil</p>
-            </div>
-          </div>
-        </div>
+const badgeVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.3, ease: 'easeOut' as const },
+  },
+};
 
-        <Button
-          onClick={onClose}
-          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
-        >
-          Compris !
-        </Button>
-      </motion.div>
-    </motion.div>
-  );
-}
+const logoVariants = {
+  hidden: { opacity: 0, scale: 0.5 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.34, 1.56, 0.64, 1] as const },
+  },
+};
 
-function IOSGuideModal({ onClose }: { onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm bg-card rounded-3xl p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
-            <Apple className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-foreground">Installer sur iOS</h3>
-            <p className="text-xs text-muted-foreground">Suivez ces étapes simples</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">1</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">Ouvrir dans Safari</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Copiez le lien et ouvrez-le dans le navigateur Safari</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">2</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">Touchez l&apos;icône Partager</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Appuyez sur le bouton <span className="inline-flex items-center"><svg className="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> en bas de l&apos;écran Safari</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">3</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Faites défiler et tapez &quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-emerald-700">4</span>
-            </div>
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-foreground">Touchez &quot;Ajouter&quot;</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Confirmez en haut à droite avec &quot;Ajouter&quot;</p>
-            </div>
-          </div>
-        </div>
-
-        <Button
-          onClick={onClose}
-          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl cursor-pointer"
-        >
-          Compris !
-        </Button>
-      </motion.div>
-    </motion.div>
-  );
-}
-
+// ─── Component ────────────────────────────────────────────────────
 export default function WelcomeScreen() {
   const navigateTo = useAppStore((s) => s.navigateTo);
+  const setSelectedRole = useAppStore((s) => s.setSelectedRole);
   const { canInstall, isIOS, isInstalled, isStandalone, installApp } = usePWAInstall();
-  const [showIOSGuide, setShowIOSGuide] = useState(false);
-  const [showAndroidGuide, setShowAndroidGuide] = useState(false);
+  const { t, language, setLanguage } = useTranslation();
   const [installing, setInstalling] = useState(false);
+
+  const handleLanguageChange = (lang: Language) => {
+    setLanguage(lang);
+  };
 
   const handleAndroidInstall = async () => {
     setInstalling(true);
@@ -205,165 +170,286 @@ export default function WelcomeScreen() {
     setInstalling(false);
 
     if (success) {
-      toast.success('Application installée avec succès !');
+      toast.success(t('welcome.install_success'));
     } else {
-      // Native install not available — show manual guide
-      setShowAndroidGuide(true);
+      toast.info(t('welcome.install_guide'));
     }
   };
 
+  const handleIOSInstall = () => {
+    toast.info(t('welcome.ios_guide'));
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-emerald-50/10 to-background dark:from-background dark:via-emerald-950/20 dark:to-background">
-      {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-        <div className="w-full max-w-sm flex flex-col items-center gap-6">
-          {/* Logo */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative w-full max-w-[220px] rounded-2xl shadow-lg shadow-emerald-200/50 overflow-hidden">
-              <img
-                src="/icon-1024.png"
-                alt="Trait Logo"
-                className="w-full h-auto object-contain"
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="min-h-screen flex flex-col bg-background"
+    >
+      {/* ── Header: Language Selector ─────────────────────────────── */}
+      <motion.header
+        variants={itemVariants}
+        className="px-5 pt-4 pb-2 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-1.5 min-w-0" />
+        {/* Language Pills */}
+        <div className="flex items-center gap-1 flex-wrap justify-end">
+          <Globe className="w-3.5 h-3.5 text-muted-foreground mr-0.5 shrink-0" />
+          {languages.map((lang) => (
+            <button
+              key={lang}
+              onClick={() => handleLanguageChange(lang)}
+              className={`
+                px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer
+                ${language === lang
+                  ? 'bg-[#1E40AF] text-white shadow-sm shadow-blue-200 dark:shadow-blue-900/40'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }
+              `}
+              aria-label={languageNames[lang]}
+            >
+              {lang.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </motion.header>
+
+      {/* ── Logo Section ─────────────────────────────────────────── */}
+      <motion.div
+        variants={logoVariants}
+        className="flex flex-col items-center pt-4 pb-5"
+      >
+        <div className="relative">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1.5 shadow-xl shadow-blue-200/50 dark:shadow-blue-900/30">
+            <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+              <Image
+                src="/trait-logo.png"
+                alt="TRAIT"
+                width={56}
+                height={56}
+                className="object-contain"
+                priority
               />
             </div>
           </div>
+          {/* Decorative ring */}
+          <div className="absolute -inset-1.5 rounded-[20px] border-2 border-blue-200/40 dark:border-blue-700/30 pointer-events-none" />
+        </div>
+        <h1 className="mt-3 text-2xl font-black tracking-tight text-foreground">
+          TRAIT
+        </h1>
+        <p className="text-xs text-muted-foreground font-medium mt-0.5">
+          FinTech for Africa
+        </p>
+      </motion.div>
 
-          {/* Tagline */}
-          <p className="text-center text-lg text-muted-foreground font-medium">
-            Transfert d&apos;argent, Troc &amp; Marketplace
+      {/* ── Hero Banner ───────────────────────────────────────────── */}
+      <motion.section
+        variants={heroTextVariants}
+        className="mx-5 mb-5 rounded-2xl bg-gradient-to-br from-[#1E40AF] via-[#2563EB] to-[#DC2626] p-6 shadow-xl shadow-blue-200/40 dark:shadow-blue-900/20 relative overflow-hidden"
+      >
+        {/* Decorative elements */}
+        <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-white/10" />
+        <div className="absolute -bottom-10 -left-10 w-28 h-28 rounded-full bg-white/5" />
+        <div className="absolute top-1/3 right-8 w-14 h-14 rounded-full bg-white/5" />
+        <div className="absolute bottom-4 right-1/3 w-8 h-8 rounded-full bg-white/5" />
+
+        <div className="relative z-10">
+          <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+            {t('welcome.tagline')}
+          </h1>
+          <p className="mt-2 text-blue-100 text-sm sm:text-base font-medium">
+            {t('welcome.subtitle')}
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <motion.div variants={badgeVariants}>
+              <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/25 text-xs font-medium">
+                <Zap className="w-3 h-3 mr-1" />
+                {t('welcome.fee')}
+              </Badge>
+            </motion.div>
+            <motion.div variants={badgeVariants}>
+              <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/25 text-xs font-medium">
+                <Check className="w-3 h-3 mr-1" />
+                {t('welcome.bonus')}
+              </Badge>
+            </motion.div>
+          </div>
+        </div>
+      </motion.section>
 
-          {/* Feature cards */}
-          <div className="w-full grid grid-cols-2 gap-3">
-            {features.map((feature) => {
-              const Icon = feature.icon;
+      {/* ── Main Content ──────────────────────────────────────────── */}
+      <main className="flex-1 px-5 space-y-6 pb-8">
+
+        {/* ── Action Buttons ──────────────────────────────────────── */}
+        <motion.div variants={itemVariants} className="space-y-2.5">
+          {/* Se connecter - Outline */}
+          <Button
+            onClick={() => navigateTo('auth-login')}
+            variant="outline"
+            className="w-full h-12 text-base font-semibold border-2 border-[#1E40AF]/30 text-[#1E40AF] dark:text-blue-400 dark:border-blue-700/40 hover:bg-[#1E40AF]/5 dark:hover:bg-blue-950/30 rounded-xl transition-all duration-200 cursor-pointer"
+          >
+            {t('welcome.login')}
+          </Button>
+
+          {/* Créer un compte - Blue filled */}
+          <Button
+            onClick={() => navigateTo('auth-role')}
+            className="w-full h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-200/40 dark:shadow-blue-900/30 transition-all duration-200 cursor-pointer"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            {t('welcome.signup')}
+          </Button>
+
+          {/* Créer un compte Agent - Amber filled */}
+          <Button
+            onClick={() => {
+              setSelectedRole('agent');
+              navigateTo('auth-role');
+            }}
+            className="w-full h-12 text-base font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-lg shadow-amber-200/40 dark:shadow-amber-900/30 transition-all duration-200 cursor-pointer"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            {t('welcome.agent')}
+          </Button>
+
+          {/* Espace Développeur - Dark/Slate */}
+          <Button
+            onClick={() => navigateTo('developer-register')}
+            className="w-full h-11 text-sm font-semibold bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl transition-all duration-200 cursor-pointer"
+          >
+            <Code className="w-4 h-4 mr-2" />
+            {t('welcome.developer')}
+            <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
+          </Button>
+
+          {/* Support - Ghost */}
+          <Button
+            onClick={() => toast.info(t('welcome.support_msg'))}
+            variant="ghost"
+            className="w-full h-11 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-xl transition-all duration-200 cursor-pointer"
+          >
+            <Headphones className="w-4 h-4 mr-2" />
+            {t('welcome.support')}
+          </Button>
+        </motion.div>
+
+        {/* ── PWA Install Section ─────────────────────────────────── */}
+        {!isStandalone && !isInstalled && (
+          <motion.div variants={itemVariants}>
+            <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-[#1E40AF]" />
+              {t('welcome.install')}
+            </h2>
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Android Install */}
+              <button
+                onClick={handleAndroidInstall}
+                disabled={installing}
+                className="flex items-center gap-3 bg-white dark:bg-card border border-border rounded-xl p-3.5 hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center shrink-0">
+                  {installing ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Smartphone className="w-5 h-5 text-white" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="text-[10px] text-muted-foreground leading-tight">{t('welcome.download_android')}</p>
+                  <p className="text-sm font-bold text-foreground leading-tight">
+                    {installing ? t('welcome.installing') : t('welcome.android')}
+                  </p>
+                </div>
+              </button>
+
+              {/* iOS Install */}
+              <button
+                onClick={handleIOSInstall}
+                className="flex items-center gap-3 bg-white dark:bg-card border border-border rounded-xl p-3.5 hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shrink-0">
+                  <Apple className="w-5 h-5 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[10px] text-muted-foreground leading-tight">{t('welcome.download_ios')}</p>
+                  <p className="text-sm font-bold text-foreground leading-tight">{t('welcome.ios')}</p>
+                </div>
+              </button>
+            </div>
+            {canInstall && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-2 text-xs text-[#1E40AF] dark:text-blue-400 font-medium flex items-center gap-1.5"
+              >
+                <Check className="w-3 h-3" />
+                {t('welcome.install_ready')}
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── Nos Services ─────────────────────────────────────────── */}
+        <motion.div variants={itemVariants}>
+          <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+            {t('welcome.services')}
+          </h2>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-none">
+            {services.map((service) => {
+              const Icon = service.icon;
+              const colors = colorMap[service.color];
               return (
                 <Card
-                  key={feature.title}
-                  className="bg-card border-border hover:border-emerald-200 hover:shadow-md transition-all duration-200 py-4 px-3 gap-3 group"
+                  key={service.titleKey}
+                  className={`min-w-[150px] max-w-[160px] shrink-0 ${colors.border} bg-card hover:shadow-md transition-all duration-200 cursor-default`}
                 >
-                  <CardContent className="p-0 flex flex-col items-center text-center gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-emerald-100 flex items-center justify-center transition-colors">
-                      <Icon className="w-5 h-5 text-emerald-600" />
+                  <CardContent className="p-3.5">
+                    <div className={`w-9 h-9 rounded-lg ${colors.bg} flex items-center justify-center mb-2.5`}>
+                      <Icon className={`w-4.5 h-4.5 ${colors.icon}`} />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground leading-tight">
-                        {feature.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
-                        {feature.description}
-                      </p>
-                    </div>
+                    <p className="text-xs font-bold text-foreground leading-snug">
+                      {t(service.titleKey)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1 leading-snug">
+                      {t(service.descKey)}
+                    </p>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
+        </motion.div>
 
-          {/* CTA Buttons */}
-          <div className="w-full flex flex-col gap-3">
-            <Button
-              onClick={() => navigateTo('auth-login')}
-              className="w-full h-13 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 cursor-pointer"
-              size="lg"
-            >
-              Se connecter
-            </Button>
-            <Button
-              onClick={() => navigateTo('auth-role')}
-              variant="outline"
-              className="w-full h-13 text-base font-semibold border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-xl cursor-pointer"
-              size="lg"
-            >
-              Créer un compte
-            </Button>
-          </div>
-
-          {/* Download / Install App Section */}
-          <div className="w-full mt-2">
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 text-white shadow-xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0">
-                  <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">Installer Trait</h3>
-                  <p className="text-xs text-gray-400">Application mobile gratuite</p>
-                </div>
-                {isStandalone && (
-                  <div className="ml-auto flex items-center gap-1.5 bg-emerald-500/20 px-2.5 py-1 rounded-full">
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-xs font-medium text-emerald-400">Installée</span>
-                  </div>
-                )}
-              </div>
-
-              {!isStandalone && !isInstalled && (
-                <div className="flex gap-2.5">
-                  {/* Android Button */}
-                  <button
-                    onClick={handleAndroidInstall}
-                    disabled={installing}
-                    className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-900 rounded-xl py-3 px-3 hover:bg-gray-100 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {installing ? (
-                      <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Smartphone className="w-4 h-4 text-emerald-600" />
-                    )}
-                    <div className="text-left">
-                      <p className="text-[10px] text-gray-500 leading-tight">Télécharger sur</p>
-                      <p className="text-xs font-bold leading-tight">
-                        {installing ? 'Installation...' : 'Android'}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* iOS Button */}
-                  <button
-                    onClick={() => setShowIOSGuide(true)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-900 rounded-xl py-3 px-3 hover:bg-gray-100 active:scale-[0.98] transition-all duration-150 cursor-pointer"
-                  >
-                    <Apple className="w-4 h-4 text-gray-900" />
-                    <div className="text-left">
-                      <p className="text-[10px] text-gray-500 leading-tight">Télécharger sur</p>
-                      <p className="text-xs font-bold leading-tight">iOS</p>
-                    </div>
-                  </button>
-                </div>
-              )}
-
-              <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
-                <div className="flex items-center gap-1">
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span>Gratuit</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span>Hors-ligne</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span>Rapide</span>
-                </div>
-              </div>
+        {/* ── Info Banner ──────────────────────────────────────────── */}
+        <motion.div variants={itemVariants}>
+          <div className="flex items-start gap-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 p-4">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0 mt-0.5">
+              <Bell className="w-4 h-4 text-[#1E40AF] dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[#1E40AF] dark:text-blue-300 mb-1">
+                {t('welcome.good_to_know')}
+              </p>
+              <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
+                {t('welcome.good_to_know_text')}
+              </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </main>
 
-      {/* Android Installation Guide Modal */}
-      {showAndroidGuide && <AndroidGuideModal onClose={() => setShowAndroidGuide(false)} />}
-
-      {/* iOS Installation Guide Modal */}
-      {showIOSGuide && <IOSGuideModal onClose={() => setShowIOSGuide(false)} />}
-
-      {/* Footer */}
-      <footer className="py-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          0.7% de frais • Bonus 10 USD • USSD *1709#
+      {/* ── Footer ────────────────────────────────────────────────── */}
+      <motion.footer
+        variants={itemVariants}
+        className="mt-auto border-t border-border/50 py-5 px-5 text-center"
+      >
+        <p className="text-xs text-muted-foreground">
+          {t('welcome.footer')}
         </p>
-      </footer>
-    </div>
+        <p className="text-[10px] text-muted-foreground/60 mt-1">v1.0.0</p>
+      </motion.footer>
+    </motion.div>
   );
 }

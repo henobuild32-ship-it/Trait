@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAppStore, type User } from '@/lib/store';
+import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
 
 const countries = [
@@ -43,6 +44,7 @@ export default function AuthProfileScreen() {
   const selectedRole = useAppStore((s) => s.selectedRole);
   const setUser = useAppStore((s) => s.setUser);
   const navigateTo = useAppStore((s) => s.navigateTo);
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [pseudo, setPseudo] = useState('');
@@ -58,43 +60,43 @@ export default function AuthProfileScreen() {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error('Veuillez entrer votre nom complet');
+      toast.error(t('validation.name_required'));
       return;
     }
 
     if (!pseudo.trim()) {
-      toast.error('Veuillez entrer un pseudo');
+      toast.error(t('validation.pseudo_required'));
       return;
     }
 
     if (!country) {
-      toast.error('Veuillez sélectionner votre pays');
+      toast.error(t('validation.country_required'));
       return;
     }
 
     if (isAgent && !email.trim()) {
-      toast.error('Veuillez entrer votre adresse email');
+      toast.error(t('validation.email_required'));
       return;
     }
 
     if (isAgent && !gender) {
-      toast.error('Veuillez sélectionner votre genre');
+      toast.error(t('validation.gender_required'));
       return;
     }
 
     if (isAgent && !city.trim()) {
-      toast.error('Veuillez entrer votre ville');
+      toast.error(t('validation.city_required'));
       return;
     }
 
     if (!phoneNumber) {
-      toast.error('Erreur : numéro de téléphone non trouvé');
+      toast.error(t('validation.phone_not_found'));
       navigateTo('auth-role');
       return;
     }
 
     if (!registrationPassword) {
-      toast.error('Erreur : mot de passe non trouvé');
+      toast.error(t('validation.password_not_found'));
       navigateTo('auth-phone');
       return;
     }
@@ -121,7 +123,7 @@ export default function AuthProfileScreen() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || 'Erreur lors de la création du compte');
+        toast.error(data.message || t('validation.create_error'));
         return;
       }
 
@@ -129,7 +131,7 @@ export default function AuthProfileScreen() {
       setUser(user);
       navigateTo('pin-setup');
     } catch {
-      toast.error('Erreur de connexion. Veuillez réessayer.');
+      toast.error(t('validation.connection_error'));
     } finally {
       setLoading(false);
     }
@@ -144,7 +146,7 @@ export default function AuthProfileScreen() {
         transition={{ duration: 0.3 }}
         className="flex items-center px-4 py-4"
       >
-        <h1 className="text-lg font-bold text-foreground">Créez votre profil</h1>
+        <h1 className="text-lg font-bold text-foreground">{t('auth.create_profile')}</h1>
       </motion.header>
 
       {/* Content */}
@@ -161,31 +163,31 @@ export default function AuthProfileScreen() {
           transition={{ duration: 0.4, delay: 0.2 }}
           className={isAgent
             ? 'mb-6 bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200 rounded-xl px-4 py-3.5 flex items-start gap-3'
-            : 'mb-6 bg-gradient-to-r from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-xl px-4 py-3.5 flex items-center gap-3'
+            : 'mb-6 bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl px-4 py-3.5 flex items-center gap-3'
           }
         >
           <div className={isAgent
             ? 'w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5'
-            : 'w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0'
+            : 'w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0'
           }>
             {isAgent
               ? <Info className="w-5 h-5 text-amber-600" />
-              : <Gift className="w-5 h-5 text-emerald-600" />
+              : <Gift className="w-5 h-5 text-[#1E40AF]" />
             }
           </div>
           {isAgent ? (
             <div className="flex flex-col gap-1">
-              <p className="text-sm text-amber-800 font-semibold">Validation requise pour les Agents</p>
+              <p className="text-sm text-amber-800 font-semibold">{t('auth.agent_validation_title')}</p>
               <ul className="text-xs text-amber-700 space-y-0.5">
-                <li>• Les comptes Agents doivent être validés manuellement par les administrateurs de Trait avant activation.</li>
-                <li>• Après validation, un numéro Agent unique sera généré automatiquement.</li>
-                <li>• Les Agents ne reçoivent ni bonus ni solde initial automatique.</li>
-                <li>• Les paiements et rémunérations des Agents sont gérés directement par les administrateurs de Trait.</li>
+                <li>• {t('auth.agent_validation_1')}</li>
+                <li>• {t('auth.agent_validation_2')}</li>
+                <li>• {t('auth.agent_validation_3')}</li>
+                <li>• {t('auth.agent_validation_4')}</li>
               </ul>
             </div>
           ) : (
-            <p className="text-sm text-emerald-800 font-medium">
-              🎁 Vous recevez <span className="font-bold">10 USD</span> de bonus !
+            <p className="text-sm text-blue-900 font-medium">
+              🎁 <span className="font-bold">10 USD</span> {t('auth.bonus_info').replace('🎁 Vous recevez ', '').replace(' de bonus !', '')}
             </p>
           )}
         </motion.div>
@@ -194,7 +196,7 @@ export default function AuthProfileScreen() {
           {/* Full Name */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="name" className="text-foreground font-medium">
-              Nom complet
+              {t('auth.full_name')}
             </Label>
             <Input
               id="name"
@@ -202,7 +204,7 @@ export default function AuthProfileScreen() {
               placeholder="Ex: Kofi Amegah"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+              className="h-12  focus-visible:border-blue-500 focus-visible:ring-blue-500/20 text-base"
               autoComplete="name"
               disabled={loading}
             />
@@ -211,7 +213,7 @@ export default function AuthProfileScreen() {
           {/* Pseudo */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="pseudo" className="text-foreground font-medium">
-              Pseudo
+              {t('auth.pseudo')}
             </Label>
             <Input
               id="pseudo"
@@ -219,7 +221,7 @@ export default function AuthProfileScreen() {
               placeholder="Ex: @kofi_trader"
               value={pseudo}
               onChange={(e) => setPseudo(e.target.value)}
-              className="h-12  focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+              className="h-12  focus-visible:border-blue-500 focus-visible:ring-blue-500/20 text-base"
               autoComplete="username"
               disabled={loading}
             />
@@ -228,11 +230,11 @@ export default function AuthProfileScreen() {
           {/* Country */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="country" className="text-foreground font-medium">
-              Pays
+              {t('auth.country')}
             </Label>
             <Select value={country} onValueChange={setCountry} disabled={loading}>
-              <SelectTrigger className="w-full h-12  focus:ring-emerald-500/20 text-base">
-                <SelectValue placeholder="Sélectionnez votre pays" />
+              <SelectTrigger className="w-full h-12  focus:ring-blue-500/20 text-base">
+                <SelectValue placeholder={t('auth.select_country')} />
               </SelectTrigger>
               <SelectContent>
                 {countries.map((c) => (
@@ -250,7 +252,7 @@ export default function AuthProfileScreen() {
               {/* Email */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="email" className="text-foreground font-medium">
-                  Adresse email
+                  {t('auth.email')}
                 </Label>
                 <Input
                   id="email"
@@ -258,7 +260,7 @@ export default function AuthProfileScreen() {
                   placeholder="Ex: agent@trait.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+                  className="h-12 focus-visible:border-blue-500 focus-visible:ring-blue-500/20 text-base"
                   autoComplete="email"
                   disabled={loading}
                 />
@@ -267,16 +269,16 @@ export default function AuthProfileScreen() {
               {/* Gender */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="gender" className="text-foreground font-medium">
-                  Genre
+                  {t('auth.gender')}
                 </Label>
                 <Select value={gender} onValueChange={setGender} disabled={loading}>
-                  <SelectTrigger className="w-full h-12 focus:ring-emerald-500/20 text-base">
-                    <SelectValue placeholder="Sélectionnez votre genre" />
+                  <SelectTrigger className="w-full h-12 focus:ring-blue-500/20 text-base">
+                    <SelectValue placeholder={t('auth.select_gender')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">Masculin</SelectItem>
-                    <SelectItem value="female">Féminin</SelectItem>
-                    <SelectItem value="other">Autre</SelectItem>
+                    <SelectItem value="male">{t('auth.male')}</SelectItem>
+                    <SelectItem value="female">{t('auth.female')}</SelectItem>
+                    <SelectItem value="other">{t('auth.other_gender')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -284,7 +286,7 @@ export default function AuthProfileScreen() {
               {/* Ville */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="city" className="text-foreground font-medium">
-                  Ville
+                  {t('auth.city')}
                 </Label>
                 <Input
                   id="city"
@@ -292,7 +294,7 @@ export default function AuthProfileScreen() {
                   placeholder="Ex: Lomé"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="h-12 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20 text-base"
+                  className="h-12 focus-visible:border-blue-500 focus-visible:ring-blue-500/20 text-base"
                   autoComplete="address-level2"
                   disabled={loading}
                 />
@@ -304,15 +306,15 @@ export default function AuthProfileScreen() {
           <Button
             type="submit"
             disabled={loading || !name.trim() || !pseudo.trim() || !country || (isAgent && (!email.trim() || !gender || !city.trim()))}
-            className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 disabled:opacity-50 cursor-pointer mt-4"
+            className="w-full h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-4"
           >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Création...
+                {t('auth.creating')}
               </>
             ) : (
-              'Créer mon compte'
+              t('auth.create_my_account')
             )}
           </Button>
         </form>

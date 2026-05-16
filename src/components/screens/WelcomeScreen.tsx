@@ -8,7 +8,7 @@ import {
   Loader2, Shield, Zap, Users, ChevronRight, Gift,
   Wallet, MessageCircle, ArrowRight, Lock, CreditCard,
   BarChart3, Star, TrendingUp, Sparkles, Landmark, Banknote,
-  QrCode, Repeat, CircleDot,
+  QrCode, Repeat, CircleDot, X, Download, Share2, Plus, Home,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -189,6 +189,8 @@ const newsItems = [
 
 const stats = [
   { value: 50, suffix: '+', labelKey: 'welcome.stats_countries', icon: Globe },
+  { value: 0.7, suffix: '%', labelKey: 'welcome.stats_fees', icon: Zap },
+  { value: 10, prefix: '$', suffix: '', labelKey: 'welcome.stats_bonus', icon: Gift },
 ];
 
 // ─── Animation Variants ───────────────────────────────────────────
@@ -218,6 +220,18 @@ const heroItem = {
   visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
 };
 
+// ─── Install Step Item ───────────────────────────────────────────
+function StepItem({ number, color = 'blue', children }: { number: number; color?: 'blue' | 'emerald'; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3 items-start">
+      <div className={`w-8 h-8 rounded-full ${color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-emerald-100 dark:bg-emerald-900/40'} flex items-center justify-center shrink-0 mt-0.5`}>
+        <span className={`text-sm font-bold ${color === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{number}</span>
+      </div>
+      <div className="flex-1">{children}</div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────
 export default function WelcomeScreen() {
   const navigateTo = useAppStore((s) => s.navigateTo);
@@ -225,6 +239,8 @@ export default function WelcomeScreen() {
   const { canInstall, isIOS, isInstalled, isStandalone, installApp } = usePWAInstall();
   const { t, language, setLanguage } = useTranslation();
   const [installing, setInstalling] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [installPlatform, setInstallPlatform] = useState<'android' | 'ios'>('android');
   const mainRef = useRef<HTMLDivElement>(null);
 
   const handleLanguageChange = (lang: Language) => {
@@ -232,18 +248,25 @@ export default function WelcomeScreen() {
   };
 
   const handleAndroidInstall = async () => {
-    setInstalling(true);
-    const success = await installApp();
-    setInstalling(false);
-    if (success) {
-      toast.success(t('welcome.install_success'));
+    if (canInstall) {
+      setInstalling(true);
+      const success = await installApp();
+      setInstalling(false);
+      if (success) {
+        toast.success(t('welcome.install_success'));
+      } else {
+        setInstallPlatform('android');
+        setShowInstallModal(true);
+      }
     } else {
-      toast.info(t('welcome.install_guide'));
+      setInstallPlatform('android');
+      setShowInstallModal(true);
     }
   };
 
   const handleIOSInstall = () => {
-    toast.info(t('welcome.ios_guide'));
+    setInstallPlatform('ios');
+    setShowInstallModal(true);
   };
 
   return (
@@ -402,7 +425,7 @@ export default function WelcomeScreen() {
               STATS — Animated Counters
           ═══════════════════════════════════════════════════════════ */}
           <AnimatedSection className="px-0 sm:px-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -421,7 +444,7 @@ export default function WelcomeScreen() {
                       <Icon className="w-4.5 h-4.5 text-[#1E40AF] dark:text-blue-400" />
                     </div>
                     <p className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-                      <AnimatedCounter value={stat.value} suffix={stat.suffix} duration={2.5} />
+                      <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix || ''} duration={2.5} />
                     </p>
                     <p className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-1">
                       {t(stat.labelKey)}
@@ -693,6 +716,9 @@ export default function WelcomeScreen() {
                   {t('welcome.install_ready')}
                 </motion.p>
               )}
+              <p className="mt-2 text-center text-[10px] text-muted-foreground/60">
+                {t('welcome.pwa_note')}
+              </p>
             </AnimatedSection>
           )}
 
@@ -747,6 +773,132 @@ export default function WelcomeScreen() {
           </AnimatedSection>
 
         </main>
+
+        {/* ═══════════════════════════════════════════════════════════
+            INSTALL GUIDE MODAL
+        ═══════════════════════════════════════════════════════════ */}
+        <AnimatePresence>
+          {showInstallModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowInstallModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 100 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="w-full max-w-md bg-card rounded-t-3xl p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${installPlatform === 'android' ? 'bg-gradient-to-br from-[#1E40AF] to-[#2563EB]' : 'bg-gradient-to-br from-slate-700 to-slate-900'}`}>
+                      {installPlatform === 'android' ? <Smartphone className="w-5 h-5 text-white" /> : <Apple className="w-5 h-5 text-white" />}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground">
+                        {installPlatform === 'android' ? t('welcome.android_install_title') : t('welcome.ios_install_title')}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">TRAIT PWA</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowInstallModal(false)}
+                    className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted/50 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Steps */}
+                <div className="flex flex-col gap-4">
+                  {installPlatform === 'android' ? (
+                    <>
+                      <StepItem number={1} color="blue">
+                        <p className="text-sm font-semibold text-foreground">{t('welcome.android_step_1_title')}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.android_step_1_desc')}</p>
+                      </StepItem>
+                      <StepItem number={2} color="blue">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{t('welcome.android_step_2_title')}</p>
+                          <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                            <span className="inline-block w-4 h-4 rounded bg-muted border border-border/50 flex items-center justify-center">
+                              <span className="text-[8px]">⋮</span>
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.android_step_2_desc')}</p>
+                      </StepItem>
+                      <StepItem number={3} color="blue">
+                        <p className="text-sm font-semibold text-foreground">{t('welcome.android_step_3_title')}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.android_step_3_desc')}</p>
+                      </StepItem>
+                      <StepItem number={4} color="emerald">
+                        <p className="text-sm font-semibold text-foreground">{t('welcome.android_step_4_title')}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.android_step_4_desc')}</p>
+                      </StepItem>
+                    </>
+                  ) : (
+                    <>
+                      <StepItem number={1} color="blue">
+                        <p className="text-sm font-semibold text-foreground">{t('welcome.ios_step_1_title')}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.ios_step_1_desc')}</p>
+                      </StepItem>
+                      <StepItem number={2} color="blue">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{t('welcome.ios_step_2_title')}</p>
+                          <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.ios_step_2_desc')}</p>
+                      </StepItem>
+                      <StepItem number={3} color="blue">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{t('welcome.ios_step_3_title')}</p>
+                          <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.ios_step_3_desc')}</p>
+                      </StepItem>
+                      <StepItem number={4} color="emerald">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{t('welcome.ios_step_4_title')}</p>
+                          <Home className="w-3.5 h-3.5 text-emerald-600" />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t('welcome.ios_step_4_desc')}</p>
+                      </StepItem>
+                    </>
+                  )}
+                </div>
+
+                {/* App badge preview */}
+                <div className="mt-5 p-3 rounded-xl bg-muted/30 border border-border/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#1E3A8A] flex items-center justify-center p-0.5 shadow-md">
+                    <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-0.5">
+                      <img src="/trait-logo.png" alt="TRAIT" className="w-full h-full object-contain" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-foreground">TRAIT</p>
+                    <p className="text-[10px] text-muted-foreground">{t('welcome.app_desc_short')}</p>
+                  </div>
+                  <Download className="w-4 h-4 text-[#1E40AF]" />
+                </div>
+
+                <Button
+                  onClick={() => setShowInstallModal(false)}
+                  className="w-full h-11 mt-5 bg-gradient-to-r from-[#1E40AF] to-[#2563EB] hover:from-[#1E3A8A] hover:to-[#1E40AF] text-white font-bold rounded-xl cursor-pointer shadow-lg shadow-blue-500/20"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  {t('welcome.install_modal_got_it')}
+                </Button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ═══════════════════════════════════════════════════════════
             FOOTER

@@ -451,3 +451,26 @@ Stage Summary:
 - International transfers blocked without KYC, respect daily limits, detect suspicious activity
 - All security events logged to SecurityLog table with risk levels
 - ESLint passes with 0 errors, dev server compiles cleanly
+---
+Task ID: 1
+Agent: main
+Task: Fix WelcomeScreen stats, hydration error, and make download buttons functional
+
+Work Log:
+- Confirmed FloatingParticles hydration mismatch was already fixed (deterministic values replacing Math.random())
+- Confirmed stats array was already reduced to single "50+ pays couverts" item
+- Updated stats to 3 items: "50+ pays couverts", "0.7% frais minimum", "$10 bonus inscription" with grid-cols-3
+- Added StepItem component for install guide modal
+- Replaced handleAndroidInstall to use beforeinstallprompt when available, fallback to modal with Chrome instructions
+- Replaced handleIOSInstall to open install guide modal with Safari instructions instead of toast
+- Added full Install Guide Modal with step-by-step instructions for both Android (Chrome) and iOS (Safari)
+- Modal includes app badge preview with TRAIT logo
+- Updated manifest.json: theme_color → #1E40AF, background_color → #ffffff
+- Added 26 new translation keys (French + English) for install modal steps, stats, and PWA note
+- Lint passes clean, no hydration errors in dev log
+
+Stage Summary:
+- Download buttons are now fully functional: Android uses native PWA install prompt (Chrome), iOS shows detailed Safari instructions modal
+- Both platforms have 4-step visual guides with numbered steps, icons, and clear instructions
+- Stats section now shows 3 relevant data points: 50+ countries, 0.7% fees, $10 bonus
+- Files modified: WelcomeScreen.tsx, i18n.tsx, manifest.json

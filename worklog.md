@@ -350,3 +350,50 @@ Stage Summary:
 - All text updated per requirements (NUMÉRO DE CARTE, ownership with client name)
 - Print function updated to match new design
 - ESLint passes with 0 errors, dev server compiles and runs cleanly
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Implement KYC system, security middleware, admin login fix, daily limits
+
+Work Log:
+- Updated Prisma schema: Added KYC fields to User model (kycStatus, kycSubmittedAt, kycVerifiedAt, kycRejectReason, kycDocumentType, kycDocumentUrl, kycSelfieUrl, kycData). Added SecurityLog model (id, userId, adminId, action, details, ipAddress, userAgent, riskLevel). Added User→InternationalTransfer relation.
+- Created `src/lib/security.ts`: Security middleware module
+  - `logSecurityEvent()`: Logs security events to SecurityLog table
+  - `checkDailyLimit()`: Counts daily outbound transactions (sent + withdrawals + international), limit 10/day
+  - `checkKYC()`: Checks user KYC verification status
+  - `detectSuspiciousActivity()`: Detects rapid transactions (5+/30min), high-value (>$500), near-limit, new account + high value
+- Created `src/app/api/kyc/route.ts`: KYC verification API
+  - GET: Returns KYC status + daily transaction count/limit for user
+  - POST: Submits KYC verification (documentType, documentUrl, selfieUrl) — validates types, prevents duplicates, creates security log + notification
+- Created `src/app/api/auth/upload-kyc/route.ts`: KYC document upload endpoint
+  - Accepts image files (JPG/PNG/WebP, max 5MB), saves to public/uploads/kyc/
+- Updated `src/app/api/transfers/international/route.ts`: Added security checks
+  - Account suspension check with security log
+  - KYC verification required — returns KYC_REQUIRED (403) with status info
+  - Daily transaction limit (10/day) — returns DAILY_LIMIT_REACHED (429)
+  - Suspicious activity detection — blocks if 2+ red flags, logs all detections
+- Updated `src/app/api/admin/login/route.ts`: Added security logging (login success + login failed)
+- Updated `src/app/api/auth/login/route.ts`: Added login_failed security log for wrong passwords
+- Updated `src/lib/store.ts`: Removed `admin` from persistence (password required every login), added 'kyc-verification' PageName
+- Created `src/components/screens/KYCVerificationScreen.tsx`: Complete KYC verification UI
+  - Status display: none/pending/verified/rejected with appropriate colors and icons
+  - Security info card showing daily transaction count and remaining
+  - "What is KYC?" explanation section with 5 verification items
+  - Document upload form: type selection (ID card, passport, driver's license), document upload, selfie upload
+  - Confirmation dialog before submission
+  - Security notice about data encryption
+  - Verified state shows "Effectuer un transfert international" button
+- Updated `src/components/screens/InternationalTransferScreen.tsx`: Added KYC + security warnings
+  - KYC warning banner when not verified (with "Vérifier" button linking to kyc-verification)
+  - Daily limit warning banner when ≤3 transactions remaining
+  - Checks run on mount via useEffect
+- Updated `src/app/page.tsx`: Added KYCVerificationScreen import, screenMap entry, pagesWithNav entry
+
+Stage Summary:
+- Complete KYC verification system: submit → pending → verified/rejected flow
+- Security middleware: daily limits (10/day), anti-fraud detection, security logging
+- Admin login: no longer persisted in localStorage, password required every session
+- International transfers blocked without KYC, respect daily limits, detect suspicious activity
+- All security events logged to SecurityLog table with risk levels
+- ESLint passes with 0 errors, dev server compiles cleanly

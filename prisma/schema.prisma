@@ -42,6 +42,16 @@ model User {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
+  // KYC fields
+  kycStatus             String   @default("none")      // none, pending, verified, rejected
+  kycSubmittedAt        DateTime?
+  kycVerifiedAt         DateTime?
+  kycRejectReason       String?
+  kycDocumentType       String?                        // passport, id_card, driver_license
+  kycDocumentUrl        String?                        // URL to uploaded ID document
+  kycSelfieUrl          String?                        // URL to uploaded selfie photo
+  kycData               String?                        // JSON: encrypted KYC data snapshot
+
   sentTransactions     Transaction[]     @relation("SenderTransactions")
   receivedTransactions Transaction[]     @relation("ReceiverTransactions")
   agentTransactions    Transaction[]     @relation("AgentTransactions")
@@ -64,6 +74,8 @@ model User {
   cards                   TraitCard[]
   cardPayments            CardPayment[]
   receivedClientMessages  AdminClientMessage[]
+  securityLogs            SecurityLog[]
+  internationalTransfers  InternationalTransfer[]
 }
 
 model Admin {
@@ -550,6 +562,28 @@ model ApiCommission {
   @@index([createdAt])
 }
 
+// ─── Security Log Model ──────────────────────────────────────────
+
+model SecurityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  adminId     String?
+  action      String                           // login, login_failed, kyc_submitted, kyc_verified, kyc_rejected, transfer_blocked, daily_limit_reached, suspicious_activity, password_change
+  details     String?                          // JSON string with extra info
+  ipAddress   String?
+  userAgent   String?
+  riskLevel   String   @default("low")         // low, medium, high, critical
+  createdAt   DateTime @default(now())
+
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([action])
+  @@index([riskLevel])
+  @@index([createdAt])
+}
+
 // ─── International Transfer Models ────────────────────────────────
 
 model InternationalTransfer {
@@ -573,6 +607,8 @@ model InternationalTransfer {
   otpVerified       Boolean  @default(false)
   description       String?
   createdAt         DateTime @default(now())
+
+  user              User      @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])

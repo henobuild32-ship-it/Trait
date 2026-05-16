@@ -58,6 +58,7 @@ import DeveloperRegisterScreen from '@/components/screens/DeveloperRegisterScree
 import AgentRegisterScreen from '@/components/screens/AgentRegisterScreen';
 import AgentPendingScreen from '@/components/screens/AgentPendingScreen';
 import SupportScreen from '@/components/screens/SupportScreen';
+import KYCVerificationScreen from '@/components/screens/KYCVerificationScreen';
 import CardRequestScreen from '@/components/screens/CardRequestScreen';
 import CardPaymentScreen from '@/components/screens/CardPaymentScreen';
 import CardScreen from '@/components/screens/CardScreen';
@@ -122,6 +123,7 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'agent-register': AgentRegisterScreen,
   'agent-pending': AgentPendingScreen,
   'support': SupportScreen,
+  'kyc-verification': KYCVerificationScreen,
   // Card system pages
   'card-request': CardRequestScreen,
   'card-payment': CardPaymentScreen,
@@ -133,7 +135,7 @@ const screenMap: Record<PageName, React.ComponentType> = {
 };
 
 // Pages that show bottom navigation
-const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card'];
+const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification'];
 
 // Admin pages that don't show bottom nav
 const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'agent-register', 'agent-pending'];

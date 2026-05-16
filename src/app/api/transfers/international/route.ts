@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { checkDailyLimit, checkKYC, detectSuspiciousActivity, logSecurityEvent } from '@/lib/security';
 
 // Fee rates by transfer type
 const FEE_RATES: Record<string, number> = {
@@ -114,6 +115,86 @@ export async function POST(request: NextRequest) {
         { success: false, message: 'Utilisateur non trouvé' },
         { status: 404 }
       );
+    }
+
+    // ─── SECURITY: Check suspended account ──────────────────────
+    const fullUser = await db.user.findUnique({ where: { id: userId }, select: { suspended: true } });
+    if (fullUser?.suspended) {
+      await logSecurityEvent({
+        userId,
+        action: 'transfer_blocked',
+        details: JSON.stringify({ reason: 'account_suspended', amount: transferAmount, type }),
+        riskLevel: 'high',
+      });
+      return NextResponse.json(
+        { success: false, message: 'Votre compte est suspendu. Contactez le support.' },
+        { status: 403 }
+      );
+    }
+
+    // ─── SECURITY: KYC check ────────────────────────────────────
+    const kycResult = await checkKYC(userId);
+    if (!kycResult.verified) {
+      await logSecurityEvent({
+        userId,
+        action: 'transfer_blocked',
+        details: JSON.stringify({ reason: 'kyc_not_verified', kycStatus: kycResult.status, amount: transferAmount, type }),
+        riskLevel: 'medium',
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Vérification KYC requise',
+          code: 'KYC_REQUIRED',
+          kycStatus: kycResult.status,
+          kycRejectReason: kycResult.rejectReason,
+        },
+        { status: 403 }
+      );
+    }
+
+    // ─── SECURITY: Daily transaction limit ──────────────────────
+    const dailyCheck = await checkDailyLimit(userId);
+    if (!dailyCheck.allowed) {
+      await logSecurityEvent({
+        userId,
+        action: 'daily_limit_reached',
+        details: JSON.stringify({ count: dailyCheck.count, limit: dailyCheck.limit, amount: transferAmount, type }),
+        riskLevel: 'high',
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Limite journalière atteinte (${dailyCheck.limit} transactions/jour). Réessayez demain.`,
+          code: 'DAILY_LIMIT_REACHED',
+          dailyTransactions: dailyCheck.count,
+          dailyLimit: dailyCheck.limit,
+        },
+        { status: 429 }
+      );
+    }
+
+    // ─── SECURITY: Suspicious activity detection ────────────────
+    const suspicious = await detectSuspiciousActivity(userId, transferAmount);
+    if (suspicious.suspicious) {
+      await logSecurityEvent({
+        userId,
+        action: 'suspicious_activity',
+        details: JSON.stringify({ reasons: suspicious.reasons, amount: transferAmount, type }),
+        riskLevel: suspicious.reasons.length >= 2 ? 'critical' : 'medium',
+      });
+
+      // If critical (2+ red flags), block the transfer
+      if (suspicious.reasons.length >= 2) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Activité suspecte détectée. Pour votre sécurité, veuillez contacter le support.',
+            code: 'SUSPICIOUS_ACTIVITY',
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Calculate fee and commission

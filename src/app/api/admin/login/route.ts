@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logSecurityEvent } from '@/lib/security';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +18,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!admin || admin.password !== password) {
+      // Log failed login attempt
+      await logSecurityEvent({
+        adminId: admin?.id,
+        action: 'login_failed',
+        details: JSON.stringify({ username, reason: 'invalid_credentials' }),
+        riskLevel: 'medium',
+      });
       return NextResponse.json(
         { success: false, message: 'Identifiants incorrects' },
         { status: 401 }
@@ -29,13 +37,20 @@ export async function POST(request: NextRequest) {
       data: { lastLogin: new Date() },
     });
 
-    // Log activity
+    // Log activity + security log
     await db.adminActivityLog.create({
       data: {
         adminId: admin.id,
         action: 'login',
         details: 'Connexion administrateur réussie',
       },
+    });
+
+    await logSecurityEvent({
+      adminId: admin.id,
+      action: 'login',
+      details: JSON.stringify({ username, adminName: admin.name }),
+      riskLevel: 'low',
     });
 
     return NextResponse.json({

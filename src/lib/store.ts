@@ -56,6 +56,7 @@ export type PageName =
   | 'agent-register'
   | 'agent-pending'
   | 'support'
+  | 'kyc-verification'
   // Card system pages
   | 'card-request'
   | 'card-payment'
@@ -294,7 +295,7 @@ export const useAppStore = create<AppStore>()(
       name: 'trait-app-storage',
       partialize: (state) => ({
         user: state.user,
-        admin: state.admin,
+        // admin is NOT persisted - password required on every login
         isDarkMode: state.isDarkMode,
         selectedRole: state.selectedRole,
         language: state.language,

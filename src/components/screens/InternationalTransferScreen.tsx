@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -23,6 +23,8 @@ import {
   ArrowRight,
   Receipt,
   Calculator,
+  ShieldX,
+  ShieldAlert,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -264,6 +266,28 @@ export default function InternationalTransferScreen() {
   const [loading, setLoading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // KYC & Security state
+  const [kycStatus, setKycStatus] = useState<string | null>(null);
+  const [dailyRemaining, setDailyRemaining] = useState<number | null>(null);
+  const [kycLoading, setKycLoading] = useState(true);
+
+  // ─── Fetch KYC + Security on mount ────────────────────────────────
+  useEffect(() => {
+    if (!user?.id) return;
+    async function check() {
+      try {
+        const res = await fetch(`/api/kyc?userId=${user.id}`);
+        const data = await res.json();
+        if (data.success) {
+          setKycStatus(data.kyc.status);
+          setDailyRemaining(data.security.remainingToday);
+        }
+      } catch { /* silent */ }
+      finally { setKycLoading(false); }
+    }
+    check();
+  }, [user?.id]);
 
   // ─── Computed Values ────────────────────────────────────────────
 
@@ -796,6 +820,58 @@ export default function InternationalTransferScreen() {
       </div>
 
       <div className="px-4 py-4 space-y-6 pb-8">
+        {/* ── KYC / Security Warning Banner ─────────────────────── */}
+        {!kycLoading && kycStatus !== 'verified' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30"
+          >
+            <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                Vérification KYC requise
+              </p>
+              <p className="text-[10px] text-amber-600/70 dark:text-amber-500/70">
+                {kycStatus === 'none'
+                  ? 'Vous devez vérifier votre identité avant d\'effectuer des transferts internationaux.'
+                  : kycStatus === 'rejected'
+                    ? 'Votre vérification a été refusée. Veuillez soumettre à nouveau.'
+                    : 'Votre vérification est en cours de traitement.'}
+              </p>
+            </div>
+            {kycStatus !== 'pending' && (
+              <Button
+                size="sm"
+                className="h-8 bg-amber-600 hover:bg-amber-700 text-white text-xs shrink-0"
+                onClick={() => navigateTo('kyc-verification')}
+              >
+                Vérifier
+              </Button>
+            )}
+          </motion.div>
+        )}
+
+        {!kycLoading && dailyRemaining !== null && dailyRemaining <= 3 && kycStatus === 'verified' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/30"
+          >
+            <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+                Limite journalière
+              </p>
+              <p className="text-[10px] text-orange-600/70 dark:text-orange-500/70">
+                {dailyRemaining === 0
+                  ? 'Limite atteinte (10/jour). Réessayez demain.'
+                  : `Il vous reste ${dailyRemaining} transaction(s) aujourd'hui.`}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* ── Transfer Type Selection ──────────────────────────── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">

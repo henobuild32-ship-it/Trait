@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { logSecurityEvent } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,12 @@ export async function POST(request: NextRequest) {
 
     // Verify password
     if (!user.password || user.password !== password.trim()) {
+      await logSecurityEvent({
+        userId: user.id,
+        action: 'login_failed',
+        details: JSON.stringify({ phone: phone.trim(), reason: 'invalid_password' }),
+        riskLevel: 'medium',
+      })
       return NextResponse.json(
         { success: false, message: 'Numéro ou mot de passe incorrect' },
         { status: 401 }

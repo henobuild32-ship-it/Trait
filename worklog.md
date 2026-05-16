@@ -272,3 +272,41 @@ Stage Summary:
 - Admin-Client messaging system with copy permission control
 - All screens integrated into the app navigation system
 - 7 API routes, 6 screen components, 1 trait card component created/updated
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Build Admin "Cartes" tab - professional card management system
+
+Work Log:
+- Updated store.ts: Added 'admin-cards' to PageName union type
+- Created `src/app/api/cards/admin/cards/route.ts`: Full card management API
+  - GET: List all TraitCards with filters (status, cardType, search), includes user balances, payment counts
+  - GET: Returns aggregate stats (total, active, suspended, blocked, usd, fc)
+  - POST generate: Creates CardRequest + TraitCard for selected client, validates client-only role, prevents duplicate active cards per type
+  - POST send-info: Sends card info reminder via Notification + AdminClientMessage with allowCopy=true
+  - POST block: Blocks card with notification to client
+  - All actions create AdminActivityLog entries
+- Created `src/app/api/admin/clients/route.ts`: Client-only listing API
+  - GET: Returns only role='client' users with search, includes card count and balances
+- Created `src/components/admin/AdminCardsScreen.tsx` (690+ lines): Premium card management interface
+  - Header with back button, title, refresh, and "Générer" button
+  - Stats grid (6 cards): Total, Active, Suspended, Blocked, USD, FC
+  - Search bar for filtering by name, phone, or card number
+  - 4-tab filter: Tous, Actives, Suspendues, Bloquées
+  - Card list items: user avatar, name, card number, type badge, status badge, phone, email, expiry, balance, payment count
+  - Action buttons per card: Voir, Imprimer, Envoyer, Suspendre/Bloquer/Réactiver
+  - Generate dialog: card type selection (USD/FC), client search, client list with details, confirmation
+  - After generation: premium TraitCard preview, card details summary, auto-sent notification confirmation
+  - Card detail dialog: TraitCard with 3D flip, owner info, card info grid, history timeline
+  - Print function: Opens new window with HD printable card design (front + security info), auto-triggers print
+- Updated AdminDashboard.tsx: Added "Cartes" quick action (CreditCard icon, sky theme) + renamed "Demandes de Cartes" with Clock icon
+- Updated page.tsx: Added AdminCardsScreen import, screenMap entry, and adminPages entry
+
+Stage Summary:
+- Professional banking-grade card management interface for admin
+- Complete card lifecycle: generate → view → print → suspend/activate/block → send info
+- Client selection restricted to clients only (no agents/admins)
+- Auto-notification to clients on generation with full card details
+- Print-ready HD card design with front face and security information
+- All lint checks pass, dev server compiles cleanly

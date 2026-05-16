@@ -61,6 +61,7 @@ export type PageName =
   | 'card-payment'
   // Admin card pages
   | 'admin-card-requests'
+  | 'admin-cards'
   | 'admin-client-messages';
 
 export type UserRole = 'client' | 'agent';

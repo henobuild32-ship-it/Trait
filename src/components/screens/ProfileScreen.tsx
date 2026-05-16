@@ -252,7 +252,7 @@ export default function ProfileScreen() {
                   <span className="text-sm">Solde réel</span>
                 </div>
                 <span className="font-bold text-emerald-600">
-                  ${user.realBalance.toFixed(2)}
+                  ${(user.realBalance ?? 0).toFixed(2)}
                 </span>
               </div>
 
@@ -271,7 +271,7 @@ export default function ProfileScreen() {
                   </div>
                 </div>
                 <span className="font-bold text-amber-600">
-                  ${user.bonusBalance.toFixed(2)}
+                  ${(user.bonusBalance ?? 0).toFixed(2)}
                 </span>
               </div>
             </CardContent>

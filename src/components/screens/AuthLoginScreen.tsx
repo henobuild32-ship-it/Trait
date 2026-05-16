@@ -74,6 +74,19 @@ export default function AuthLoginScreen() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
+        // Handle agent validation status specially
+        if (data.validationStatus === 'pending') {
+          toast.error(data.message || 'Compte en attente de validation');
+          return;
+        }
+        if (data.validationStatus === 'rejected') {
+          toast.error(data.message || 'Demande refusée');
+          return;
+        }
+        if (data.validationStatus === 'suspended') {
+          toast.error(data.message || 'Compte suspendu');
+          return;
+        }
         toast.error(data.message || t('validation.login_error'));
         return;
       }
@@ -144,13 +157,17 @@ export default function AuthLoginScreen() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            <Image
-              src="/trait-logo.png"
-              alt="TRAIT"
-              width={64}
-              height={64}
-              className="rounded-2xl shadow-lg"
-            />
+            <div className="rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-lg shadow-blue-200/40 dark:shadow-blue-900/30">
+              <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-2 py-1.5">
+                <Image
+                  src="/trait-logo.png"
+                  alt="TRAIT"
+                  width={140}
+                  height={67}
+                  className="object-contain"
+                />
+              </div>
+            </div>
           </motion.div>
         </div>
 

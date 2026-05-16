@@ -52,7 +52,16 @@ export type PageName =
   | 'admin-messages'
   | 'admin-developers'
   | 'developer-register'
-  | 'international-transfer';
+  | 'international-transfer'
+  | 'agent-register'
+  | 'agent-pending'
+  | 'support'
+  // Card system pages
+  | 'card-request'
+  | 'card-payment'
+  // Admin card pages
+  | 'admin-card-requests'
+  | 'admin-client-messages';
 
 export type UserRole = 'client' | 'agent';
 

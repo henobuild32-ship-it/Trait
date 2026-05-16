@@ -177,18 +177,18 @@ export default function MarketplaceDetailScreen() {
         } catch {
           // Fallback: use local calculation
           const updatedUser = { ...user };
-          if (data.purchase.usedBonus > 0) {
+          if ((data.purchase?.usedBonus ?? 0) > 0) {
             if (currency === 'FC') {
-              updatedUser.bonusBalanceFC = Math.max(0, updatedUser.bonusBalanceFC - data.purchase.usedBonus);
+              updatedUser.bonusBalanceFC = Math.max(0, (updatedUser.bonusBalanceFC ?? 0) - (data.purchase?.usedBonus ?? 0));
             } else {
-              updatedUser.bonusBalance = Math.max(0, updatedUser.bonusBalance - data.purchase.usedBonus);
+              updatedUser.bonusBalance = Math.max(0, (updatedUser.bonusBalance ?? 0) - (data.purchase?.usedBonus ?? 0));
             }
           }
-          if (data.purchase.usedReal > 0) {
+          if ((data.purchase?.usedReal ?? 0) > 0) {
             if (currency === 'FC') {
-              updatedUser.realBalanceFC = Math.max(0, updatedUser.realBalanceFC - data.purchase.usedReal);
+              updatedUser.realBalanceFC = Math.max(0, (updatedUser.realBalanceFC ?? 0) - (data.purchase?.usedReal ?? 0));
             } else {
-              updatedUser.realBalance = Math.max(0, updatedUser.realBalance - data.purchase.usedReal);
+              updatedUser.realBalance = Math.max(0, (updatedUser.realBalance ?? 0) - (data.purchase?.usedReal ?? 0));
             }
           }
           setUser(updatedUser as any);

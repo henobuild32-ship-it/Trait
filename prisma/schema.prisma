@@ -19,7 +19,11 @@ model User {
   role                  String   @default("client") // client, agent
   agentCode             String?  @unique              // AGT-XXXXXX format (old)
   agentNumber           String?  @unique              // AGT-2026-XXXXX format (official)
-  validationStatus      String   @default("validated") // pending, validated, rejected (agents only)
+  address               String?
+  photoId               String?                         // URL to profile photo / ID document
+  systemPassword        String?                         // Admin-generated system password (separate from login password)
+  systemPasswordSent    Boolean  @default(false)        // Whether system credentials email was sent
+  validationStatus      String   @default("validated") // pending, validated, rejected, suspended (agents only)
   validationRejectReason String?
   password              String?
   pin                   String?
@@ -56,6 +60,10 @@ model User {
   userSettings         UserSettings?
   bonusHistory         BonusHistory[]
   receivedAgentMessages AgentMessage[]   @relation("ReceivedAgentMessages")
+  cardRequests            CardRequest[]
+  cards                   TraitCard[]
+  cardPayments            CardPayment[]
+  receivedClientMessages  AdminClientMessage[]
 }
 
 model Admin {
@@ -72,6 +80,8 @@ model Admin {
   globalNotifications GlobalNotification[]
   bonusCampaigns  BonusCampaign[]
   sentAgentMessages AgentMessage[]
+  sentClientMessages AdminClientMessage[]
+  cardValidations  CardRequest[]
 }
 
 model AdminActivityLog {
@@ -373,6 +383,90 @@ model AgentMessage {
 
   admin    Admin @relation(fields: [adminId], references: [id])
   recipient User  @relation("ReceivedAgentMessages", fields: [recipientId], references: [id])
+
+  @@index([recipientId])
+  @@index([adminId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ─── TRAIT Card System ─────────────────────────────────────────
+
+model CardRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  cardType      String   @default("USD")        // USD, FC
+  status        String   @default("pending")     // pending, approved, rejected, suspended
+  rejectReason  String?
+  adminId       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user    User        @relation(fields: [userId], references: [id])
+  card    TraitCard?
+  admin   Admin?      @relation(fields: [adminId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TraitCard {
+  id              String   @id @default(cuid())
+  userId          String
+  cardRequestId   String   @unique
+  cardType        String   @default("USD")        // USD, FC
+  cardNumber      String   @unique                // Generated 16-digit card number
+  cvv             String                           // Generated 3-digit CCV
+  qrCode          String                           // Unique QR code data
+  expiryDate      String                           // MM/YY format
+  status          String   @default("active")      // active, suspended, blocked
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id])
+  request     CardRequest @relation(fields: [cardRequestId], references: [id])
+  payments    CardPayment[]
+
+  @@index([userId])
+  @@index([cardNumber])
+  @@index([status])
+}
+
+model CardPayment {
+  id              String   @id @default(cuid())
+  cardId          String
+  userId          String
+  amount          Float
+  currency        String   @default("USD")
+  description     String?
+  status          String   @default("pending")    // pending, completed, failed
+  createdAt       DateTime @default(now())
+
+  card  TraitCard @relation(fields: [cardId], references: [id])
+  user  User       @relation(fields: [userId], references: [id])
+
+  @@index([cardId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── Admin → Client Messaging System ──────────────────────────────
+
+model AdminClientMessage {
+  id            String   @id @default(cuid())
+  adminId       String
+  recipientId   String                         // User ID of the client
+  title         String
+  message       String
+  type          String   @default("individual") // individual, broadcast
+  allowCopy     Boolean  @default(false)        // Admin allows client to copy message
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  admin     Admin @relation(fields: [adminId], references: [id])
+  recipient User  @relation(fields: [recipientId], references: [id])
 
   @@index([recipientId])
   @@index([adminId])

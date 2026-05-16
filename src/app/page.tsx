@@ -55,9 +55,17 @@ import AdminMessagesScreen from '@/components/admin/AdminMessagesScreen';
 import AgentMessagesScreen from '@/components/screens/AgentMessagesScreen';
 import InternationalTransferScreen from '@/components/screens/InternationalTransferScreen';
 import DeveloperRegisterScreen from '@/components/screens/DeveloperRegisterScreen';
+import AgentRegisterScreen from '@/components/screens/AgentRegisterScreen';
+import AgentPendingScreen from '@/components/screens/AgentPendingScreen';
+import SupportScreen from '@/components/screens/SupportScreen';
+import CardRequestScreen from '@/components/screens/CardRequestScreen';
+import CardPaymentScreen from '@/components/screens/CardPaymentScreen';
+import CardScreen from '@/components/screens/CardScreen';
 
 // Admin screens continued
 import AdminDevelopersScreen from '@/components/admin/AdminDevelopersScreen';
+import AdminCardRequestsScreen from '@/components/admin/AdminCardRequestsScreen';
+import AdminClientMessagesScreen from '@/components/admin/AdminClientMessagesScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
@@ -110,13 +118,23 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'agent-messages': AgentMessagesScreen,
   'international-transfer': InternationalTransferScreen,
   'developer-register': DeveloperRegisterScreen,
+  'agent-register': AgentRegisterScreen,
+  'agent-pending': AgentPendingScreen,
+  'support': SupportScreen,
+  // Card system pages
+  'card-request': CardRequestScreen,
+  'card-payment': CardPaymentScreen,
+  'card': CardScreen,
+  // Admin card & client messaging pages
+  'admin-card-requests': AdminCardRequestsScreen,
+  'admin-client-messages': AdminClientMessagesScreen,
 };
 
 // Pages that show bottom navigation
-const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages'];
+const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card'];
 
 // Admin pages that don't show bottom nav
-const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers'];
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-client-messages', 'agent-register', 'agent-pending'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();

@@ -43,13 +43,17 @@ export default function AuthRoleScreen() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            <Image
-              src="/trait-logo.png"
-              alt="TRAIT"
-              width={72}
-              height={72}
-              className="rounded-2xl shadow-lg"
-            />
+            <div className="rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-lg shadow-blue-200/40 dark:shadow-blue-900/30">
+              <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-2 py-1.5">
+                <Image
+                  src="/trait-logo.png"
+                  alt="TRAIT"
+                  width={140}
+                  height={67}
+                  className="object-contain"
+                />
+              </div>
+            </div>
           </motion.div>
           <h1 className="text-2xl font-bold text-foreground">{t('auth.welcome')}</h1>
           <p className="text-muted-foreground text-center">{t('auth.choose_role')}</p>

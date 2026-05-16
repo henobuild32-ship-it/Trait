@@ -21,6 +21,8 @@ import {
   MessageSquare,
   Code,
   Globe,
+  CreditCard,
+  Mail,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,16 +84,16 @@ interface QuickAction {
 const quickActions: QuickAction[] = [
   { label: 'Gestion Utilisateurs', page: 'admin-users', icon: Users, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/40' },
   { label: 'Gestion Agents', page: 'admin-agents', icon: Bot, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
+  { label: 'Demandes de Cartes', page: 'admin-card-requests', icon: CreditCard, color: 'text-sky-600 dark:text-sky-400', bgColor: 'bg-sky-100 dark:bg-sky-900/40' },
   { label: 'Transactions', page: 'admin-transactions', icon: ArrowLeftRight, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/40' },
   { label: 'Market', page: 'admin-market', icon: ShoppingBag, color: 'text-pink-600 dark:text-pink-400', bgColor: 'bg-pink-100 dark:bg-pink-900/40' },
   { label: 'Troc', page: 'admin-barter', icon: Handshake, color: 'text-teal-600 dark:text-teal-400', bgColor: 'bg-teal-100 dark:bg-teal-900/40' },
   { label: 'Notifications', page: 'admin-notifications', icon: Bell, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-100 dark:bg-orange-900/40' },
-  { label: 'Journal d\'Activité', page: 'admin-activity-log', icon: Activity, color: 'text-slate-600 dark:text-slate-400', bgColor: 'bg-slate-100 dark:bg-slate-900/40' },
   { label: 'Gestion Bonus', page: 'admin-bonus', icon: Gift, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/40' },
   { label: 'Validation Agents', page: 'admin-agent-validation', icon: UserCheck, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
-  { label: 'Messagerie', page: 'admin-messages', icon: MessageSquare, color: 'text-cyan-600 dark:text-cyan-400', bgColor: 'bg-cyan-100 dark:bg-cyan-900/40' },
+  { label: 'Messages Agents', page: 'admin-messages', icon: MessageSquare, color: 'text-cyan-600 dark:text-cyan-400', bgColor: 'bg-cyan-100 dark:bg-cyan-900/40' },
+  { label: 'Messages Clients', page: 'admin-client-messages', icon: Mail, color: 'text-indigo-600 dark:text-indigo-400', bgColor: 'bg-indigo-100 dark:bg-indigo-900/40' },
   { label: 'Développeurs', page: 'admin-developers', icon: Code, color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-100 dark:bg-violet-900/40' },
-  { label: 'Transferts Intl.', page: 'admin-transactions', icon: Globe, color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-100 dark:bg-rose-900/40' },
 ];
 
 function formatStatValue(key: keyof DashboardStats, value: number): string {

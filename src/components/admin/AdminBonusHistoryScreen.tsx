@@ -76,7 +76,7 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 const typeOptions = [
-  { value: '', label: 'Tous les types' },
+  { value: 'all', label: 'Tous les types' },
   { value: 'admin_add', label: 'Ajout Admin' },
   { value: 'admin_remove', label: 'Retrait Admin' },
   { value: 'campaign', label: 'Campagne' },
@@ -98,7 +98,7 @@ export default function AdminBonusHistoryScreen() {
   const [loading, setLoading] = useState(true);
 
   const [filterUserId, setFilterUserId] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterType, setFilterType] = useState('all');
 
   const fetchHistory = useCallback(async (page: number) => {
     setLoading(true);

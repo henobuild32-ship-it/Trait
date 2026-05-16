@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { phone, name, pseudo, country, role, pin, password, email, gender, city } = body as {
+    const { phone, name, pseudo, country, role, pin, password, email, gender, city, address, photoId } = body as {
       phone: string
       name: string
       pseudo: string
@@ -15,18 +15,20 @@ export async function POST(request: NextRequest) {
       email?: string
       gender?: string
       city?: string
+      address?: string
+      photoId?: string
     }
 
     if (!phone || !name || !pseudo || !country || !role || !password) {
       return NextResponse.json(
-        { success: false, message: 'All fields are required' },
+        { success: false, message: 'Tous les champs requis doivent être remplis' },
         { status: 400 }
       )
     }
 
     if (role !== 'client' && role !== 'agent') {
       return NextResponse.json(
-        { success: false, message: 'Role must be "client" or "agent"' },
+        { success: false, message: 'Le rôle doit être "client" ou "agent"' },
         { status: 400 }
       )
     }
@@ -38,18 +40,28 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { success: false, message: 'Phone number already registered' },
+        { success: false, message: 'Ce numéro de téléphone est déjà enregistré' },
         { status: 409 }
       )
+    }
+
+    // Check if email already exists (for agents)
+    if (role === 'agent' && email) {
+      const existingEmail = await db.user.findFirst({
+        where: { email: email.trim().toLowerCase() },
+      })
+      if (existingEmail) {
+        return NextResponse.json(
+          { success: false, message: 'Cette adresse email est déjà utilisée' },
+          { status: 409 }
+        )
+      }
     }
 
     // Agent vs Client settings
     const isAgent = role === 'agent'
     const validationStatus = isAgent ? 'pending' : 'validated'
     const bonusBalance = isAgent ? 0 : 10
-    const bonusBalanceFC = isAgent ? 0 : 0
-
-    // No agentCode generated at registration for agents (generated on validation as agentNumber)
 
     const user = await db.user.create({
       data: {
@@ -60,13 +72,15 @@ export async function POST(request: NextRequest) {
         role,
         pin: pin || null,
         password,
-        email: email?.trim() || null,
+        email: isAgent ? (email?.trim().toLowerCase() || null) : (email?.trim() || null),
         gender: gender || null,
         city: city?.trim() || null,
+        address: address?.trim() || null,
+        photoId: photoId || null,
         realBalance: 0,
         realBalanceFC: 0,
         bonusBalance,
-        bonusBalanceFC,
+        bonusBalanceFC: 0,
         validationStatus,
       },
     })
@@ -91,13 +105,15 @@ export async function POST(request: NextRequest) {
       bonusBalanceFC: user.bonusBalanceFC,
       isVerified: user.isVerified,
       hasCompletedOnboarding: user.hasCompletedOnboarding,
+      address: user.address,
+      photoId: user.photoId,
     }
 
     return NextResponse.json({ success: true, user: safeUser })
   } catch (error) {
     console.error('Register error:', error)
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Erreur interne du serveur' },
       { status: 500 }
     )
   }

@@ -29,7 +29,6 @@ import {
   HelpCircle,
   MessageSquare,
   ShieldOff,
-  Zap,
   Key,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -255,7 +254,7 @@ export default function USSDScreen() {
       const data = await res.json();
       if (data.success) {
         setResultMessage(
-          `Solde disponible:  ${data.totalBalance.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`
+          `Solde disponible:  ${(data.totalBalance ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`
         );
       } else {
         setResultMessage(`Erreur: ${data.message}`);
@@ -429,7 +428,7 @@ export default function USSDScreen() {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && inputValue.trim()) {
                 if (validate) validate();
-                else setStep(nextStep);
+                setStep(nextStep);
               }
             }}
             autoFocus
@@ -438,7 +437,7 @@ export default function USSDScreen() {
             className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
             onClick={() => {
               if (validate) validate();
-              else setStep(nextStep);
+              setStep(nextStep);
             }}
             disabled={!inputValue.trim()}
           >

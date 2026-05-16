@@ -167,62 +167,43 @@ export async function POST(request: NextRequest) {
       usedReal = effectivePrice
     }
 
-    // ─── Create purchase record ──────────────────────────────────────
-    const purchase = await db.purchase.create({
-      data: {
-        productId,
-        buyerId,
-        amount: effectivePrice,
-        usedBonus,
-        usedReal,
-        status: 'completed',
-      },
-      include: {
-        product: true,
-        buyer: { select: { id: true, name: true, pseudo: true } },
-      },
-    })
-
-    // ─── Deduct from buyer ───────────────────────────────────────────
-    if (usedBonus > 0 && usedReal > 0) {
-      // Mixed: deduct both
-      const bonusField = isFC ? 'bonusBalanceFC' : 'bonusBalance'
-      const realField = isFC ? 'realBalanceFC' : 'realBalance'
-      await db.user.update({
+    // ─── Atomic: create purchase, deduct buyer, credit seller ────────
+    const [purchase, buyerUpdate, sellerUpdate] = await db.$transaction([
+      // 1. Create purchase record
+      db.purchase.create({
+        data: {
+          productId,
+          buyerId,
+          amount: effectivePrice,
+          usedBonus,
+          usedReal,
+          status: 'completed',
+        },
+        include: {
+          product: true,
+          buyer: { select: { id: true, name: true, pseudo: true } },
+        },
+      }),
+      // 2. Deduct from buyer
+      db.user.update({
         where: { id: buyerId },
         data: {
-          [bonusField]: { decrement: usedBonus },
-          [realField]: { decrement: usedReal },
+          ...(usedBonus > 0 ? { [isFC ? 'bonusBalanceFC' : 'bonusBalance']: { decrement: usedBonus } } : {}),
+          ...(usedReal > 0 ? { [isFC ? 'realBalanceFC' : 'realBalance']: { decrement: usedReal } } : {}),
         },
-      })
-    } else if (usedBonus > 0) {
-      // Pure bonus
-      const bonusField = isFC ? 'bonusBalanceFC' : 'bonusBalance'
-      await db.user.update({
-        where: { id: buyerId },
-        data: { [bonusField]: { decrement: usedBonus } },
-      })
-    } else {
-      // Pure real
-      const realField = isFC ? 'realBalanceFC' : 'realBalance'
-      await db.user.update({
-        where: { id: buyerId },
-        data: { [realField]: { decrement: usedReal } },
-      })
-    }
-
-    // ─── Credit seller with real balance ─────────────────────────────
-    // The seller always receives real balance, regardless of buyer's payment method
-    // (The system absorbs the bonus cost)
-    if (product.sellerId) {
-      const sellerRealField = isFC ? 'realBalanceFC' : 'realBalance'
-      await db.user.update({
-        where: { id: product.sellerId },
-        data: {
-          [sellerRealField]: { increment: effectivePrice },
-        },
-      })
-    }
+      }),
+      // 3. Credit seller with real balance
+      ...(product.sellerId
+        ? [
+            db.user.update({
+              where: { id: product.sellerId },
+              data: {
+                [isFC ? 'realBalanceFC' : 'realBalance']: { increment: effectivePrice },
+              },
+            }),
+          ]
+        : []),
+    ])
 
     // ─── Record bonus history if bonus was used ──────────────────────
     if (usedBonus > 0) {

@@ -14,6 +14,10 @@ import {
   MessageSquare,
   CheckCheck,
   BellOff,
+  Copy,
+  Check,
+  Megaphone,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +34,11 @@ const NOTIFICATION_ICONS: Record<string, typeof Bell> = {
   system: AlertCircle,
   purchase: ShoppingBag,
   barter_accepted: MessageSquare,
+  card_approved: CreditCard,
+  card_rejected: CreditCard,
+  card_suspended: CreditCard,
+  admin_message: MessageSquare,
+  card_payment: CreditCard,
   default: Bell,
 };
 
@@ -43,8 +52,23 @@ const NOTIFICATION_COLORS: Record<string, string> = {
   system: 'bg-muted text-muted-foreground',
   purchase: 'bg-emerald-100 text-emerald-600',
   barter_accepted: 'bg-amber-100 text-amber-600',
+  card_approved: 'bg-sky-100 text-sky-600',
+  card_rejected: 'bg-red-100 text-red-600',
+  card_suspended: 'bg-amber-100 text-amber-600',
+  admin_message: 'bg-indigo-100 text-indigo-600',
+  card_payment: 'bg-emerald-100 text-emerald-600',
   default: 'bg-muted text-muted-foreground',
 };
+
+interface AdminMessage {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  allowCopy: boolean;
+  isRead: boolean;
+  createdAt: string;
+}
 
 function formatRelativeTime(dateStr: string): string {
   const now = new Date();
@@ -64,8 +88,10 @@ function formatRelativeTime(dateStr: string): string {
 export default function NotificationsScreen() {
   const { goBack, user, setNotifications, markAsRead } = useAppStore();
   const [notifications, setLocalNotifications] = useState<Notification[]>([]);
+  const [adminMessages, setAdminMessages] = useState<AdminMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
@@ -77,7 +103,7 @@ export default function NotificationsScreen() {
       const data = await res.json();
 
       if (data.success) {
-        const mapped: Notification[] = data.notifications.map(
+        const mapped: Notification[] = (data.notifications ?? []).map(
           (n: {
             id: string;
             title: string;
@@ -99,14 +125,27 @@ export default function NotificationsScreen() {
       }
     } catch {
       toast.error('Erreur lors du chargement');
-    } finally {
-      setLoading(false);
     }
   }, [user, setNotifications]);
 
+  const fetchAdminMessages = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await fetch(`/api/client-messages?userId=${user.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setAdminMessages(data.messages || []);
+      }
+    } catch {
+      // silent
+    }
+  }, [user]);
+
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    Promise.all([fetchNotifications(), fetchAdminMessages()]).finally(() => {
+      setLoading(false);
+    });
+  }, [fetchNotifications, fetchAdminMessages]);
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -121,6 +160,33 @@ export default function NotificationsScreen() {
       );
     } catch {
       // silent fail
+    }
+  };
+
+  const handleMarkAdminMessageAsRead = async (msgId: string) => {
+    if (!user) return;
+    try {
+      await fetch('/api/client-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, messageId: msgId }),
+      });
+      setAdminMessages((prev) =>
+        prev.map((m) => (m.id === msgId ? { ...m, isRead: true } : m))
+      );
+    } catch {
+      // silent fail
+    }
+  };
+
+  const handleCopyMessage = async (msg: AdminMessage) => {
+    try {
+      await navigator.clipboard.writeText(msg.message);
+      setCopiedId(msg.id);
+      toast.success('Message copié');
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      toast.error('Erreur lors de la copie');
     }
   };
 
@@ -152,7 +218,7 @@ export default function NotificationsScreen() {
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length + adminMessages.filter((m) => !m.isRead).length;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -184,7 +250,7 @@ export default function NotificationsScreen() {
         </div>
       </header>
 
-      <div className="flex-1 px-4 py-4 pb-8">
+      <div className="flex-1 px-4 py-4 pb-8 space-y-6">
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -198,7 +264,7 @@ export default function NotificationsScreen() {
               </div>
             ))}
           </div>
-        ) : notifications.length === 0 ? (
+        ) : notifications.length === 0 && adminMessages.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -213,65 +279,174 @@ export default function NotificationsScreen() {
             </p>
           </motion.div>
         ) : (
-          <div className="space-y-1">
-            <AnimatePresence>
-              {notifications.map((notif, index) => {
-                const Icon =
-                  NOTIFICATION_ICONS[notif.type] ||
-                  NOTIFICATION_ICONS.default;
-                const colorClass =
-                  NOTIFICATION_COLORS[notif.type] ||
-                  NOTIFICATION_COLORS.default;
+          <>
+            {/* Admin Messages Section */}
+            {adminMessages.length > 0 && (
+              <section>
+                <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <MessageSquare className="size-4 text-indigo-500" />
+                  Messages de l&apos;Admin
+                  {adminMessages.some((m) => !m.isRead) && (
+                    <Badge className="bg-indigo-600 text-white border-0 text-[10px]">
+                      {adminMessages.filter((m) => !m.isRead).length} nouveau(x)
+                    </Badge>
+                  )}
+                </h2>
+                <div className="space-y-2">
+                  {adminMessages.map((msg, index) => {
+                    const isBroadcast = msg.type === 'broadcast';
+                    return (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.03 }}
+                        className={`rounded-xl border transition-colors p-3.5 ${
+                          !msg.isRead
+                            ? 'bg-indigo-50/50 border-indigo-200/60 dark:bg-indigo-950/20 dark:border-indigo-800/40'
+                            : 'bg-card border-border hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                            isBroadcast
+                              ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400'
+                              : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400'
+                          }`}>
+                            {isBroadcast ? (
+                              <Megaphone className="size-5" />
+                            ) : (
+                              <MessageSquare className="size-5" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h3 className={`text-sm font-medium leading-tight ${
+                                    !msg.isRead ? '' : 'text-muted-foreground'
+                                  }`}>
+                                    {msg.title}
+                                  </h3>
+                                  {isBroadcast && (
+                                    <Badge variant="outline" className="text-[9px] border-amber-300 text-amber-600 shrink-0">
+                                      Annonce
+                                    </Badge>
+                                  )}
+                                </div>
+                                {!msg.isRead && (
+                                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1" />
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed whitespace-pre-wrap">
+                              {msg.message}
+                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                              <p className="text-xs text-muted-foreground/70">
+                                {formatRelativeTime(msg.createdAt)}
+                              </p>
+                              {msg.allowCopy && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
+                                  onClick={() => handleCopyMessage(msg)}
+                                >
+                                  {copiedId === msg.id ? (
+                                    <>
+                                      <Check className="size-3.5 mr-1" />
+                                      Copié
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="size-3.5 mr-1" />
+                                      Copier
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-                return (
-                  <motion.button
-                    key={notif.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ delay: index * 0.03 }}
-                    onClick={() => {
-                      if (!notif.read) handleMarkAsRead(notif.id);
-                    }}
-                    className={`w-full flex items-start gap-3 p-3 rounded-xl transition-colors text-left ${
-                      notif.read
-                        ? 'hover:bg-muted/50'
-                        : 'bg-emerald-50/50 hover:bg-emerald-50'
-                    }`}
-                  >
-                    {/* Icon */}
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}
-                    >
-                      <Icon className="size-5" />
-                    </div>
+            {/* Standard Notifications */}
+            {notifications.length > 0 && (
+              <section>
+                {adminMessages.length > 0 && (
+                  <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                    <Bell className="size-4 text-emerald-500" />
+                    Activité
+                  </h2>
+                )}
+                <div className="space-y-1">
+                  <AnimatePresence>
+                    {notifications.map((notif, index) => {
+                      const Icon =
+                        NOTIFICATION_ICONS[notif.type] ||
+                        NOTIFICATION_ICONS.default;
+                      const colorClass =
+                        NOTIFICATION_COLORS[notif.type] ||
+                        NOTIFICATION_COLORS.default;
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3
-                          className={`text-sm font-medium leading-tight ${
-                            notif.read ? 'text-muted-foreground' : ''
+                      return (
+                        <motion.button
+                          key={notif.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          transition={{ delay: index * 0.03 }}
+                          onClick={() => {
+                            if (!notif.read) handleMarkAsRead(notif.id);
+                          }}
+                          className={`w-full flex items-start gap-3 p-3 rounded-xl transition-colors text-left ${
+                            notif.read
+                              ? 'hover:bg-muted/50'
+                              : 'bg-emerald-50/50 hover:bg-emerald-50'
                           }`}
                         >
-                          {notif.title}
-                        </h3>
-                        {!notif.read && (
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
-                        {notif.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground/70 mt-1">
-                        {formatRelativeTime(notif.createdAt)}
-                      </p>
-                    </div>
-                  </motion.button>
-                );
-              })}
-            </AnimatePresence>
-          </div>
+                          {/* Icon */}
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}
+                          >
+                            <Icon className="size-5" />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h3
+                                className={`text-sm font-medium leading-tight ${
+                                  notif.read ? 'text-muted-foreground' : ''
+                                }`}
+                              >
+                                {notif.title}
+                              </h3>
+                              {!notif.read && (
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                              {notif.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground/70 mt-1">
+                              {formatRelativeTime(notif.createdAt)}
+                            </p>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+              </section>
+            )}
+          </>
         )}
       </div>
     </div>

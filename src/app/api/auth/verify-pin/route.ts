@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!pin || typeof pin !== 'string' || pin.length !== 4) {
+    if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 8 || !/^\d{4,8}$/.test(pin)) {
       return NextResponse.json(
         { success: false, message: 'Code PIN invalide' },
         { status: 400 }

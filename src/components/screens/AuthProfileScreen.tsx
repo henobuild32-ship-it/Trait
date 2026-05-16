@@ -187,7 +187,7 @@ export default function AuthProfileScreen() {
             </div>
           ) : (
             <p className="text-sm text-blue-900 font-medium">
-              🎁 <span className="font-bold">10 USD</span> {t('auth.bonus_info').replace('🎁 Vous recevez ', '').replace(' de bonus !', '')}
+              🎁 <span className="font-bold">10 USD</span> {t('auth.bonus_info')}
             </p>
           )}
         </motion.div>

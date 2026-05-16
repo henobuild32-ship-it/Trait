@@ -60,26 +60,30 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create AdminActivityLog
-    await db.adminActivityLog.create({
-      data: {
-        adminId: 'system',
-        action: 'developer_register',
-        target: developer.id,
-        details: `Nouvelle demande développeur: ${fullName} (${email}) - Application: ${appName} (${projectType})`,
-      },
-    });
+    // Create AdminActivityLog (optional, may fail if no system admin)
+    try {
+      await db.adminActivityLog.create({
+        data: {
+          adminId: 'system',
+          action: 'developer_register',
+          target: developer.id,
+          details: `Nouvelle demande développeur: ${fullName} (${email}) - Application: ${appName} (${projectType})`,
+        },
+      });
+    } catch { /* system admin not found, skip */ }
 
-    // Create GlobalNotification for admin
-    await db.globalNotification.create({
-      data: {
-        adminId: 'system',
-        title: 'Nouvelle demande développeur',
-        message: `${fullName} a soumis une demande de compte développeur pour l'application "${appName}" (${projectType}). Pays: ${country}. Email: ${email}`,
-        type: 'alert',
-        sentToAll: false,
-      },
-    });
+    // Create GlobalNotification for admin (optional)
+    try {
+      await db.globalNotification.create({
+        data: {
+          adminId: 'system',
+          title: 'Nouvelle demande développeur',
+          message: `${fullName} a soumis une demande de compte développeur pour l'application "${appName}" (${projectType}). Pays: ${country}. Email: ${email}`,
+          type: 'alert',
+          sentToAll: false,
+        },
+      });
+    } catch { /* skip */ }
 
     return NextResponse.json({
       success: true,

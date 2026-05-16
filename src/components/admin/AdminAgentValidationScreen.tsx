@@ -21,7 +21,12 @@ import {
   AlertTriangle,
   BadgeCheck,
   RefreshCw,
+  Send,
+  Key,
+  Copy,
+  Image as ImageIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -52,12 +57,18 @@ interface ValidationAgent {
   gender: string | null;
   city: string | null;
   country: string;
-  validationStatus: 'pending' | 'validated' | 'rejected';
+  address: string | null;
+  photoId: string | null;
+  validationStatus: 'pending' | 'validated' | 'rejected' | 'suspended';
   validationRejectReason: string | null;
   agentCode: string | null;
   agentNumber: string | null;
+  systemPassword: string | null;
+  systemPasswordSent: boolean;
   suspended: boolean;
+  suspensionReason: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 type TabStatus = 'pending' | 'validated' | 'rejected';
@@ -93,6 +104,13 @@ function getGenderLabel(gender: string | null): string {
 
 function getStatusBadge(status: string) {
   switch (status) {
+    case 'suspended':
+      return (
+        <Badge className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-800/40">
+          <Ban className="h-3 w-3 mr-1" />
+          Suspendu
+        </Badge>
+      );
     case 'pending':
       return (
         <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800/40">
@@ -170,6 +188,8 @@ export default function AdminAgentValidationScreen() {
   const [validateTarget, setValidateTarget] = useState<ValidationAgent | null>(null);
   const [validateLoading, setValidateLoading] = useState(false);
   const [generatedAgentNumber, setGeneratedAgentNumber] = useState<string | null>(null);
+  const [generatedSystemPassword, setGeneratedSystemPassword] = useState<string | null>(null);
+  const [sendEmailOnValidate, setSendEmailOnValidate] = useState(true);
 
   // Suspend dialog
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
@@ -311,6 +331,7 @@ export default function AdminAgentValidationScreen() {
           adminId: admin.id,
           action: 'accept',
           agentId: validateTarget.id,
+          sendEmail: sendEmailOnValidate,
         }),
       });
 
@@ -318,7 +339,11 @@ export default function AdminAgentValidationScreen() {
 
       if (data.success) {
         setGeneratedAgentNumber(data.agentNumber ?? data.agentCode ?? null);
+        setGeneratedSystemPassword(data.systemPassword ?? null);
         toast.success(`${validateTarget.name} a été validé`);
+        if (data.emailSent) {
+          toast.info('Email avec identifiants envoyé à l\'agent');
+        }
         // Refresh data after a short delay so user sees the dialog
         setTimeout(() => {
           fetchAgents(debouncedSearch);
@@ -455,6 +480,36 @@ export default function AdminAgentValidationScreen() {
     }
   }
 
+  // ─── Resend Credentials ──────────────────────────────────────
+
+  async function handleResendCredentials(agent: ValidationAgent) {
+    if (!admin?.id || !agent.email) {
+      toast.error('Email de l\'agent non disponible');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/agent-validation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId: admin.id,
+          action: 'resend_credentials',
+          agentId: agent.id,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.emailSent) {
+        toast.success('Email avec identifiants renvoyé avec succès');
+      } else {
+        toast.error('Erreur lors de l\'envoi de l\'email');
+      }
+    } catch {
+      toast.error('Erreur lors du renvoi');
+    }
+  }
+
   // ─── Render agent card ───────────────────────────────────────────
 
   function renderAgentCard(agent: ValidationAgent, index: number) {
@@ -485,9 +540,21 @@ export default function AdminAgentValidationScreen() {
                 className="flex items-center gap-2 flex-wrap min-w-0 flex-1"
                 onClick={() => openDetailDialog(agent)}
               >
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </div>
+                {agent.photoId ? (
+                  <div className="h-8 w-8 rounded-full overflow-hidden shrink-0">
+                    <Image
+                      src={agent.photoId}
+                      alt={agent.name}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-foreground truncate">
                     {agent.name}
@@ -846,14 +913,34 @@ export default function AdminAgentValidationScreen() {
               <div className="space-y-4 py-2">
                 {/* Avatar + name + status */}
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <User className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">
+                  {detailAgent.photoId ? (
+                    <div className="h-14 w-14 rounded-xl overflow-hidden border-2 border-border">
+                      <Image
+                        src={detailAgent.photoId}
+                        alt={detailAgent.name}
+                        width={56}
+                        height={56}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-semibold text-foreground truncate">
                       {detailAgent.name}
                     </h3>
-                    <div className="mt-0.5">{getStatusBadge(detailAgent.validationStatus)}</div>
+                    <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      {getStatusBadge(detailAgent.validationStatus)}
+                      {detailAgent.systemPasswordSent && (
+                        <Badge className="text-[10px] bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-400 dark:border-blue-800/40">
+                          <Send className="h-2.5 w-2.5 mr-0.5" />
+                          Email envoyé
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -919,6 +1006,20 @@ export default function AdminAgentValidationScreen() {
                     </div>
                   </div>
 
+                  {detailAgent.address && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                          Adresse
+                        </p>
+                        <p className="font-medium text-foreground">{detailAgent.address}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-3 text-sm">
                     <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -934,23 +1035,43 @@ export default function AdminAgentValidationScreen() {
                   </div>
                 </div>
 
-                {/* Agent number (if validated) */}
+                {/* Agent number + system password (if validated) */}
                 {detailAgent.validationStatus === 'validated' && detailAgent.agentNumber && (
                   <>
                     <Separator />
-                    <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 p-3">
-                      <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-1 font-medium">
-                        Numéro d&apos;agent
-                      </p>
-                      <p className="text-lg font-mono font-bold text-emerald-800 dark:text-emerald-300">
-                        {detailAgent.agentNumber}
-                      </p>
-                      {detailAgent.agentCode && (
-                        <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1 font-mono">
-                          Code : {detailAgent.agentCode}
+                    <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 p-3 space-y-2.5">
+                      <div>
+                        <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-1 font-medium flex items-center gap-1">
+                          <Shield className="h-3.5 w-3.5" />
+                          Numéro d&apos;agent
                         </p>
+                        <p className="text-lg font-mono font-bold text-emerald-800 dark:text-emerald-300">
+                          {detailAgent.agentNumber}
+                        </p>
+                      </div>
+                      {detailAgent.systemPassword && (
+                        <div>
+                          <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-1 font-medium flex items-center gap-1">
+                            <Key className="h-3.5 w-3.5" />
+                            Mot de passe système
+                          </p>
+                          <p className="text-base font-mono font-bold text-emerald-800 dark:text-emerald-300">
+                            {detailAgent.systemPassword}
+                          </p>
+                        </div>
                       )}
                     </div>
+                    {detailAgent.email && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800/40 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                        onClick={() => handleResendCredentials(detailAgent)}
+                      >
+                        <Send className="h-3.5 w-3.5 mr-2" />
+                        Renvoyer les identifiants par email
+                      </Button>
+                    )}
                   </>
                 )}
 
@@ -1105,10 +1226,24 @@ export default function AdminAgentValidationScreen() {
                 </DialogTitle>
                 <DialogDescription>
                   Voulez-vous valider la demande de{' '}
-                  <strong>{validateTarget?.name}</strong> ? Un numéro d&apos;agent sera généré
-                  automatiquement.
+                  <strong>{validateTarget?.name}</strong> ? Un numéro d&apos;agent et un mot de passe
+                  système seront générés automatiquement.
                 </DialogDescription>
               </DialogHeader>
+
+              {validateTarget?.email && (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={sendEmailOnValidate}
+                    onChange={(e) => setSendEmailOnValidate(e.target.checked)}
+                    className="rounded border-border accent-emerald-600"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Envoyer les identifiants à <strong>{validateTarget.email}</strong>
+                  </span>
+                </label>
+              )}
 
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button
@@ -1150,21 +1285,30 @@ export default function AdminAgentValidationScreen() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 p-4 text-center space-y-2">
+              <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 p-4 text-center space-y-3">
                 <Shield className="h-8 w-8 text-emerald-600 dark:text-emerald-400 mx-auto" />
                 <div>
                   <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
-                    Numéro d&apos;agent
+                    Code Agent
                   </p>
                   <p className="text-2xl font-mono font-bold text-emerald-800 dark:text-emerald-300 mt-1">
                     {generatedAgentNumber}
                   </p>
                 </div>
-                {validateTarget?.agentCode && (
-                  <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 font-mono">
-                    Code : {validateTarget.agentCode}
-                  </p>
+                {generatedSystemPassword && (
+                  <div>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium flex items-center justify-center gap-1">
+                      <Key className="h-3.5 w-3.5" />
+                      Mot de passe système
+                    </p>
+                    <p className="text-lg font-mono font-bold text-emerald-800 dark:text-emerald-300 mt-1">
+                      {generatedSystemPassword}
+                    </p>
+                  </div>
                 )}
+                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/60">
+                  Ces identifiants sont également envoyés à l&apos;agent par email
+                </p>
               </div>
 
               <DialogFooter className="gap-2 sm:gap-0">

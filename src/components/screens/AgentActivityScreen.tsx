@@ -1,14 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, Activity, Filter } from 'lucide-react';
+import { ArrowLeft, Activity } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/lib/store';
 
 export default function AgentActivityScreen() {
-  const { goBack, user } = useAppStore();
+  const { goBack } = useAppStore();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

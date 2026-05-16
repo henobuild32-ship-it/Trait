@@ -23,6 +23,9 @@ import {
   TrendingDown,
   ArrowUpRight,
   ArrowDownLeft,
+  CreditCard,
+  Clock,
+  ChevronRight,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +34,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/lib/store';
 import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
+import TraitCard from '@/components/trait/TraitCard';
+
+interface UserCard {
+  id: string;
+  cardType: 'USD' | 'FC';
+  cardNumber: string;
+  cvv: string;
+  qrCode: string;
+  expiryDate: string;
+  status: string;
+}
+
+interface PendingRequest {
+  id: string;
+  cardType: string;
+  status: string;
+  createdAt: string;
+}
 
 interface HistoryItem {
   id: string;
@@ -107,6 +128,8 @@ export default function HomeScreen() {
   const [recentTransactions, setRecentTransactions] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [userCards, setUserCards] = useState<UserCard[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
 
   const isAgent = user?.role === 'agent';
   const realBalanceUSD = user?.realBalance ?? 0;
@@ -122,6 +145,7 @@ export default function HomeScreen() {
   useEffect(() => {
     fetchRecentTransactions();
     refreshUserBalance();
+    fetchUserCards();
   }, [user?.id]);
 
   async function refreshUserBalance() {
@@ -154,7 +178,7 @@ export default function HomeScreen() {
       const res = await fetch(`/api/transfer/history?userId=${user.id}`);
       const data = await res.json();
       if (data.success) {
-        setRecentTransactions(data.history.slice(0, 5));
+        setRecentTransactions((data.history ?? []).slice(0, 5));
       }
     } catch (err) {
       console.error('Failed to fetch history:', err);
@@ -162,6 +186,24 @@ export default function HomeScreen() {
       setLoading(false);
     }
   }
+
+  async function fetchUserCards() {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/cards/my-cards?userId=${user.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setUserCards(data.cards || []);
+        setPendingRequests(data.pendingRequests || []);
+      }
+    } catch {
+      // silent
+    }
+  }
+
+  const hasCards = userCards.length > 0;
+  const hasPendingRequests = pendingRequests.length > 0;
+  const showCardButton = !isAgent && !hasCards && !hasPendingRequests;
 
   function handleCopyCode() {
     if (!agentCode) return;
@@ -178,12 +220,12 @@ export default function HomeScreen() {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             {/* TRAIT Logo */}
-            <div className="relative h-9 w-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center shrink-0">
+            <div className="relative h-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center shrink-0 px-1 py-1">
               <Image
                 src="/trait-logo.png"
                 alt="TRAIT"
-                width={32}
-                height={32}
+                width={80}
+                height={30}
                 className="object-contain"
               />
             </div>
@@ -307,6 +349,93 @@ export default function HomeScreen() {
             </div>
           </div>
         </div>
+
+        {/* ─── TRAIT Cards Section (Client only) ──────────── */}
+        {!isAgent && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <CreditCard className="size-4 text-[#1E40AF]" />
+                Mes Cartes TRAIT
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#1E40AF] hover:text-[#1E40AF]/80 hover:bg-[#1E40AF]/10 text-xs font-semibold dark:text-blue-400"
+                onClick={() => navigateTo('card' as any)}
+              >
+                Voir tout
+                <ChevronRight className="h-3 w-3 ml-0.5" />
+              </Button>
+            </div>
+
+            {/* Active cards */}
+            {hasCards && (
+              <div className="space-y-3 mb-3">
+                {userCards.map((card) => (
+                  <TraitCard
+                    key={card.id}
+                    cardType={card.cardType}
+                    cardNumber={card.cardNumber}
+                    cardHolder={user?.name || user?.pseudo || 'TRAIT USER'}
+                    expiryDate={card.expiryDate}
+                    cvv={card.cvv}
+                    qrCode={card.qrCode}
+                    balance={card.cardType === 'USD'
+                      ? (user?.realBalance ?? 0)
+                      : (user?.realBalanceFC ?? 0)
+                    }
+                    status={card.status}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Pending requests */}
+            {hasPendingRequests && !hasCards && (
+              <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800/40 dark:bg-amber-950/20">
+                <CardContent className="flex items-center gap-3 p-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                    <Clock className="size-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      Demande en attente
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Votre demande de carte est en cours de validation.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Demander une carte button */}
+            {showCardButton && (
+              <button
+                onClick={() => navigateTo('card-request' as any)}
+                className="w-full rounded-2xl p-4 shadow-sm border border-[#1E40AF]/20 bg-gradient-to-r from-[#0A1628] via-[#1E3A5F] to-[#0D2847] hover:shadow-lg hover:border-[#1E40AF]/40 transition-all active:scale-[0.98] relative overflow-hidden"
+              >
+                <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-blue-500/10" />
+                <div className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-red-500/5" />
+                <div className="relative z-10 flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
+                    <CreditCard className="size-5 text-blue-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-white">
+                      Demander une carte
+                    </p>
+                    <p className="text-[10px] text-blue-200/70 mt-0.5">
+                      Carte numérique TRAIT USD ou FC
+                    </p>
+                  </div>
+                  <ChevronRight className="size-4 text-white/40 ml-auto" />
+                </div>
+              </button>
+            )}
+          </section>
+        )}
 
         {/* ─── Quick Actions ─────────────────────────────────── */}
         <section>

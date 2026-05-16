@@ -3,7 +3,6 @@
 import { useAppStore, PageName } from '@/lib/store';
 import { useTranslation } from '@/lib/i18n';
 import { Home, ArrowLeftRight, Store, Settings, Phone, MessageSquare, Globe } from 'lucide-react';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface NavItem {

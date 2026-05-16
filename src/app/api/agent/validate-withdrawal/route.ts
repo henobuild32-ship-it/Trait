@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const withdrawal = await db.withdrawal.findUnique({
       where: { id: withdrawalId },
       include: {
-        user: { select: { id: true, name: true, phone: true, realBalance: true } },
+        user: { select: { id: true, name: true, phone: true, realBalance: true, realBalanceFC: true } },
       },
     })
 
@@ -73,12 +73,13 @@ export async function POST(request: NextRequest) {
         data: { status: 'failed' },
       })
 
-      // Refund the client's balance
+      // Refund the client's balance based on currency
+      const isFC = withdrawal.currency === 'FC';
       await db.user.update({
         where: { id: withdrawal.userId },
-        data: {
-          realBalance: { increment: withdrawal.amount + withdrawal.fee },
-        },
+        data: isFC
+          ? { realBalanceFC: { increment: withdrawal.amount + withdrawal.fee } }
+          : { realBalance: { increment: withdrawal.amount + withdrawal.fee } },
       })
 
       // Create notification for client

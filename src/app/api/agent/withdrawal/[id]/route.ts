@@ -60,6 +60,15 @@ export async function PUT(
       },
     })
 
+    // Deduct balance immediately when creating pending withdrawal
+    const isFC = (currency || 'USD') === 'FC';
+    await db.user.update({
+      where: { id: userId },
+      data: isFC
+        ? { realBalanceFC: { decrement: amount + (fee || 0) } }
+        : { realBalance: { decrement: amount + (fee || 0) } },
+    })
+
     return NextResponse.json({
       success: true,
       withdrawal: {

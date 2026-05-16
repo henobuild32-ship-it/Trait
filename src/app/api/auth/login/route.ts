@@ -58,6 +58,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check agent validation status
+    if (user.role === 'agent') {
+      if (user.validationStatus === 'pending') {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Votre compte Agent est en attente de validation par l\'administrateur TRAIT.',
+            validationStatus: 'pending',
+          },
+          { status: 403 }
+        )
+      }
+
+      if (user.validationStatus === 'rejected') {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Votre demande de compte Agent a été refusée. Motif: ' + (user.validationRejectReason || 'Non spécifié'),
+            validationStatus: 'rejected',
+          },
+          { status: 403 }
+        )
+      }
+
+      if (user.suspended || user.validationStatus === 'suspended') {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Votre compte Agent a été suspendu. Motif: ' + (user.suspensionReason || 'Contactez le support TRAIT.'),
+            validationStatus: 'suspended',
+          },
+          { status: 403 }
+        )
+      }
+    }
+
     return NextResponse.json({
       success: true,
       user: {

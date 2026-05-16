@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       reason: string
     }
 
-    if (!adminId || !userId || blocked === undefined || !reason) {
+    if (!adminId || !userId || blocked === undefined || (blocked && !reason)) {
       return NextResponse.json(
         { success: false, message: 'All fields are required: adminId, userId, blocked, reason' },
         { status: 400 }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     await db.bonusHistory.create({
       data: {
         userId,
-        type: blocked ? 'blocked_unblocked' : 'blocked_unblocked',
+        type: blocked ? 'bonus_blocked' : 'bonus_unblocked',
         amount: 0,
         currency: 'USD',
         description: blocked

@@ -31,6 +31,11 @@ export default function PinSetupScreen() {
       if (newConfirm.length === 4) {
         setTimeout(async () => {
           if (newConfirm === pin) {
+            if (!user) {
+              setError('Utilisateur non trouvé');
+              navigateTo('auth-login');
+              return;
+            }
             setStep('saving');
             // Save PIN to database
             try {

@@ -61,12 +61,13 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Add amount to client's realBalance
+    // Add amount to client's balance based on currency
+    const isFC = (currency || 'USD') === 'FC';
     await db.user.update({
       where: { id: client.id },
-      data: {
-        realBalance: { increment: amount },
-      },
+      data: isFC
+        ? { realBalanceFC: { increment: amount } }
+        : { realBalance: { increment: amount } },
     })
 
     // Create notification for client
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: client.id,
         title: 'Dépôt reçu',
-        message: `Un dépôt de $${amount.toFixed(2)} a été effectué par l'agent ${agent.name || agent.pseudo || agent.agentCode || 'N/A'} via ${agent.phone}.`,
+        message: `Un dépôt de ${isFC ? amount.toLocaleString('fr-FR') : '$' + amount.toFixed(2)} ${currency || 'USD'} a été effectué par l'agent ${agent.name || agent.pseudo || agent.agentCode || 'N/A'} via ${agent.phone}.`,
         type: 'general',
       },
     })

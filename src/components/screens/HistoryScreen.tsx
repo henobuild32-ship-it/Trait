@@ -96,7 +96,7 @@ export default function HistoryScreen() {
       const res = await fetch(`/api/transfer/history?userId=${user.id}`);
       const data = await res.json();
       if (data.success) {
-        setHistory(data.history);
+        setHistory(data.history ?? []);
       }
     } catch (err) {
       console.error('Failed to fetch history:', err);

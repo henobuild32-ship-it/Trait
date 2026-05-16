@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       fee: t.fee,
       currency: t.currency,
       status: t.status,
-      description: t.description || `Envoi de ${t.amount.toFixed(2)} ${t.currency} à ${t.receiver.phone}`,
+      description: t.description || `Envoi de ${t.amount.toFixed(2)} ${t.currency} à ${t.receiver?.phone || 'inconnu'}`,
       createdAt: t.createdAt,
       counterparty: t.receiver ? { id: t.receiver.id, phone: t.receiver.phone, name: t.receiver.name, pseudo: t.receiver.pseudo } : null,
     }))
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       fee: 0,
       currency: t.currency,
       status: t.status,
-      description: t.description || `Réception de ${t.amount.toFixed(2)} ${t.currency} de ${t.sender.phone}`,
+      description: t.description || `Réception de ${t.amount.toFixed(2)} ${t.currency} de ${t.sender?.phone || 'inconnu'}`,
       createdAt: t.createdAt,
       counterparty: t.sender ? { id: t.sender.id, phone: t.sender.phone, name: t.sender.name, pseudo: t.sender.pseudo } : null,
     }))

@@ -35,11 +35,13 @@ export function PWAInstallBanner() {
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
             <div className="bg-card rounded-2xl shadow-xl border border-border p-4 flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
-                <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center p-0.5">
+                <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-0.5">
+                  <img src="/trait-logo.png" alt="TRAIT" className="w-full h-full object-contain" />
+                </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Installer Trait</p>
+                <p className="text-sm font-semibold text-foreground">Installer TRAIT</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Accès rapide depuis votre écran d&apos;accueil</p>
                 <div className="flex gap-2 mt-3">
                   <Button
@@ -80,8 +82,10 @@ export function PWAInstallBanner() {
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
             <div className="bg-card rounded-2xl shadow-xl border border-border p-4 flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
-                <img src="/trait-logo.png" alt="Trait" className="w-full h-full object-contain" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center p-0.5">
+                <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-0.5">
+                  <img src="/trait-logo.png" alt="TRAIT" className="w-full h-full object-contain" />
+                </div>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Installer sur iPhone</p>

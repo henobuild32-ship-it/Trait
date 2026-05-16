@@ -81,6 +81,10 @@ export default function AuthOtpScreen() {
         return;
       }
 
+      if (!data.user) {
+        toast.error('Erreur: données utilisateur manquantes');
+        return;
+      }
       const user = data.user as User;
       setUser(user);
       setOtpCode(otp);

@@ -19,8 +19,6 @@ import {
   RotateCcw,
   Trash2,
   AlertTriangle,
-  Copy,
-  Check,
   Eye,
   EyeOff,
 } from 'lucide-react';

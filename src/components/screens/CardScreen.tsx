@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Loader2, Clock, XCircle, Plus, Payment, ChevronRight } from 'lucide-react';
+import { ArrowLeft, CreditCard, Loader2, Clock, XCircle, Plus, Wallet, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -208,7 +208,7 @@ export default function CardScreen() {
                           }}
                           onClick={() => navigateTo('card-payment' as any)}
                         >
-                          <Payment className="w-4 h-4 mr-2" />
+                          <Wallet className="w-4 h-4 mr-2" />
                           Paiement par carte {card.cardType}
                           <ChevronRight className="w-4 h-4 ml-auto" />
                         </Button>

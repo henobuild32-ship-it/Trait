@@ -45,16 +45,30 @@ function AnimatedCounter({ value, suffix = '', prefix = '', duration = 2 }: { va
   return <span ref={ref}>{prefix}{displayValue}{suffix}</span>;
 }
 
-// ─── Floating Particles ──────────────────────────────────────────
+// ─── Floating Particles (deterministic to avoid hydration mismatch) ──
 function FloatingParticles() {
-  const particles = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    delay: Math.random() * 8,
-    duration: 6 + Math.random() * 8,
-    size: 2 + Math.random() * 3,
-    opacity: 0.1 + Math.random() * 0.3,
-  }));
+  const particles = [
+    { id: 0, left: 5, delay: 0.5, duration: 8, size: 3, opacity: 0.2 },
+    { id: 1, left: 15, delay: 2.1, duration: 10, size: 2.5, opacity: 0.15 },
+    { id: 2, left: 25, delay: 4.3, duration: 7, size: 4, opacity: 0.25 },
+    { id: 3, left: 35, delay: 1.2, duration: 9, size: 3, opacity: 0.18 },
+    { id: 4, left: 45, delay: 6.0, duration: 11, size: 2, opacity: 0.12 },
+    { id: 5, left: 55, delay: 3.5, duration: 8.5, size: 3.5, opacity: 0.22 },
+    { id: 6, left: 65, delay: 0.8, duration: 12, size: 2.5, opacity: 0.16 },
+    { id: 7, left: 75, delay: 5.2, duration: 9.5, size: 4, opacity: 0.2 },
+    { id: 8, left: 85, delay: 7.1, duration: 7.5, size: 3, opacity: 0.14 },
+    { id: 9, left: 95, delay: 2.8, duration: 10.5, size: 2, opacity: 0.18 },
+    { id: 10, left: 10, delay: 4.9, duration: 13, size: 3.5, opacity: 0.2 },
+    { id: 11, left: 20, delay: 1.6, duration: 8, size: 2, opacity: 0.15 },
+    { id: 12, left: 30, delay: 6.5, duration: 11, size: 4, opacity: 0.25 },
+    { id: 13, left: 40, delay: 3.0, duration: 9, size: 3, opacity: 0.17 },
+    { id: 14, left: 50, delay: 0.3, duration: 7, size: 2.5, opacity: 0.13 },
+    { id: 15, left: 60, delay: 5.8, duration: 10, size: 3.5, opacity: 0.22 },
+    { id: 16, left: 70, delay: 2.4, duration: 12, size: 2, opacity: 0.16 },
+    { id: 17, left: 80, delay: 7.5, duration: 8.5, size: 3, opacity: 0.19 },
+    { id: 18, left: 90, delay: 4.0, duration: 9.5, size: 4, opacity: 0.21 },
+    { id: 19, left: 48, delay: 1.0, duration: 14, size: 2.5, opacity: 0.14 },
+  ];
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -65,8 +79,8 @@ function FloatingParticles() {
           style={{
             left: `${p.left}%`,
             bottom: '-10px',
-            width: p.size,
-            height: p.size,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
             opacity: p.opacity,
             animation: `particleFloat ${p.duration}s ${p.delay}s ease-in-out infinite`,
           }}
@@ -174,10 +188,7 @@ const newsItems = [
 ];
 
 const stats = [
-  { value: 15000, suffix: '+', labelKey: 'welcome.stats_users', icon: Users },
-  { value: 50000, suffix: '+', labelKey: 'welcome.stats_transactions', icon: BarChart3 },
   { value: 50, suffix: '+', labelKey: 'welcome.stats_countries', icon: Globe },
-  { value: 500, suffix: '+', labelKey: 'welcome.stats_agents', icon: Landmark },
 ];
 
 // ─── Animation Variants ───────────────────────────────────────────

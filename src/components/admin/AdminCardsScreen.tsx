@@ -405,11 +405,14 @@ export default function AdminCardsScreen() {
       }
 
     const isUSD = card.cardType === 'USD';
-    const accentColor = isUSD ? '#3B82F6' : '#EF4444';
+    const accentColor = isUSD ? '#00C9A7' : '#FF6B6B';
+    const accentLight = isUSD ? '#00C9A730' : '#FF6B6B30';
+    const accentBorder = isUSD ? '#00C9A740' : '#FF6B6B40';
     const bgColor = isUSD
-      ? 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 40%, #0D2847 100%)'
-      : 'linear-gradient(135deg, #1A0A0A 0%, #5F1E1E 40%, #470D0D 100%)';
+      ? 'linear-gradient(135deg, #0B0E1A 0%, #121A3A 30%, #0D1528 60%, #081020 100%)'
+      : 'linear-gradient(135deg, #1A0A10 0%, #2D1020 30%, #200810 60%, #180510 100%)';
     const formattedNumber = card.cardNumber.replace(/(.{4})/g, '$1 ').trim();
+    const cardHolderName = card.user?.name || 'TITULAIRE';
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -434,118 +437,146 @@ export default function AdminCardsScreen() {
             background: ${bgColor};
             color: white;
             position: relative;
+            border: 1px solid ${accentBorder};
           }
-          .card-dots {
+          .card-grid {
             position: absolute;
             inset: 0;
-            opacity: 0.06;
-            background-image: radial-gradient(circle, ${accentColor} 1px, transparent 1px);
-            background-size: 20px 20px;
+            opacity: 0.03;
+            background-image: linear-gradient(${accentColor} 1px, transparent 1px),
+                              linear-gradient(90deg, ${accentColor} 1px, transparent 1px);
+            background-size: 40px 40px;
           }
           .card-glow-1 {
             position: absolute;
-            top: 0; right: 0;
-            width: 200px; height: 200px;
-            background: radial-gradient(ellipse at top right, ${accentColor}, transparent 70%);
-            opacity: 0.2;
+            top: -80px; right: -80px;
+            width: 240px; height: 240px;
+            border-radius: 50%;
+            background: radial-gradient(circle, ${accentColor}, transparent 70%);
+            opacity: 0.15;
           }
           .card-glow-2 {
             position: absolute;
-            bottom: 0; left: 0;
-            width: 150px; height: 150px;
-            background: radial-gradient(ellipse at bottom left, ${accentColor}, transparent 70%);
-            opacity: 0.1;
+            bottom: -64px; left: -64px;
+            width: 192px; height: 192px;
+            border-radius: 50%;
+            background: radial-gradient(circle, ${accentColor}, transparent 70%);
+            opacity: 0.08;
           }
           .card-content {
             position: relative;
             z-index: 1;
             padding: 28px;
           }
-          .card-label {
-            position: absolute;
-            top: 14px; right: 14px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            background: ${accentColor}30;
-            color: ${accentColor};
-            border: 1px solid ${accentColor}40;
+          .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
           }
           .card-header {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 32px;
           }
           .card-logo {
             width: 36px; height: 36px;
             border-radius: 10px;
-            background: ${accentColor}20;
+            background: ${accentLight};
+            border: 1px solid ${accentBorder};
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
           }
-          .card-logo svg { color: ${accentColor}; }
-          .card-brand { font-size: 16px; font-weight: 900; letter-spacing: 2px; }
-          .card-sub { font-size: 8px; color: rgba(255,255,255,0.4); font-weight: 500; letter-spacing: 1px; margin-top: 2px; }
-          .card-number-label { font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 500; letter-spacing: 1px; margin-bottom: 6px; }
-          .card-number { font-size: 22px; font-family: monospace; font-weight: 700; letter-spacing: 4px; margin-bottom: 28px; }
+          .card-logo img { width: 28px; height: 28px; filter: brightness(0) invert(1); }
+          .card-brand { font-size: 15px; font-weight: 900; letter-spacing: 3px; }
+          .card-sub { font-size: 7px; color: rgba(255,255,255,0.3); font-weight: 500; letter-spacing: 2px; margin-top: 2px; }
+          .card-currency {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            background: ${accentLight};
+            color: ${accentColor};
+            border: 1px solid ${accentBorder};
+          }
+          .card-number-label { font-size: 9px; color: rgba(255,255,255,0.3); font-weight: 600; letter-spacing: 2px; margin-bottom: 6px; }
+          .card-number { font-size: 22px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 4px; margin-bottom: 24px; }
           .card-bottom { display: flex; align-items: flex-end; justify-content: space-between; }
-          .card-name-label { font-size: 8px; color: rgba(255,255,255,0.4); font-weight: 500; letter-spacing: 1px; margin-bottom: 4px; }
-          .card-name { font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+          .card-name-label { font-size: 8px; color: rgba(255,255,255,0.3); font-weight: 600; letter-spacing: 1.5px; margin-bottom: 4px; }
+          .card-name { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
           .card-qr {
-            width: 56px; height: 56px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            width: 72px; height: 72px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 4px;
           }
-          .card-qr-inner {
-            width: 40px; height: 40px;
-            border-radius: 6px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .card-qr-pattern {
-            width: 30px; height: 30px;
-            background: ${isUSD ? '#0A1628' : '#1A0A0A'};
-            opacity: 0.8;
-          }
-          .card-balance-row {
+          .card-qr img { width: 56px; height: 56px; border-radius: 4px; }
+          .card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-top: 18px;
-            padding-top: 18px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.06);
           }
-          .balance-label { font-size: 8px; color: rgba(255,255,255,0.4); font-weight: 500; letter-spacing: 1px; }
-          .balance-value { font-size: 18px; font-weight: 700; }
+          .expiry-label { font-size: 8px; color: rgba(255,255,255,0.3); font-weight: 600; letter-spacing: 1.5px); }
+          .expiry-value { font-size: 14px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 2px; }
           .security-badge {
             display: flex;
             align-items: center;
             gap: 6px;
           }
-          .security-text { font-size: 9px; font-weight: 600; letter-spacing: 1px; color: ${accentColor}; opacity: 0.8; }
+          .security-text { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; color: ${accentColor}; opacity: 0.6; }
           .back-section {
             margin-top: 20px;
             padding: 20px 28px;
-            background: ${isUSD ? '#0D2847' : '#470D0D'};
+            background: ${isUSD ? '#0D1528' : '#200810'};
             border-radius: 12px;
             color: white;
+            border: 1px solid ${accentBorder};
           }
-          .back-title { font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+          .back-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+          }
+          .back-logo {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: ${accentLight};
+            border: 1px solid ${accentBorder};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+          }
+          .back-logo img { width: 28px; height: 28px; filter: brightness(0) invert(1); }
+          .back-brand { font-size: 15px; font-weight: 900; letter-spacing: 3px; }
+          .back-ownership { font-size: 8px; color: rgba(255,255,255,0.4); font-style: italic; line-height: 1.6; margin-bottom: 14px; padding-left: 4px; }
+          .back-ownership strong { color: rgba(255,255,255,0.7); font-weight: 600; font-style: normal; }
+          .back-signature {
+            height: 32px;
+            border-radius: 6px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.1), rgba(255,255,255,0.06));
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            margin-bottom: 14px;
+          }
+          .back-signature-text { font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; font-style: italic; letter-spacing: 1px; }
           .back-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
           .back-label { font-size: 10px; color: rgba(255,255,255,0.5); }
           .back-value { font-size: 10px; font-weight: 600; }
-          .back-cvv { font-size: 16px; font-family: monospace; font-weight: 700; letter-spacing: 4px; }
+          .back-cvv { font-size: 20px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 5px; }
           .print-footer {
             text-align: center;
             margin-top: 16px;
@@ -560,49 +591,58 @@ export default function AdminCardsScreen() {
       <body>
         <div>
           <div class="card-container">
-            <div class="card-dots"></div>
+            <div class="card-grid"></div>
             <div class="card-glow-1"></div>
             <div class="card-glow-2"></div>
             <div class="card-content">
-              <div class="card-label">CARTE ${card.cardType}</div>
-              <div class="card-header">
-                <div class="card-logo">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="22" height="16" x="1" y="4" rx="2"/><line x1="1" x2="23" y1="10" y2="10"/>
-                  </svg>
+              <div class="card-top">
+                <div class="card-header">
+                  <div class="card-logo">
+                    <img src="/trait-logo.png" alt="TRAIT" />
+                  </div>
+                  <div>
+                    <div class="card-brand">TRAIT</div>
+                    <div class="card-sub">CARTE NUMÉRIQUE</div>
+                  </div>
                 </div>
-                <div>
-                  <div class="card-brand">TRAIT</div>
-                  <div class="card-sub">CARTE NUMÉRIQUE</div>
-                </div>
+                <div class="card-currency">${card.cardType}</div>
               </div>
-              <div class="card-number-label">NUMÉRO CRYPTÉ</div>
+              <div class="card-number-label">NUMÉRO DE CARTE</div>
               <div class="card-number">${formattedNumber}</div>
               <div class="card-bottom">
                 <div>
-                  <div class="card-name-label">NOM DU TITULAIRE</div>
-                  <div class="card-name">${card.user?.name || 'TITULAIRE'}</div>
+                  <div class="card-name-label">TITULAIRE</div>
+                  <div class="card-name">${cardHolderName}</div>
                 </div>
                 <div class="card-qr">
-                  <div class="card-qr-inner">
-                    <div class="card-qr-pattern"></div>
-                  </div>
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=112x112&data=${encodeURIComponent(card.qrCode)}&bgcolor=ffffff&color=${encodeURIComponent(isUSD ? '0B0E1A' : '1A0A10')}&format=png" alt="QR Code" />
                 </div>
               </div>
-              <div class="card-balance-row">
+              <div class="card-footer">
                 <div>
-                  <div class="balance-label">SOLDE DISPONIBLE</div>
-                  <div class="balance-value">${isUSD ? '$' : ''}${isUSD ? card.user?.realBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) : card.user?.realBalanceFC?.toLocaleString('en-US', { minimumFractionDigits: 2 })}${isUSD ? '' : ' FC'}</div>
+                  <div class="expiry-label">EXPIRE</div>
+                  <div class="expiry-value">${card.expiryDate}</div>
                 </div>
                 <div class="security-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                   <span class="security-text">SÉCURISÉE PAR TRAIT</span>
                 </div>
               </div>
             </div>
           </div>
           <div class="back-section">
-            <div class="back-title">Informations de sécurité</div>
+            <div class="back-header">
+              <div class="back-logo">
+                <img src="/trait-logo.png" alt="TRAIT" />
+              </div>
+              <div class="back-brand">TRAIT</div>
+            </div>
+            <div class="back-ownership">
+              Cette carte est la propriété de <strong>${cardHolderName}</strong>. Si vous la trouvez, veuillez la retourner.
+            </div>
+            <div class="back-signature">
+              <span class="back-signature-text">TRAIT CARD</span>
+            </div>
             <div class="back-row">
               <span class="back-label">Code de sécurité (CCV)</span>
               <span class="back-cvv">${card.cvv}</span>
@@ -617,7 +657,7 @@ export default function AdminCardsScreen() {
             </div>
             <div class="back-row">
               <span class="back-label">ID Carte</span>
-              <span class="back-value">${card.id.slice(0, 8).toUpperCase()}</span>
+              <span class="back-value">${card.id.slice(0, 10).toUpperCase()}</span>
             </div>
           </div>
           <div class="print-footer">

@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Shield, Wifi } from 'lucide-react';
+import Image from 'next/image';
+import { QRCodeSVG } from 'qrcode.react';
+import { Shield, Wifi, Lock, Globe } from 'lucide-react';
 
 interface TraitCardProps {
   cardType: 'USD' | 'FC';
@@ -11,7 +13,7 @@ interface TraitCardProps {
   expiryDate: string;
   cvv: string;
   qrCode: string;
-  balance: number;
+  balance?: number; // kept for backward compat, no longer displayed
   status?: string;
 }
 
@@ -22,7 +24,6 @@ export default function TraitCard({
   expiryDate,
   cvv,
   qrCode,
-  balance,
   status = 'active',
 }: TraitCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -34,76 +35,87 @@ export default function TraitCard({
   const formattedNumber = cardNumber.replace(/(.{4})/g, '$1 ').trim();
 
   // Color scheme
-  const accentColor = isUSD ? '#3B82F6' : '#EF4444';
-  const currencySymbol = isUSD ? '$' : '';
+  const accentColor = isUSD ? '#00C9A7' : '#FF6B6B';
+  const accentColorLight = isUSD ? '#00C9A730' : '#FF6B6B30';
+  const accentColorBorder = isUSD ? '#00C9A740' : '#FF6B6B40';
   const currencyLabel = isUSD ? 'USD' : 'FC';
+  const gradientBg = isUSD
+    ? 'linear-gradient(135deg, #0B0E1A 0%, #121A3A 30%, #0D1528 60%, #081020 100%)'
+    : 'linear-gradient(135deg, #1A0A10 0%, #2D1020 30%, #200810 60%, #180510 100%)';
+  const gradientBgBack = isUSD
+    ? 'linear-gradient(135deg, #081020 0%, #0D1528 30%, #121A3A 60%, #0B0E1A 100%)'
+    : 'linear-gradient(135deg, #180510 0%, #200810 30%, #2D1020 60%, #1A0A10 100%)';
+
+  // QR code value: encode card ID, type, number for scanning
+  const qrValue = JSON.stringify({
+    card: cardNumber,
+    type: currencyLabel,
+    holder: cardHolder,
+    id: qrCode,
+  });
 
   return (
     <div
       className="w-full cursor-pointer select-none"
-      style={{ perspective: '1000px' }}
+      style={{ perspective: '1200px' }}
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
         style={{ transformStyle: 'preserve-3d' }}
         className="relative w-full"
       >
-        {/* FRONT */}
+        {/* ═══════ FRONT ═══════ */}
         <div
           className="w-full rounded-2xl overflow-hidden shadow-2xl relative"
           style={{
             backfaceVisibility: 'hidden',
-            background: isUSD
-              ? 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 40%, #0D2847 100%)'
-              : 'linear-gradient(135deg, #1A0A0A 0%, #5F1E1E 40%, #470D0D 100%)',
-            minHeight: '220px',
+            background: gradientBg,
+            minHeight: '240px',
+            border: `1px solid ${accentColorBorder}`,
           }}
         >
-          {/* World map dots */}
+          {/* Subtle grid pattern */}
           <div
-            className="absolute inset-0 opacity-[0.06]"
+            className="absolute inset-0 opacity-[0.03]"
             style={{
-              backgroundImage: `radial-gradient(circle, ${accentColor} 1px, transparent 1px)`,
-              backgroundSize: '20px 20px',
+              backgroundImage: `
+                linear-gradient(${accentColor} 1px, transparent 1px),
+                linear-gradient(90deg, ${accentColor} 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px',
             }}
           />
 
-          {/* Light streaks */}
+          {/* Top-right light bloom */}
           <div
-            className="absolute top-0 right-0 w-48 h-48 opacity-20"
+            className="absolute -top-20 -right-20 w-60 h-60 rounded-full opacity-[0.15]"
             style={{
-              background: `radial-gradient(ellipse at top right, ${accentColor}, transparent 70%)`,
+              background: `radial-gradient(circle, ${accentColor}, transparent 70%)`,
             }}
           />
+          {/* Bottom-left light bloom */}
           <div
-            className="absolute bottom-0 left-0 w-32 h-32 opacity-10"
+            className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-[0.08]"
             style={{
-              background: `radial-gradient(ellipse at bottom left, ${accentColor}, transparent 70%)`,
+              background: `radial-gradient(circle, ${accentColor}, transparent 70%)`,
             }}
           />
-
-          {/* Card label */}
-          <div className="absolute top-3 right-3 flex items-center gap-1">
-            <div
-              className="px-2.5 py-1 rounded-md text-[9px] font-bold tracking-wider uppercase"
-              style={{
-                backgroundColor: `${accentColor}30`,
-                color: accentColor,
-                border: `1px solid ${accentColor}40`,
-              }}
-            >
-              CARTE {currencyLabel}
-            </div>
-          </div>
+          {/* Middle holographic streak */}
+          <div
+            className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-32 opacity-[0.04]"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)`,
+            }}
+          />
 
           {/* Suspended overlay */}
           {isSuspended && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20 rounded-2xl">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-20 rounded-2xl">
               <div className="text-center">
-                <Shield className="w-8 h-8 text-red-400 mx-auto mb-1" />
-                <p className="text-white text-xs font-bold uppercase">
+                <Shield className="w-10 h-10 text-red-400 mx-auto mb-2" />
+                <p className="text-white text-sm font-bold uppercase tracking-wider">
                   {status === 'suspended' ? 'Suspendue' : 'Bloquée'}
                 </p>
               </div>
@@ -111,102 +123,117 @@ export default function TraitCard({
           )}
 
           <div className="relative z-10 p-5 pt-4">
-            {/* Logo */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
+            {/* ── Top row: Logo + card label ── */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                {/* Official TRAIT Logo */}
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${accentColor}20` }}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden"
+                  style={{
+                    backgroundColor: `${accentColor}15`,
+                    border: `1px solid ${accentColorBorder}`,
+                  }}
                 >
-                  <CreditCard className="w-4 h-4" style={{ color: accentColor }} />
+                  <Image
+                    src="/trait-logo.png"
+                    alt="TRAIT"
+                    width={32}
+                    height={32}
+                    className="w-7 h-7 object-contain"
+                    style={{ filter: 'brightness(0) invert(1)' }}
+                  />
                 </div>
                 <div>
-                  <p className="text-white text-sm font-black tracking-wider leading-none">
+                  <p className="text-white text-[15px] font-black tracking-[3px] leading-none">
                     TRAIT
                   </p>
-                  <p className="text-white/40 text-[8px] font-medium tracking-wider mt-0.5">
+                  <p className="text-white/30 text-[7px] font-medium tracking-[2px] mt-0.5">
                     CARTE NUMÉRIQUE
                   </p>
                 </div>
               </div>
-              <Wifi
-                className="w-5 h-5 rotate-90"
-                style={{ color: accentColor, opacity: 0.7 }}
-              />
+
+              <div className="flex flex-col items-end gap-1.5">
+                <div
+                  className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[1.5px] uppercase"
+                  style={{
+                    backgroundColor: accentColorLight,
+                    color: accentColor,
+                    border: `1px solid ${accentColorBorder}`,
+                  }}
+                >
+                  {currencyLabel}
+                </div>
+                <Wifi
+                  className="w-4 h-4 rotate-90"
+                  style={{ color: accentColor, opacity: 0.5 }}
+                />
+              </div>
             </div>
 
-            {/* Card number */}
-            <div className="mb-4">
-              <p className="text-white/40 text-[10px] font-medium tracking-wider mb-1">
-                NUMÉRO CRYPTÉ
+            {/* ── Card Number ── */}
+            <div className="mb-5">
+              <p className="text-white/30 text-[9px] font-semibold tracking-[2px] mb-1.5">
+                NUMÉRO DE CARTE
               </p>
-              <p className="text-white text-lg font-mono font-bold tracking-[3px]">
+              <p className="text-white text-[22px] font-mono font-bold tracking-[4px] leading-none">
                 {formattedNumber}
               </p>
             </div>
 
-            {/* Bottom: Name + QR */}
+            {/* ── Bottom: Name + QR Code ── */}
             <div className="flex items-end justify-between">
               <div className="flex-1 min-w-0">
-                <p className="text-white/40 text-[8px] font-medium tracking-wider mb-0.5">
-                  NOM DU TITULAIRE
+                <p className="text-white/30 text-[8px] font-semibold tracking-[1.5px] mb-1">
+                  TITULAIRE
                 </p>
-                <p className="text-white text-xs font-bold tracking-wider truncate uppercase">
+                <p className="text-white text-[13px] font-bold tracking-[2px] truncate uppercase leading-none">
                   {cardHolder}
                 </p>
               </div>
 
-              {/* QR Code visual */}
-              <div className="w-12 h-12 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center ml-3 shrink-0">
-                <div className="w-8 h-8 rounded bg-white/90 flex items-center justify-center">
-                  <div
-                    className="w-6 h-6 grid grid-cols-3 grid-rows-3 gap-[1px] p-0.5"
-                    style={{ backgroundColor: isUSD ? '#0A1628' : '#1A0A0A' }}
-                  >
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="rounded-[0.5px]"
-                        style={{
-                          backgroundColor: [0, 2, 4, 6, 8].includes(i)
-                            ? (isUSD ? '#0A1628' : '#1A0A0A')
-                            : [1, 3, 5, 7].includes(i)
-                              ? (isUSD ? '#0A1628' : '#1A0A0A')
-                              : 'transparent',
-                          opacity: [0, 2, 4, 6, 8].includes(i) ? 1 : 0.5,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
+              {/* Professional QR Code */}
+              <div
+                className="w-[72px] h-[72px] rounded-xl flex items-center justify-center ml-3 shrink-0 p-1"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.95)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                }}
+              >
+                <QRCodeSVG
+                  value={qrValue}
+                  size={56}
+                  level="M"
+                  fgColor={isUSD ? '#0B0E1A' : '#1A0A10'}
+                  bgColor="#FFFFFF"
+                  imageSettings={{
+                    src: '/trait-logo.png',
+                    height: 14,
+                    width: 14,
+                    excavate: true,
+                  }}
+                />
               </div>
             </div>
 
-            {/* Balance & Security */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+            {/* ── Bottom bar: expiry + security ── */}
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.06]">
               <div>
-                <p className="text-white/40 text-[8px] font-medium tracking-wider">
-                  SOLDE DISPONIBLE
+                <p className="text-white/30 text-[8px] font-semibold tracking-[1.5px]">
+                  EXPIRE
                 </p>
-                <p className="text-white text-base font-bold">
-                  {currencySymbol}
-                  {balance.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                  {!isUSD && (
-                    <span className="text-xs font-medium ml-0.5">FC</span>
-                  )}
+                <p className="text-white text-[14px] font-mono font-bold tracking-[2px]">
+                  {expiryDate}
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
-                <Shield
-                  className="w-3.5 h-3.5"
-                  style={{ color: accentColor, opacity: 0.7 }}
+                <Lock
+                  className="w-3 h-3"
+                  style={{ color: accentColor, opacity: 0.6 }}
                 />
                 <p
-                  className="text-[9px] font-semibold tracking-wider"
-                  style={{ color: accentColor, opacity: 0.8 }}
+                  className="text-[8px] font-bold tracking-[1.5px]"
+                  style={{ color: accentColor, opacity: 0.6 }}
                 >
                   SÉCURISÉE PAR TRAIT
                 </p>
@@ -215,108 +242,146 @@ export default function TraitCard({
           </div>
         </div>
 
-        {/* BACK */}
+        {/* ═══════ BACK ═══════ */}
         <div
           className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl"
           style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
-            background: isUSD
-              ? 'linear-gradient(135deg, #0D2847 0%, #1E3A5F 40%, #0A1628 100%)'
-              : 'linear-gradient(135deg, #470D0D 0%, #5F1E1E 40%, #1A0A0A 100%)',
-            minHeight: '220px',
+            background: gradientBgBack,
+            minHeight: '240px',
+            border: `1px solid ${accentColorBorder}`,
           }}
         >
+          {/* Subtle grid pattern */}
           <div
-            className="absolute inset-0 opacity-[0.04]"
+            className="absolute inset-0 opacity-[0.02]"
             style={{
-              backgroundImage: `radial-gradient(circle, ${accentColor} 1px, transparent 1px)`,
-              backgroundSize: '20px 20px',
+              backgroundImage: `
+                linear-gradient(${accentColor} 1px, transparent 1px),
+                linear-gradient(90deg, ${accentColor} 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px',
+            }}
+          />
+
+          {/* Light bloom */}
+          <div
+            className="absolute -top-20 -right-20 w-48 h-48 rounded-full opacity-[0.1]"
+            style={{
+              background: `radial-gradient(circle, ${accentColor}, transparent 70%)`,
             }}
           />
 
           <div className="relative z-10 p-5 pt-4">
-            {/* Logo */}
-            <div className="flex items-center gap-2 mb-4">
+            {/* ── Logo ── */}
+            <div className="flex items-center gap-2.5 mb-5">
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: `${accentColor}20` }}
+                className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden"
+                style={{
+                  backgroundColor: `${accentColor}15`,
+                  border: `1px solid ${accentColorBorder}`,
+                }}
               >
-                <CreditCard className="w-4 h-4" style={{ color: accentColor }} />
+                <Image
+                  src="/trait-logo.png"
+                  alt="TRAIT"
+                  width={32}
+                  height={32}
+                  className="w-7 h-7 object-contain"
+                  style={{ filter: 'brightness(0) invert(1)' }}
+                />
               </div>
-              <p className="text-white text-sm font-black tracking-wider">TRAIT</p>
+              <p className="text-white text-[15px] font-black tracking-[3px]">TRAIT</p>
             </div>
 
-            {/* Ownership note */}
-            <p className="text-white/50 text-[8px] leading-relaxed italic mb-4">
-              Cette carte est la propriété de TRAIT. Si vous la trouvez, veuillez la retourner.
+            {/* ── Ownership text with client name ── */}
+            <p className="text-white/40 text-[8px] leading-relaxed italic mb-4 px-1">
+              Cette carte est la propriété de{' '}
+              <span className="text-white/70 font-semibold not-italic">
+                {cardHolder}
+              </span>
+              . Si vous la trouvez, veuillez la retourner.
             </p>
 
-            {/* Signature strip */}
+            {/* ── Signature strip ── */}
             <div className="mb-4">
-              <p className="text-white/40 text-[8px] font-medium tracking-wider mb-1.5">
+              <p className="text-white/30 text-[8px] font-semibold tracking-[1.5px] mb-1.5">
                 SIGNATURE AUTORISÉE
               </p>
-              <div className="bg-white/10 border border-white/20 rounded-md px-3 py-2">
-                <p className="text-white/60 text-[10px] font-mono italic">
+              <div
+                className="h-8 rounded-md flex items-center px-3"
+                style={{
+                  background: 'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.1), rgba(255,255,255,0.06))',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                <p className="text-white/30 text-[10px] font-mono italic tracking-wider">
                   TRAIT CARD
                 </p>
               </div>
             </div>
 
-            {/* CVV */}
-            <div className="mb-4">
-              <p className="text-white/40 text-[8px] font-medium tracking-wider mb-1.5">
+            {/* ── CCV ── */}
+            <div className="mb-5">
+              <p className="text-white/30 text-[8px] font-semibold tracking-[1.5px] mb-1.5">
                 CODE DE SÉCURITÉ (CCV)
               </p>
               <div
-                className="inline-block rounded-md px-4 py-1.5"
-                style={{ backgroundColor: `${accentColor}30` }}
+                className="inline-flex items-center rounded-lg px-4 py-2"
+                style={{ backgroundColor: accentColorLight }}
               >
-                <p className="text-white text-lg font-mono font-bold tracking-[4px]">
+                <p
+                  className="text-white text-xl font-mono font-bold tracking-[5px]"
+                >
                   {cvv}
                 </p>
               </div>
-              <p className="text-white/30 text-[8px] mt-0.5">3 chiffres</p>
             </div>
 
-            {/* Security features */}
-            <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-white/10">
+            {/* ── Security features grid ── */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               {[
-                { icon: '🔒', label: 'Sécurité', desc: 'Protection avancée' },
-                { icon: '🛡️', label: 'Confidentiel', desc: 'Ne partagez pas le CCV' },
-                { icon: '✅', label: 'Utilisation', desc: 'En ligne et en magasin' },
-                { icon: '📞', label: 'Support', desc: 'trait137@gmail.com' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-1.5">
-                  <span className="text-xs">{item.icon}</span>
-                  <div className="min-w-0">
-                    <p className="text-white/70 text-[8px] font-semibold leading-none">
-                      {item.label}
-                    </p>
-                    <p className="text-white/40 text-[7px] leading-tight mt-0.5">
-                      {item.desc}
-                    </p>
+                { icon: Lock, label: 'Sécurité', desc: 'Protection avancée' },
+                { icon: Shield, label: 'Confidentiel', desc: 'Ne partagez pas le CCV' },
+                { icon: Globe, label: 'Utilisation', desc: 'En ligne et en magasin' },
+                { icon: Lock, label: 'Support', desc: 'trait137@gmail.com' },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <Icon
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={{ color: accentColor, opacity: 0.6 }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-white/60 text-[8px] font-bold leading-none tracking-wider">
+                        {item.label}
+                      </p>
+                      <p className="text-white/30 text-[7px] leading-tight mt-0.5">
+                        {item.desc}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* Expiry */}
-            <div className="flex items-center justify-between mt-3">
-              <p className="text-white/30 text-[8px]">
+            {/* ── Footer info ── */}
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/[0.06]">
+              <p className="text-white/20 text-[7px] tracking-wider">
                 EXPIRE {expiryDate}
               </p>
-              <p className="text-white/20 text-[7px]">
-                {currencyLabel} • {isUSD ? 'Internationale' : 'Nationale'}
+              <p className="text-white/15 text-[7px] tracking-wider">
+                {currencyLabel} &bull; {isUSD ? 'INTERNATIONALE' : 'NATIONALE'}
               </p>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Tap to flip hint */}
-      <p className="text-center text-[10px] text-muted-foreground mt-2">
+      {/* Tap hint */}
+      <p className="text-center text-[10px] text-muted-foreground mt-2.5">
         Appuyez pour retourner la carte
       </p>
     </div>

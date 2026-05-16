@@ -352,6 +352,60 @@ Stage Summary:
 - ESLint passes with 0 errors, dev server compiles and runs cleanly
 
 ---
+Task ID: 8
+Agent: Main Agent
+Task: Ultra-premium homepage redesign inspired by Stripe/Revolut/Flutterwave
+
+Work Log:
+- Added 15+ new premium CSS animations to globals.css:
+  - shimmer, meshFloat, orbitSpin, pulseRing, gradientOrb, slideUpBlur, borderGlow, countUp, ripple, textShine, particleFloat
+  - Utility classes: premium-shimmer, premium-mesh-float, premium-gradient-text, glass-card, premium-border-glow
+- Added 25+ new translation keys to i18n.tsx (French + English):
+  - hero_headline, hero_headline2, hero_desc, get_started, stats_users/transactions/countries/agents/uptime
+  - trust_title, trust_desc, cta_title, cta_desc, cta_button, partners_title, feature_cards_title/desc
+  - instant_desc, worldwide_desc, low_fees_desc, cards_title, cards_desc, barter_desc
+- Completely rewrote WelcomeScreen.tsx (~550 lines) with premium fintech design:
+  - FloatingParticles component: 20 animated particles with staggered delays
+  - MeshGradient component: 4 animated gradient orbs with blur effects
+  - AnimatedSection: scroll-triggered fade-up with blur animation
+  - AnimatedCounter: animated number counting (spring physics, in-view trigger)
+  - PremiumFeatureCard: hover-activated gradient overlays, scale animations, shimmer borders
+
+  Sections:
+  1. Header: Language selector pills with scale effect
+  2. Hero: Spinning dashed ring around logo, gradient text headline, animated badges, dual CTA buttons with arrow animations
+  3. Stats: 4 animated counter cards (15K+ users, 50K+ transactions, 50+ countries, 500+ agents)
+  4. Services: Horizontal snap-scrolling carousel with hover scale effects
+  5. Features: 2x2 premium grid with animated gradient overlays
+  6. Trust Banner: Dark gradient with mesh patterns, grid dots, shimmer sweep, security badges (SSL/TLS, JWT, E2E)
+  7. Account Buttons: Agent, Developer, Support, Contact Us - all with hover/tap animations
+  8. News: 3 items with slide-in animations and hover effects
+  9. PWA Install: 2 premium platform cards (Android/iOS) with hover float
+  10. Info Banner: Gradient background with blur effect
+  11. CTA Section: Full gradient background with decorative orbs and shimmer sweep
+  12. Footer: Blur backdrop, subtle border
+
+  All existing buttons preserved:
+  - Connexion (Se connecter) → auth-login
+  - Inscription (Créer un compte) → auth-phone with setSelectedRole('client')
+  - Compte Agent (Créer un compte Agent) → agent-register
+  - Espace Développeur → developer-register
+  - Support → support
+  - Nous contacter → support
+  - Télécharger Android → PWA install
+  - Télécharger iOS → PWA install guide
+
+Stage Summary:
+- Ultra-premium homepage matching Stripe/Revolut/PayPal design standards
+- Smooth Framer Motion animations throughout (spring physics, stagger, in-view triggers)
+- Fully responsive: mobile-first with sm/lg breakpoints for tablets/desktop
+- Glass morphism, mesh gradients, floating particles, shimmer effects
+- Animated stats counters with scroll-triggered counting
+- All existing buttons and navigation preserved exactly
+- Multilingual system continues to work normally
+- ESLint: 0 errors, dev server: compiles and runs cleanly
+
+---
 Task ID: 7
 Agent: Main Agent
 Task: Implement KYC system, security middleware, admin login fix, daily limits

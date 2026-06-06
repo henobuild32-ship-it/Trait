@@ -3,112 +3,107 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id                    String   @id @default(cuid())
-  phone                 String   @unique
-  name                  String?
-  pseudo                String?
-  email                 String?
-  gender                String?                         // male, female, other
-  city                  String?
-  country               String   @default("US")
-  role                  String   @default("client") // client, agent, seller
-  agentCode             String?  @unique              // AGT-XXXXXX format (old)
-  agentNumber           String?  @unique              // AGT-2026-XXXXX format (official)
-  address               String?
-  photoId               String?                         // URL to profile photo / ID document
-  businessName          String?                         // Seller business name
-  businessType          String?                         // Seller product types
-  location              String?                         // Seller location (market/city)
-  systemPassword        String?                         // Admin-generated system password (separate from login password)
-  systemPasswordSent    Boolean  @default(false)        // Whether system credentials email was sent
-  validationStatus      String   @default("validated") // pending, validated, rejected, suspended (agents only)
+  id                     String                  @id @default(cuid())
+  phone                  String                  @unique
+  name                   String?
+  pseudo                 String?
+  email                  String?
+  gender                 String?
+  city                   String?
+  country                String                  @default("US")
+  role                   String                  @default("client")
+  agentCode              String?                 @unique
+  agentNumber            String?                 @unique
+  address                String?
+  photoId                String?
+  businessName           String?
+  businessType           String?
+  location               String?
+  systemPassword         String?
+  systemPasswordSent     Boolean                 @default(false)
+  validationStatus       String                  @default("validated")
   validationRejectReason String?
-  password              String?
-  pin                   String?
-  realBalance           Float    @default(0)
-  realBalanceFC         Float    @default(0)
-  bonusBalance          Float    @default(10)
-  bonusBalanceFC        Float    @default(0)
-  bonusBlocked          Boolean  @default(false)       // Block abusive bonus usage
-  bonusBlockedReason    String?                       // Reason for blocking bonus
-  isVerified            Boolean  @default(false)
-  suspended             Boolean  @default(false)
-  suspensionReason      String?
-  tempBlocked           Boolean  @default(false)
-  pinAttempts           Int      @default(0)
-  hasCompletedOnboarding Boolean @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  // KYC fields
-  kycStatus             String   @default("none")      // none, pending, verified, rejected
-  kycSubmittedAt        DateTime?
-  kycVerifiedAt         DateTime?
-  kycRejectReason       String?
-  kycDocumentType       String?                        // passport, id_card, driver_license
-  kycDocumentUrl        String?                        // URL to uploaded ID document
-  kycSelfieUrl          String?                        // URL to uploaded selfie photo
-  kycData               String?                        // JSON: encrypted KYC data snapshot
-
-  sentTransactions     Transaction[]     @relation("SenderTransactions")
-  receivedTransactions Transaction[]     @relation("ReceiverTransactions")
-  agentTransactions    Transaction[]     @relation("AgentTransactions")
-  agentDeposits        Deposit[]         @relation("AgentDeposits")
-  agentWithdrawals     Withdrawal[]      @relation("AgentWithdrawals")
-  purchases            Purchase[]
-  marketplaceProducts  MarketplaceProduct[]
-  barterOffers         BarterOffer[]
-  barterChats          BarterChatParticipant[]
-  notifications        Notification[]
-  deposits             Deposit[]
-  withdrawals          Withdrawal[]
-  ussdFavorites        UssdFavorite[]
-  creditPurchases      CreditPurchase[]
-  billPayments         BillPayment[]
-  userSettings         UserSettings?
-  bonusHistory         BonusHistory[]
-  receivedAgentMessages AgentMessage[]   @relation("ReceivedAgentMessages")
-  cardRequests            CardRequest[]
-  cards                   TraitCard[]
-  cardPayments            CardPayment[]
-  receivedClientMessages  AdminClientMessage[]
-  securityLogs            SecurityLog[]
-  internationalTransfers  InternationalTransfer[]
+  password               String?
+  pin                    String?
+  realBalance            Float                   @default(0)
+  realBalanceFC          Float                   @default(0)
+  bonusBalance           Float                   @default(10)
+  bonusBalanceFC         Float                   @default(0)
+  bonusBlocked           Boolean                 @default(false)
+  bonusBlockedReason     String?
+  isVerified             Boolean                 @default(false)
+  suspended              Boolean                 @default(false)
+  suspensionReason       String?
+  tempBlocked            Boolean                 @default(false)
+  pinAttempts            Int                     @default(0)
+  hasCompletedOnboarding Boolean                 @default(false)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  kycStatus              String                  @default("none")
+  kycSubmittedAt         DateTime?
+  kycVerifiedAt          DateTime?
+  kycRejectReason        String?
+  kycDocumentType        String?
+  kycDocumentUrl         String?
+  kycSelfieUrl           String?
+  kycData                String?
+  receivedClientMessages AdminClientMessage[]
+  receivedAgentMessages  AgentMessage[]          @relation("ReceivedAgentMessages")
+  barterChats            BarterChatParticipant[]
+  barterOffers           BarterOffer[]
+  billPayments           BillPayment[]
+  bonusHistory           BonusHistory[]
+  cardPayments           CardPayment[]
+  cardRequests           CardRequest[]
+  creditPurchases        CreditPurchase[]
+  agentDeposits          Deposit[]               @relation("AgentDeposits")
+  deposits               Deposit[]
+  internationalTransfers InternationalTransfer[]
+  marketplaceProducts    MarketplaceProduct[]
+  notifications          Notification[]
+  purchases              Purchase[]
+  securityLogs           SecurityLog[]
+  cards                  TraitCard[]
+  agentTransactions      Transaction[]           @relation("AgentTransactions")
+  receivedTransactions   Transaction[]           @relation("ReceiverTransactions")
+  sentTransactions       Transaction[]           @relation("SenderTransactions")
+  userSettings           UserSettings?
+  ussdFavorites          UssdFavorite[]
+  agentWithdrawals       Withdrawal[]            @relation("AgentWithdrawals")
+  withdrawals            Withdrawal[]
 }
 
 model Admin {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String
-  role      String   @default("admin") // admin, super_admin
-  lastLogin DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  activityLogs   AdminActivityLog[]
+  id                  String               @id @default(cuid())
+  username            String               @unique
+  password            String
+  name                String
+  role                String               @default("admin")
+  lastLogin           DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  activityLogs        AdminActivityLog[]
+  sentClientMessages  AdminClientMessage[]
+  sentAgentMessages   AgentMessage[]
+  bonusCampaigns      BonusCampaign[]
+  cardValidations     CardRequest[]
   globalNotifications GlobalNotification[]
-  bonusCampaigns  BonusCampaign[]
-  sentAgentMessages AgentMessage[]
-  sentClientMessages AdminClientMessage[]
-  cardValidations  CardRequest[]
 }
 
 model AdminActivityLog {
   id        String   @id @default(cuid())
   adminId   String
-  action    String   // login, suspend_user, delete_user, create_agent, suspend_agent, delete_agent, publish_product, delete_product, block_transaction, send_notification, etc.
-  target    String?  // ID of the affected entity
-  details   String?  // JSON string with additional info
+  action    String
+  target    String?
+  details   String?
   ipAddress String?
   createdAt DateTime @default(now())
-
-  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([adminId])
   @@index([action])
@@ -120,32 +115,30 @@ model GlobalNotification {
   adminId   String
   title     String
   message   String
-  type      String   @default("general") // announcement, alert, maintenance, promo
+  type      String   @default("general")
   sentToAll Boolean  @default(true)
   createdAt DateTime @default(now())
-
-  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([adminId])
 }
 
 model Transaction {
   id          String   @id @default(cuid())
-  type        String   // send, receive, deposit, withdrawal
+  type        String
   amount      Float
   fee         Float    @default(0)
   currency    String   @default("USD")
-  status      String   @default("pending") // pending, completed, failed, blocked
+  status      String   @default("pending")
   senderId    String
   receiverId  String
   description String?
   agentId     String?
   blockReason String?
   createdAt   DateTime @default(now())
-
-  sender   User @relation("SenderTransactions", fields: [senderId], references: [id])
-  receiver User @relation("ReceiverTransactions", fields: [receiverId], references: [id])
-  agent    User? @relation("AgentTransactions", fields: [agentId], references: [id])
+  agent       User?    @relation("AgentTransactions", fields: [agentId], references: [id])
+  receiver    User     @relation("ReceiverTransactions", fields: [receiverId], references: [id])
+  sender      User     @relation("SenderTransactions", fields: [senderId], references: [id])
 
   @@index([senderId])
   @@index([receiverId])
@@ -162,9 +155,8 @@ model Deposit {
   status    String   @default("pending")
   agentId   String?
   createdAt DateTime @default(now())
-
-  user  User   @relation(fields: [userId], references: [id])
-  agent User?  @relation("AgentDeposits", fields: [agentId], references: [id])
+  agent     User?    @relation("AgentDeposits", fields: [agentId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Withdrawal {
@@ -177,94 +169,86 @@ model Withdrawal {
   status    String   @default("pending")
   agentId   String?
   createdAt DateTime @default(now())
-
-  user  User   @relation(fields: [userId], references: [id])
-  agent User?  @relation("AgentWithdrawals", fields: [agentId], references: [id])
+  agent     User?    @relation("AgentWithdrawals", fields: [agentId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model MarketplaceProduct {
-  id              String    @id @default(cuid())
-  name            String
-  description     String
-  price           Float
-  currency        String    @default("USD")        // USD, FC
-  category        String
-  imageUrl        String?
-  sellerId        String?
-  active          Boolean   @default(true)
-  // Bonus fields
-  bonusEnabled    Boolean   @default(false)        // Allow purchase with bonus
-  bonusOnly       Boolean   @default(false)        // Exclusively purchasable with bonus
-  bonusPrice      Float?                           // Specific bonus price (optional)
-  bonusMaxQty     Int?                             // Max quantity purchasable with bonus per user
-  bonusExpiryAt   DateTime?                        // Bonus availability expiry
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  seller    User?     @relation(fields: [sellerId], references: [id])
-  purchases Purchase[]
+  id            String     @id @default(cuid())
+  name          String
+  description   String
+  price         Float
+  currency      String     @default("USD")
+  category      String
+  imageUrl      String?
+  sellerId      String?
+  active        Boolean    @default(true)
+  bonusEnabled  Boolean    @default(false)
+  bonusOnly     Boolean    @default(false)
+  bonusPrice    Float?
+  bonusMaxQty   Int?
+  bonusExpiryAt DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  seller        User?      @relation(fields: [sellerId], references: [id])
+  purchases     Purchase[]
 }
 
 model Purchase {
-  id          String   @id @default(cuid())
-  productId   String
-  buyerId     String
-  amount      Float
-  usedBonus   Float    @default(0)
-  usedReal    Float    @default(0)
-  status      String   @default("completed")
-  createdAt   DateTime @default(now())
-
-  product MarketplaceProduct @relation(fields: [productId], references: [id])
-  buyer   User              @relation(fields: [buyerId], references: [id])
+  id        String             @id @default(cuid())
+  productId String
+  buyerId   String
+  amount    Float
+  usedBonus Float              @default(0)
+  usedReal  Float              @default(0)
+  status    String             @default("completed")
+  createdAt DateTime           @default(now())
+  buyer     User               @relation(fields: [buyerId], references: [id])
+  product   MarketplaceProduct @relation(fields: [productId], references: [id])
 }
 
 model BarterOffer {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
   description String
   category    String
   offeredBy   String
   wantedItem  String?
   images      String?
-  status      String   @default("active") // active, matched, closed, moderated
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user  User          @relation(fields: [offeredBy], references: [id])
-  chats BarterChat[]
+  status      String       @default("active")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  chats       BarterChat[]
+  user        User         @relation(fields: [offeredBy], references: [id])
 }
 
 model BarterChat {
-  id          String   @id @default(cuid())
-  offerId     String
-  initiatedBy String
-  createdAt   DateTime @default(now())
-
+  id           String                  @id @default(cuid())
+  offerId      String
+  initiatedBy  String
+  createdAt    DateTime                @default(now())
   offer        BarterOffer             @relation(fields: [offerId], references: [id])
   participants BarterChatParticipant[]
   messages     BarterMessage[]
 }
 
 model BarterChatParticipant {
-  id     String   @id @default(cuid())
+  id     String     @id @default(cuid())
   chatId String
   userId String
-
-  chat BarterChat @relation(fields: [chatId], references: [id])
-  user User       @relation(fields: [userId], references: [id])
+  chat   BarterChat @relation(fields: [chatId], references: [id])
+  user   User       @relation(fields: [userId], references: [id])
 
   @@unique([chatId, userId])
 }
 
 model BarterMessage {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   chatId    String
   senderId  String
   content   String
-  createdAt DateTime @default(now())
-
-  chat BarterChat @relation(fields: [chatId], references: [id])
+  createdAt DateTime   @default(now())
+  chat      BarterChat @relation(fields: [chatId], references: [id])
 }
 
 model Notification {
@@ -275,85 +259,75 @@ model Notification {
   type      String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
-
-// ─── USSD System Models ─────────────────────────────────────────────
 
 model UssdFavorite {
   id        String   @id @default(cuid())
   userId    String
   label     String
   phone     String
-  type      String   @default("transfer") // transfer, credit
+  type      String   @default("transfer")
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model UserSettings {
-  id                     String   @id @default(cuid())
-  userId                 String   @unique
-  ussdLanguage           String   @default("fr") // fr, en, ln, sw, tl, kg
-  defaultCurrency        String   @default("USD") // USD, FC
-  smsNotifications       Boolean  @default(false)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  ussdLanguage     String   @default("fr")
+  defaultCurrency  String   @default("USD")
+  smsNotifications Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model CreditPurchase {
   id          String   @id @default(cuid())
   userId      String
-  network     String   // Vodacom, Airtel, Orange, Africell
+  network     String
   phoneNumber String
   amount      Float
   currency    String   @default("USD")
   status      String   @default("completed")
   createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([network])
 }
 
 model BillPayment {
-  id          String   @id @default(cuid())
-  userId      String
-  billType    String   // electricity, water, internet, subscription, other
-  reference   String
-  amount      Float
-  currency    String   @default("USD")
-  status      String   @default("completed")
-  createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String
+  billType  String
+  reference String
+  amount    Float
+  currency  String   @default("USD")
+  status    String   @default("completed")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([billType])
 }
 
-// ─── Bonus System Models ───────────────────────────────────────────
-
 model BonusHistory {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   userId      String
-  type        String   // registration, admin_grant, admin_remove, campaign, purchase, adjustment, blocked_unblocked
-  amount      Float    // Positive = added, Negative = removed
-  currency    String   @default("USD") // USD, FC
+  type        String
+  amount      Float
+  currency    String         @default("USD")
   description String?
-  adminId     String?  // If action was by admin
-  campaignId  String?  // If from a campaign
-  metadata    String?  // JSON string with extra info
-  createdAt   DateTime @default(now())
-
-  user     User            @relation(fields: [userId], references: [id])
-  campaign BonusCampaign?  @relation(fields: [campaignId], references: [id])
+  adminId     String?
+  campaignId  String?
+  metadata    String?
+  createdAt   DateTime       @default(now())
+  campaign    BonusCampaign? @relation(fields: [campaignId], references: [id])
+  user        User           @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([type])
@@ -361,43 +335,39 @@ model BonusHistory {
 }
 
 model BonusCampaign {
-  id              String    @id @default(cuid())
-  name            String
-  description     String?
-  bonusAmount     Float                          // Amount to grant per user
-  currency        String    @default("USD")      // USD, FC
-  targetUsers     String    @default("all")      // all, new, specific
-  targetUserIds   String?                          // JSON array of user IDs (when targetUsers = "specific")
-  status          String    @default("active")    // active, paused, completed, expired
-  maxDistributions Int?                           // Max total distributions
-  currentCount    Int       @default(0)           // Current distributions
-  startDate       DateTime  @default(now())
-  endDate         DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  history         BonusHistory[]
-  adminId         String
-  admin           Admin     @relation(fields: [adminId], references: [id])
+  id               String         @id @default(cuid())
+  name             String
+  description      String?
+  bonusAmount      Float
+  currency         String         @default("USD")
+  targetUsers      String         @default("all")
+  targetUserIds    String?
+  status           String         @default("active")
+  maxDistributions Int?
+  currentCount     Int            @default(0)
+  startDate        DateTime       @default(now())
+  endDate          DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  adminId          String
+  admin            Admin          @relation(fields: [adminId], references: [id])
+  history          BonusHistory[]
 
   @@index([status])
   @@index([startDate])
 }
 
-// ─── Agent Messaging System ──────────────────────────────────────
-
 model AgentMessage {
   id          String   @id @default(cuid())
   adminId     String
-  recipientId String                         // User ID of the agent
+  recipientId String
   title       String
   message     String
-  type        String   @default("individual") // individual, broadcast
+  type        String   @default("individual")
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
-
-  admin    Admin @relation(fields: [adminId], references: [id])
-  recipient User  @relation("ReceivedAgentMessages", fields: [recipientId], references: [id])
+  admin       Admin    @relation(fields: [adminId], references: [id])
+  recipient   User     @relation("ReceivedAgentMessages", fields: [recipientId], references: [id])
 
   @@index([recipientId])
   @@index([adminId])
@@ -405,21 +375,18 @@ model AgentMessage {
   @@index([createdAt])
 }
 
-// ─── TRAIT Card System ─────────────────────────────────────────
-
 model CardRequest {
-  id            String   @id @default(cuid())
-  userId        String
-  cardType      String   @default("USD")        // USD, FC
-  status        String   @default("pending")     // pending, approved, rejected, suspended
-  rejectReason  String?
-  adminId       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user    User        @relation(fields: [userId], references: [id])
-  card    TraitCard?
-  admin   Admin?      @relation(fields: [adminId], references: [id])
+  id           String     @id @default(cuid())
+  userId       String
+  cardType     String     @default("USD")
+  status       String     @default("pending")
+  rejectReason String?
+  adminId      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  admin        Admin?     @relation(fields: [adminId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+  card         TraitCard?
 
   @@index([userId])
   @@index([status])
@@ -427,21 +394,20 @@ model CardRequest {
 }
 
 model TraitCard {
-  id              String   @id @default(cuid())
-  userId          String
-  cardRequestId   String   @unique
-  cardType        String   @default("USD")        // USD, FC
-  cardNumber      String   @unique                // Generated 16-digit card number
-  cvv             String                           // Generated 3-digit CCV
-  qrCode          String                           // Unique QR code data
-  expiryDate      String                           // MM/YY format
-  status          String   @default("active")      // active, suspended, blocked
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user        User        @relation(fields: [userId], references: [id])
-  request     CardRequest @relation(fields: [cardRequestId], references: [id])
-  payments    CardPayment[]
+  id            String        @id @default(cuid())
+  userId        String
+  cardRequestId String        @unique
+  cardType      String        @default("USD")
+  cardNumber    String        @unique
+  cvv           String
+  qrCode        String
+  expiryDate    String
+  status        String        @default("active")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  payments      CardPayment[]
+  request       CardRequest   @relation(fields: [cardRequestId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([cardNumber])
@@ -449,17 +415,16 @@ model TraitCard {
 }
 
 model CardPayment {
-  id              String   @id @default(cuid())
-  cardId          String
-  userId          String
-  amount          Float
-  currency        String   @default("USD")
-  description     String?
-  status          String   @default("pending")    // pending, completed, failed
-  createdAt       DateTime @default(now())
-
-  card  TraitCard @relation(fields: [cardId], references: [id])
-  user  User       @relation(fields: [userId], references: [id])
+  id          String    @id @default(cuid())
+  cardId      String
+  userId      String
+  amount      Float
+  currency    String    @default("USD")
+  description String?
+  status      String    @default("pending")
+  createdAt   DateTime  @default(now())
+  card        TraitCard @relation(fields: [cardId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 
   @@index([cardId])
   @@index([userId])
@@ -467,21 +432,18 @@ model CardPayment {
   @@index([createdAt])
 }
 
-// ─── Admin → Client Messaging System ──────────────────────────────
-
 model AdminClientMessage {
-  id            String   @id @default(cuid())
-  adminId       String
-  recipientId   String                         // User ID of the client
-  title         String
-  message       String
-  type          String   @default("individual") // individual, broadcast
-  allowCopy     Boolean  @default(false)        // Admin allows client to copy message
-  isRead        Boolean  @default(false)
-  createdAt     DateTime @default(now())
-
-  admin     Admin @relation(fields: [adminId], references: [id])
-  recipient User  @relation(fields: [recipientId], references: [id])
+  id          String   @id @default(cuid())
+  adminId     String
+  recipientId String
+  title       String
+  message     String
+  type        String   @default("individual")
+  allowCopy   Boolean  @default(false)
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  admin       Admin    @relation(fields: [adminId], references: [id])
+  recipient   User     @relation(fields: [recipientId], references: [id])
 
   @@index([recipientId])
   @@index([adminId])
@@ -489,42 +451,37 @@ model AdminClientMessage {
   @@index([createdAt])
 }
 
-// ─── App Version ─────────────────────────────────────────────────
-
 model AppVersion {
   id          String   @id @default(cuid())
-  version     String   @unique               // e.g. "1.0.0"
+  version     String   @unique
   description String?
   downloadUrl String?
   isCurrent   Boolean  @default(true)
   createdAt   DateTime @default(now())
 }
 
-// ─── Developer Portal Models ─────────────────────────────────────
-
 model Developer {
-  id              String   @id @default(cuid())
-  fullName        String
-  company         String?
-  email           String   @unique
-  phone           String
-  country         String
-  appName         String
-  projectType     String                           // mobile_android, mobile_ios, web, flutter, react_native, python, php, javascript
-  description     String?
-  siteUrl         String?
-  estimatedUsers  Int?
-  status          String   @default("pending")     // pending, approved, rejected, suspended
-  rejectReason    String?
-  commissionRate  Float    @default(0.015)          // 1.5%
-  totalTransactions Int     @default(0)
-  totalVolume     Float    @default(0)
-  totalCommission Float    @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  apiKeys         DeveloperApiKey[]
-  commissions     ApiCommission[]
+  id                String            @id @default(cuid())
+  fullName          String
+  company           String?
+  email             String            @unique
+  phone             String
+  country           String
+  appName           String
+  projectType       String
+  description       String?
+  siteUrl           String?
+  estimatedUsers    Int?
+  status            String            @default("pending")
+  rejectReason      String?
+  commissionRate    Float             @default(0.015)
+  totalTransactions Int               @default(0)
+  totalVolume       Float             @default(0)
+  totalCommission   Float             @default(0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  commissions       ApiCommission[]
+  apiKeys           DeveloperApiKey[]
 
   @@index([status])
   @@index([email])
@@ -532,53 +489,48 @@ model Developer {
 }
 
 model DeveloperApiKey {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   developerId String
-  publicKey   String   @unique                     // pk_live_XXXXX
-  secretKey   String                           // sk_live_XXXXX (hashed)
+  publicKey   String    @unique
+  secretKey   String
   webhookUrl  String?
-  mode        String   @default("test")          // test, live
-  isActive    Boolean  @default(true)
+  mode        String    @default("test")
+  isActive    Boolean   @default(true)
   expiresAt   DateTime?
   lastUsedAt  DateTime?
-  createdAt   DateTime @default(now())
-
-  developer Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  developer   Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
 
   @@index([developerId])
   @@index([publicKey])
 }
 
 model ApiCommission {
-  id              String   @id @default(cuid())
-  developerId     String
-  transactionId   String?
-  amount          Float
-  commission      Float                            // 1.5% of amount
-  currency        String   @default("USD")
-  status          String   @default("collected")    // collected, pending, reversed
-  createdAt       DateTime @default(now())
-
-  developer Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  developerId   String
+  transactionId String?
+  amount        Float
+  commission    Float
+  currency      String    @default("USD")
+  status        String    @default("collected")
+  createdAt     DateTime  @default(now())
+  developer     Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
 
   @@index([developerId])
   @@index([createdAt])
 }
 
-// ─── Security Log Model ──────────────────────────────────────────
-
 model SecurityLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  adminId     String?
-  action      String                           // login, login_failed, kyc_submitted, kyc_verified, kyc_rejected, transfer_blocked, daily_limit_reached, suspicious_activity, password_change
-  details     String?                          // JSON string with extra info
-  ipAddress   String?
-  userAgent   String?
-  riskLevel   String   @default("low")         // low, medium, high, critical
-  createdAt   DateTime @default(now())
-
-  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String?
+  adminId   String?
+  action    String
+  details   String?
+  ipAddress String?
+  userAgent String?
+  riskLevel String   @default("low")
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([adminId])
@@ -587,31 +539,28 @@ model SecurityLog {
   @@index([createdAt])
 }
 
-// ─── International Transfer Models ────────────────────────────────
-
 model InternationalTransfer {
-  id                String   @id @default(cuid())
-  userId            String
-  type              String                           // wallet, mobile_money, bank, card, merchant, api, qr_code
-  recipientName     String
-  recipientPhone    String?
-  recipientAccount  String?
-  recipientBank     String?
-  swiftBic          String?
-  iban              String?
-  country           String
-  currency          String   @default("USD")
-  amount            Float
-  fee               Float    @default(0)
-  commission        Float    @default(0)             // 1.5% commission
-  exchangeRate      Float?
-  amountReceived    Float?
-  status            String   @default("pending")     // pending, processing, completed, failed
-  otpVerified       Boolean  @default(false)
-  description       String?
-  createdAt         DateTime @default(now())
-
-  user              User      @relation(fields: [userId], references: [id])
+  id               String   @id @default(cuid())
+  userId           String
+  type             String
+  recipientName    String
+  recipientPhone   String?
+  recipientAccount String?
+  recipientBank    String?
+  swiftBic         String?
+  iban             String?
+  country          String
+  currency         String   @default("USD")
+  amount           Float
+  fee              Float    @default(0)
+  commission       Float    @default(0)
+  exchangeRate     Float?
+  amountReceived   Float?
+  status           String   @default("pending")
+  otpVerified      Boolean  @default(false)
+  description      String?
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])

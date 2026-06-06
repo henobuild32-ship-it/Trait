@@ -1,30 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logSecurityEvent } from '@/lib/security';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
+    // Validation input
     if (!username || !password) {
       return NextResponse.json(
-        { success: false, message: 'Nom d\'utilisateur et mot de passe requis' },
+        { success: false, message: "Nom d'utilisateur et mot de passe requis" },
         { status: 400 }
       );
     }
 
+    // Find admin
     const admin = await db.admin.findUnique({
       where: { username },
     });
 
-    if (!admin || admin.password !== password) {
-      // Log failed login attempt
+    // If admin not found
+    if (!admin) {
       await logSecurityEvent({
-        adminId: admin?.id,
+        adminId: null,
         action: 'login_failed',
-        details: JSON.stringify({ username, reason: 'invalid_credentials' }),
+        details: JSON.stringify({ username, reason: 'user_not_found' }),
         riskLevel: 'medium',
       });
+
+      return NextResponse.json(
+        { success: false, message: 'Identifiants incorrects' },
+        { status: 401 }
+      );
+    }
+
+    // Check password (SECURE VERSION)
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+
+    if (!isPasswordValid) {
+      await logSecurityEvent({
+        adminId: admin.id,
+        action: 'login_failed',
+        details: JSON.stringify({ username, reason: 'invalid_password' }),
+        riskLevel: 'medium',
+      });
+
       return NextResponse.json(
         { success: false, message: 'Identifiants incorrects' },
         { status: 401 }
@@ -37,7 +58,7 @@ export async function POST(request: NextRequest) {
       data: { lastLogin: new Date() },
     });
 
-    // Log activity + security log
+    // Activity log
     await db.adminActivityLog.create({
       data: {
         adminId: admin.id,
@@ -46,13 +67,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Security log success
     await logSecurityEvent({
       adminId: admin.id,
       action: 'login',
-      details: JSON.stringify({ username, adminName: admin.name }),
+      details: JSON.stringify({
+        username,
+        adminName: admin.name,
+      }),
       riskLevel: 'low',
     });
 
+    // Response
     return NextResponse.json({
       success: true,
       admin: {
@@ -62,10 +88,15 @@ export async function POST(request: NextRequest) {
         role: admin.role,
       },
     });
+
   } catch (error) {
     console.error('Admin login error:', error);
+
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      {
+        success: false,
+        message: 'Erreur serveur',
+      },
       { status: 500 }
     );
   }

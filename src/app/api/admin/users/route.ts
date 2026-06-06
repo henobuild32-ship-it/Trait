@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
           isVerified: true,
           suspended: true,
           suspensionReason: true,
+          validationStatus: true,
           hasCompletedOnboarding: true,
           createdAt: true,
           _count: {
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'Utilisateur suspendu' });
     }
 
-    if (action === 'unsuspend') {
+    if (action === 'unsuspend' || action === 'reactivate') {
       await db.user.update({
         where: { id: userId },
         data: {
@@ -163,6 +164,42 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json({ success: true, message: 'Utilisateur supprimé' });
+    }
+
+    if (action === 'validate_seller') {
+      await db.user.update({
+        where: { id: userId },
+        data: { validationStatus: 'validated' },
+      });
+
+      await db.adminActivityLog.create({
+        data: {
+          adminId,
+          action: 'validate_seller',
+          target: userId,
+          details: `Vendeur ${user.businessName || user.name} validé`,
+        },
+      });
+
+      return NextResponse.json({ success: true, message: 'Vendeur validé' });
+    }
+
+    if (action === 'reject_seller') {
+      await db.user.update({
+        where: { id: userId },
+        data: { validationStatus: 'rejected', validationRejectReason: reason || 'Non conforme' },
+      });
+
+      await db.adminActivityLog.create({
+        data: {
+          adminId,
+          action: 'reject_seller',
+          target: userId,
+          details: `Vendeur ${user.businessName || user.name} rejeté`,
+        },
+      });
+
+      return NextResponse.json({ success: true, message: 'Vendeur rejeté' });
     }
 
     return NextResponse.json(

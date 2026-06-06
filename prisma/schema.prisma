@@ -16,11 +16,14 @@ model User {
   gender                String?                         // male, female, other
   city                  String?
   country               String   @default("US")
-  role                  String   @default("client") // client, agent
+  role                  String   @default("client") // client, agent, seller
   agentCode             String?  @unique              // AGT-XXXXXX format (old)
   agentNumber           String?  @unique              // AGT-2026-XXXXX format (official)
   address               String?
   photoId               String?                         // URL to profile photo / ID document
+  businessName          String?                         // Seller business name
+  businessType          String?                         // Seller product types
+  location              String?                         // Seller location (market/city)
   systemPassword        String?                         // Admin-generated system password (separate from login password)
   systemPasswordSent    Boolean  @default(false)        // Whether system credentials email was sent
   validationStatus      String   @default("validated") // pending, validated, rejected, suspended (agents only)

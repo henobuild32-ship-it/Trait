@@ -63,11 +63,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, name, pseudo, country } = body as {
+    const { userId, name, pseudo, country, validationRejectReason } = body as {
       userId: string
-      name: string
-      pseudo: string
-      country: string
+      name?: string
+      pseudo?: string
+      country?: string
+      validationRejectReason?: string | null
     }
 
     if (!userId) {
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
         ...(name !== undefined && name !== null && { name: name.trim() || null }),
         ...(pseudo !== undefined && pseudo !== null && { pseudo: pseudo.trim() || null }),
         ...(country !== undefined && country !== null && { country: country.trim() || 'US' }),
+        ...(validationRejectReason !== undefined && { validationRejectReason }),
       },
     })
 

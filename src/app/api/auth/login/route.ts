@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if suspended
-    if (user.suspended) {
+    // Check if suspended (sellers can log in to view their status/messages)
+    if (user.suspended && user.role !== 'seller') {
       return NextResponse.json(
         { success: false, message: `Compte suspendu. Motif: ${user.suspensionReason || 'Contactez le support'}` },
         { status: 403 }

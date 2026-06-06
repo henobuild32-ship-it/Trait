@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
 
     const where: Record<string, any> = {
-      role: 'client',
+      role: { in: ['client', 'seller'] },
     };
 
     if (search.trim()) {

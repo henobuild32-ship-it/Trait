@@ -23,6 +23,7 @@ import {
   Globe,
   CreditCard,
   Mail,
+  Store,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,8 @@ interface QuickAction {
 const quickActions: QuickAction[] = [
   { label: 'Gestion Utilisateurs', page: 'admin-users', icon: Users, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/40' },
   { label: 'Gestion Agents', page: 'admin-agents', icon: Bot, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
+  { label: 'Validation Vendeurs', page: 'admin-seller-validation', icon: UserCheck, color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-100 dark:bg-rose-900/40' },
+  { label: 'Gestion Vendeurs', page: 'admin-sellers', icon: Store, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/40' },
   { label: 'Cartes', page: 'admin-cards', icon: CreditCard, color: 'text-sky-600 dark:text-sky-400', bgColor: 'bg-sky-100 dark:bg-sky-900/40' },
   { label: 'Demandes de Cartes', page: 'admin-card-requests', icon: Clock, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
   { label: 'Transactions', page: 'admin-transactions', icon: ArrowLeftRight, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/40' },

@@ -17,6 +17,8 @@ import {
   Wallet,
   X,
   AlertTriangle,
+  Check,
+  ShoppingBag,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,6 +48,7 @@ interface UserCard {
   realBalance: number;
   bonusBalance: number;
   suspended: boolean;
+  validationStatus: string;
   createdAt: string;
   _count?: {
     sentTransactions?: number;
@@ -54,12 +57,13 @@ interface UserCard {
   transactionCount?: number;
 }
 
-type FilterTab = 'all' | 'clients' | 'agents' | 'suspended' | 'active';
+type FilterTab = 'all' | 'clients' | 'agents' | 'sellers' | 'suspended' | 'active';
 
 const filterTabs: { key: FilterTab; label: string }[] = [
   { key: 'all', label: 'Tous' },
   { key: 'clients', label: 'Clients' },
   { key: 'agents', label: 'Agents' },
+  { key: 'sellers', label: 'Vendeurs' },
   { key: 'suspended', label: 'Suspendus' },
   { key: 'active', label: 'Actifs' },
 ];
@@ -124,6 +128,7 @@ export default function AdminUsersScreen() {
 
       if (activeFilter === 'clients') params.set('role', 'client');
       else if (activeFilter === 'agents') params.set('role', 'agent');
+      else if (activeFilter === 'sellers') params.set('role', 'seller');
       else if (activeFilter === 'suspended') params.set('suspended', 'true');
       else if (activeFilter === 'active') params.set('suspended', 'false');
 
@@ -227,6 +232,38 @@ export default function AdminUsersScreen() {
       }
     } catch (err) {
       console.error('Suspend error:', err);
+      toast.error('Erreur lors de l\'action');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  // ─── Validate / Reject Seller ──────────────────────────────────────
+
+  async function handleSellerValidation(userId: string, action: 'validate_seller' | 'reject_seller') {
+    if (!admin?.id) return;
+    
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          adminId: admin.id,
+          action,
+          reason: action === 'reject_seller' ? 'Rejeté par l\'administrateur' : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message);
+        fetchUsers(1, false);
+      } else {
+        toast.error(data.message || 'Action échouée');
+      }
+    } catch (err) {
       toast.error('Erreur lors de l\'action');
     } finally {
       setActionLoading(false);
@@ -430,10 +467,12 @@ export default function AdminUsersScreen() {
                             className={`text-xs font-medium ${
                               user.role === 'agent'
                                 ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800/40'
+                                : user.role === 'seller'
+                                ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-800/40'
                                 : 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800/40'
                             }`}
                           >
-                            {user.role === 'agent' ? 'Agent' : 'Client'}
+                            {user.role === 'agent' ? 'Agent' : user.role === 'seller' ? 'Vendeur' : 'Client'}
                           </Badge>
                           {user.suspended && (
                             <Badge variant="destructive" className="text-xs">
@@ -472,6 +511,42 @@ export default function AdminUsersScreen() {
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Supprimer</span>
                           </Button>
+                          {user.role === 'seller' && user.validationStatus === 'pending' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                                onClick={() => handleSellerValidation(user.id, 'validate_seller')}
+                                disabled={actionLoading}
+                                title="Valider le vendeur"
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                onClick={() => handleSellerValidation(user.id, 'reject_seller')}
+                                disabled={actionLoading}
+                                title="Rejeter le vendeur"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {user.role === 'seller' && user.validationStatus === 'rejected' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-md text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                              onClick={() => handleSellerValidation(user.id, 'validate_seller')}
+                              disabled={actionLoading}
+                              title="Ré-approuver le vendeur"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
 
@@ -485,6 +560,26 @@ export default function AdminUsersScreen() {
                           <AtSign className="h-3.5 w-3.5 shrink-0" />
                           <span className="truncate">@{user.pseudo}</span>
                         </div>
+                        {user.role === 'seller' && (
+                          <div className="flex items-center gap-2">
+                            <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-purple-600" />
+                            <Badge
+                              className={`text-xs font-medium ${
+                                user.validationStatus === 'validated'
+                                  ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800/40'
+                                  : user.validationStatus === 'rejected'
+                                  ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-800/40'
+                                  : 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-400 dark:border-yellow-800/40'
+                              }`}
+                            >
+                              {user.validationStatus === 'validated'
+                                ? 'Validé'
+                                : user.validationStatus === 'rejected'
+                                ? 'Rejeté'
+                                : 'En attente'}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
 
                       <Separator className="my-3" />

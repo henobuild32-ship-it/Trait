@@ -63,11 +63,20 @@ import CardRequestScreen from '@/components/screens/CardRequestScreen';
 import CardPaymentScreen from '@/components/screens/CardPaymentScreen';
 import CardScreen from '@/components/screens/CardScreen';
 
+// Seller screens
+import { SellerRegisterScreen } from '@/components/screens/SellerRegisterScreen';
+import { SellerPendingScreen } from '@/components/screens/SellerPendingScreen';
+import { SellerDashboard } from '@/components/screens/SellerDashboard';
+import { SellerProductsScreen } from '@/components/screens/SellerProductsScreen';
+import { SellerQRScannerScreen } from '@/components/screens/SellerQRScannerScreen';
+
 // Admin screens continued
 import AdminDevelopersScreen from '@/components/admin/AdminDevelopersScreen';
 import AdminCardRequestsScreen from '@/components/admin/AdminCardRequestsScreen';
 import AdminCardsScreen from '@/components/admin/AdminCardsScreen';
 import AdminClientMessagesScreen from '@/components/admin/AdminClientMessagesScreen';
+import AdminSellerValidationScreen from '@/components/admin/AdminSellerValidationScreen';
+import AdminSellersScreen from '@/components/admin/AdminSellersScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
@@ -132,13 +141,21 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'admin-card-requests': AdminCardRequestsScreen,
   'admin-cards': AdminCardsScreen,
   'admin-client-messages': AdminClientMessagesScreen,
+  'admin-seller-validation': AdminSellerValidationScreen,
+  'admin-sellers': AdminSellersScreen,
+  // Seller pages
+  'seller-register': SellerRegisterScreen,
+  'seller-pending': SellerPendingScreen,
+  'seller-dashboard': SellerDashboard,
+  'seller-products': SellerProductsScreen,
+  'seller-qr-scanner': SellerQRScannerScreen,
 };
 
 // Pages that show bottom navigation
-const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification'];
+const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification', 'seller-dashboard'];
 
 // Admin pages that don't show bottom nav
-const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'agent-register', 'agent-pending'];
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'admin-seller-validation', 'admin-sellers', 'agent-register', 'agent-pending'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();
@@ -147,7 +164,9 @@ export default function TraitApp() {
   // Auto-redirect: if user is logged in but on welcome, go to correct home
   useEffect(() => {
     if (user && currentPage === 'welcome') {
-      navigateTo(user.role === 'agent' ? 'agent-dashboard' : 'home');
+      if (user.role === 'agent') navigateTo('agent-dashboard');
+      else if (user.role === 'seller') navigateTo('seller-dashboard');
+      else navigateTo('home');
     }
     // If admin is logged in and on admin-login, go to dashboard
     if (admin && currentPage === 'admin-login') {

@@ -43,6 +43,8 @@ export type PageName =
   | 'admin-barter'
   | 'admin-notifications'
   | 'admin-activity-log'
+  | 'admin-seller-validation'
+  | 'admin-sellers'
   // Admin bonus pages
   | 'admin-bonus'
   | 'admin-bonus-adjust'
@@ -60,12 +62,19 @@ export type PageName =
   // Card system pages
   | 'card-request'
   | 'card-payment'
+  | 'card'
   // Admin card pages
   | 'admin-card-requests'
   | 'admin-cards'
-  | 'admin-client-messages';
+  | 'admin-client-messages'
+  // Seller pages
+  | 'seller-register'
+  | 'seller-pending'
+  | 'seller-dashboard'
+  | 'seller-products'
+  | 'seller-qr-scanner';
 
-export type UserRole = 'client' | 'agent';
+export type UserRole = 'client' | 'agent' | 'seller';
 
 export interface User {
   id: string;
@@ -81,6 +90,10 @@ export interface User {
   agentNumber: string | null;
   validationStatus: string;
   validationRejectReason: string | null;
+  businessName?: string | null;
+  businessType?: string | null;
+  location?: string | null;
+  suspensionReason?: string | null;
   realBalance: number;
   realBalanceFC: number;
   bonusBalance: number;

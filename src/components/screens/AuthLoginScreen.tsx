@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, User as UserIcon, Building2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Loader2, User as UserIcon, Building2, Eye, EyeOff, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +40,7 @@ export default function AuthLoginScreen() {
   const setUser = useAppStore((s) => s.setUser);
   const { t } = useTranslation();
 
-  const [selectedRole, setSelectedRole] = useState<'client' | 'agent'>('client');
+  const [selectedRole, setSelectedRole] = useState<'client' | 'agent' | 'seller'>('client');
   const [countryCode, setCountryCode] = useState('+228');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -95,17 +95,25 @@ export default function AuthLoginScreen() {
 
       // Verify role matches
       if (user.role !== selectedRole) {
-        toast.error(user.role === 'agent' ? t('validation.role_mismatch_agent') : t('validation.role_mismatch_client'));
+        const roleLabel = user.role === 'agent' ? 'Agent' : user.role === 'seller' ? 'Vendeur' : 'Client';
+        toast.error(`Ce compte est un compte ${roleLabel}. Veuillez sélectionner le bon rôle.`);
         return;
       }
 
       setUser(user);
 
       // Route based on role and onboarding status
-      if (!user.hasCompletedOnboarding) {
+      if (!user.hasCompletedOnboarding && user.role !== 'seller') {
         navigateTo('onboarding');
       } else if (user.role === 'agent') {
         navigateTo('agent-dashboard');
+      } else if (user.role === 'seller') {
+        // If seller account is not fully validated or is suspended, show status screen
+        if (user.validationStatus !== 'validated' || user.suspended) {
+          navigateTo('seller-pending' as any);
+        } else {
+          navigateTo('seller-dashboard' as any);
+        }
       } else {
         navigateTo('home');
       }
@@ -181,7 +189,7 @@ export default function AuthLoginScreen() {
           <button
             type="button"
             onClick={() => setSelectedRole('client')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
               selectedRole === 'client'
                 ? 'bg-[#1E40AF] text-white shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -193,7 +201,7 @@ export default function AuthLoginScreen() {
           <button
             type="button"
             onClick={() => setSelectedRole('agent')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
               selectedRole === 'agent'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -201,6 +209,18 @@ export default function AuthLoginScreen() {
           >
             <Building2 className="w-4 h-4" />
             {t('auth.agent')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedRole('seller')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              selectedRole === 'seller'
+                ? 'bg-pink-500 text-white shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            Vendeur
           </button>
         </div>
 

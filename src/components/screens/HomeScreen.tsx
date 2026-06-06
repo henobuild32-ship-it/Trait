@@ -71,6 +71,7 @@ const clientQuickActions = [
   { labelKey: 'action.intl_transfer', icon: Globe, page: 'international-transfer' as const, color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
   { labelKey: 'action.history', icon: History, page: 'history' as const, color: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
   { labelKey: 'action.marketplace', icon: Store, page: 'marketplace' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
+  { labelKey: 'Espace Vendeur', icon: Store, page: 'seller-dashboard' as const, color: 'bg-pink-50 text-pink-600 dark:bg-pink-950 dark:text-pink-400' },
 ];
 
 const agentQuickActions = [
@@ -447,14 +448,22 @@ export default function HomeScreen() {
               return (
                 <button
                   key={action.page}
-                  onClick={() => navigateTo(action.page)}
+                  onClick={() => {
+                    if (action.labelKey === 'Espace Vendeur') {
+                      navigateTo(user?.role === 'seller' ? 'seller-dashboard' : 'seller-register' as any);
+                    } else {
+                      navigateTo(action.page);
+                    }
+                  }}
                   className="flex flex-col items-center gap-2.5 rounded-2xl bg-card p-4 shadow-sm border border-border hover:shadow-md hover:border-[#1E40AF]/20 transition-all active:scale-[0.97] dark:hover:border-blue-500/30"
                 >
                   <div className={`w-11 h-11 rounded-xl ${action.color} flex items-center justify-center`}>
                     <Icon className="size-5" />
                   </div>
                   <span className="text-[11px] font-semibold text-foreground text-center leading-tight">
-                    {t(action.labelKey)}
+                    {action.labelKey === 'Espace Vendeur' 
+                      ? (user?.role === 'seller' ? 'Espace Vendeur' : 'Devenir Vendeur') 
+                      : t(action.labelKey)}
                   </span>
                 </button>
               );

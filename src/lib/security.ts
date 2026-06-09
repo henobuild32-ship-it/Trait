@@ -148,3 +148,27 @@ export async function detectSuspiciousActivity(
     reasons,
   };
 }
+
+export async function checkChildBalanceLimit(
+  userId: string,
+  incomingAmount: number,
+  currency: string
+): Promise<{ allowed: boolean; message?: string }> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { parentId: true, realBalance: true, realBalanceFC: true }
+  });
+  if (!user || !user.parentId) {
+    return { allowed: true };
+  }
+  const isFC = currency === 'FC' || currency === 'CDF';
+  const currentBalance = isFC ? user.realBalanceFC : user.realBalance;
+  const maxLimit = isFC ? 10000000 : 1000;
+  if (currentBalance + incomingAmount > maxLimit) {
+    return {
+      allowed: false,
+      message: `Le solde du compte enfant après cette opération dépasserait la limite autorisée (${maxLimit.toLocaleString('fr-FR')} ${isFC ? 'CDF' : 'USD'}).`
+    };
+  }
+  return { allowed: true };
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { checkChildBalanceLimit } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,15 @@ export async function POST(request: NextRequest) {
 
     const isFC = currency === 'FC'
     const cur = isFC ? 'FC' : (currency || 'USD')
+
+    // Check child balance limit
+    const limitCheck = await checkChildBalanceLimit(userId, amount, cur)
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { success: false, message: limitCheck.message },
+        { status: 400 }
+      )
+    }
 
     // Create deposit
     const deposit = await db.deposit.create({

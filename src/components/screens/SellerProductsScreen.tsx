@@ -12,6 +12,9 @@ import { useAppStore } from '@/lib/store'
 export function SellerProductsScreen() {
   const { user, goBack } = useAppStore()
   const { toast } = useToast()
+  if (!user) {
+    return null
+  }
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)

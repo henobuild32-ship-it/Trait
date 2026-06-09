@@ -4,12 +4,13 @@ import { db } from '@/lib/db';
 // POST - Card payment
 export async function POST(request: NextRequest) {
   try {
-    const { userId, cardId, amount, currency, description } = await request.json() as {
+    const { userId, cardId, amount, currency, description, pin } = await request.json() as {
       userId: string;
       cardId: string;
       amount: number;
       currency: string;
       description?: string;
+      pin?: string;
     };
 
     if (!userId || !cardId || !amount || amount <= 0) {
@@ -87,11 +88,31 @@ export async function POST(request: NextRequest) {
     const isFC = currency === 'FC';
     const realBal = isFC ? user.realBalanceFC : user.realBalance;
 
-    if (realBal < amount) {
+    const isChild = user.parentId !== null;
+
+    if (isChild) {
+      if (!pin) {
+        return NextResponse.json(
+          { success: false, message: "Le code PIN est obligatoire pour valider l'achat." },
+          { status: 400 }
+        );
+      }
+      if (user.pin !== pin) {
+        return NextResponse.json(
+          { success: false, message: "Code PIN de l'enfant incorrect." },
+          { status: 400 }
+        );
+      }
+    }
+
+    const fee = isChild ? Math.round(amount * 0.007 * 100) / 100 : 0;
+    const totalDeduction = amount + fee;
+
+    if (realBal < totalDeduction) {
       return NextResponse.json(
         {
           success: false,
-          message: `Solde insuffisant. Solde réel: ${realBal.toFixed(2)} ${currency}, requis: ${amount.toFixed(2)} ${currency}`,
+          message: `Solde insuffisant. Solde réel: ${realBal.toFixed(2)} ${currency}, requis: ${totalDeduction.toFixed(2)} ${currency} (dont commission parrainage: ${fee} ${currency})`,
         },
         { status: 400 }
       );
@@ -101,9 +122,11 @@ export async function POST(request: NextRequest) {
     await db.user.update({
       where: { id: userId },
       data: isFC
-        ? { realBalanceFC: { decrement: amount } }
-        : { realBalance: { decrement: amount } },
+        ? { realBalanceFC: { decrement: totalDeduction } }
+        : { realBalance: { decrement: totalDeduction } },
     });
+
+    const paymentDesc = description || `Paiement par carte ${card.cardNumber}${isChild ? ` (Commission Enfant: ${fee} ${currency})` : ''}`;
 
     // Create CardPayment record
     const cardPayment = await db.cardPayment.create({
@@ -112,7 +135,7 @@ export async function POST(request: NextRequest) {
         userId,
         amount,
         currency,
-        description: description || `Paiement par carte ${card.cardNumber}`,
+        description: paymentDesc,
         status: 'completed',
       },
     });
@@ -122,12 +145,12 @@ export async function POST(request: NextRequest) {
       data: {
         type: 'card_payment',
         amount,
-        fee: 0,
+        fee,
         currency,
         status: 'completed',
         senderId: userId,
         receiverId: userId,
-        description: description || `Paiement par carte TRAIT - ${card.cardNumber.slice(-4)}`,
+        description: description || `Paiement par carte TRAIT - ${card.cardNumber.slice(-4)}${isChild ? ` (Commission Enfant: ${fee} ${currency})` : ''}`,
       },
     });
 

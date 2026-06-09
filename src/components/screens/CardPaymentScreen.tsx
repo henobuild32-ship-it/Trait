@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CreditCard, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,7 @@ export default function CardPaymentScreen() {
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
 
   const numericAmount = parseFloat(amount) || 0;
@@ -88,6 +89,10 @@ export default function CardPaymentScreen() {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
+    if (user?.parentId && (!pin || pin.length !== 4)) {
+      toast.error('Votre code PIN à 4 chiffres est obligatoire pour valider ce paiement.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -100,6 +105,7 @@ export default function CardPaymentScreen() {
           amount: numericAmount,
           currency: selectedCurrency,
           description: description || undefined,
+          pin: user.parentId ? pin : undefined,
         }),
       });
       const data = await res.json();
@@ -351,6 +357,26 @@ export default function CardPaymentScreen() {
                   className="h-11"
                 />
               </div>
+
+              {/* PIN Code for Child */}
+              {user?.parentId && (
+                <div className="space-y-2">
+                  <Label htmlFor="payPin" className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    <Lock className="size-3.5 text-muted-foreground" />
+                    Code PIN Enfant <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="payPin"
+                    type="password"
+                    maxLength={4}
+                    placeholder="Entrez votre PIN à 4 chiffres"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                    className="h-11 font-mono tracking-widest text-center text-lg"
+                    required
+                  />
+                </div>
+              )}
 
               {/* Submit */}
               <Button

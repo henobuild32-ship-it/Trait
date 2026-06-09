@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { findActiveAgentByIdentifier } from '@/lib/agents';
+import { checkChildBalanceLimit, logSecurityEvent } from '@/lib/security';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,15 +22,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' });
     }
 
-    const agent = await db.user.findFirst({
-      where: { agentCode: agentCode.trim(), role: 'agent', suspended: false },
-    });
+    const agent = await findActiveAgentByIdentifier(agentCode);
 
     if (!agent) {
       return NextResponse.json({ success: false, message: 'Agent non trouvé. Vérifiez le code agent.' });
     }
 
     const isFC = currency === 'FC';
+
+    // Check child balance limit
+    const limitCheck = await checkChildBalanceLimit(userId, amount, currency || 'USD');
+    if (!limitCheck.allowed) {
+      return NextResponse.json({ success: false, message: limitCheck.message }, { status: 400 });
+    }
+
+    // Log agent action
+    await logSecurityEvent({
+      userId: agent.id,
+      action: 'agent_ussd_deposit',
+      details: `L'agent ${agent.name || agent.pseudo} (${agent.agentCode || agent.agentNumber}) a effectué un dépôt USSD de ${amount} ${currency || 'USD'} pour le client (ID: ${userId})`,
+      riskLevel: 'low',
+    });
     const deposit = await db.deposit.create({
       data: {
         userId,

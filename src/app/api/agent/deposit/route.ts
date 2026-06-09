@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { checkChildBalanceLimit, logSecurityEvent } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,6 +43,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check child balance limit
+    const limitCheck = await checkChildBalanceLimit(client.id, amount, currency || 'USD')
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { success: false, message: limitCheck.message },
+        { status: 400 }
+      )
+    }
+
     if (client.id === agentId) {
       return NextResponse.json(
         { success: false, message: 'Vous ne pouvez pas effectuer un dépôt pour vous-même' },
@@ -78,6 +88,14 @@ export async function POST(request: NextRequest) {
         message: `Un dépôt de ${isFC ? amount.toLocaleString('fr-FR') : '$' + amount.toFixed(2)} ${currency || 'USD'} a été effectué par l'agent ${agent.name || agent.pseudo || agent.agentCode || 'N/A'} via ${agent.phone}.`,
         type: 'general',
       },
+    })
+
+    // Log agent activity
+    await logSecurityEvent({
+      userId: agent.id,
+      action: 'agent_deposit',
+      details: `L'agent ${agent.name || agent.pseudo || 'N/A'} (${agent.agentCode || agent.agentNumber || 'N/A'}) a effectué un dépôt de ${amount} ${currency || 'USD'} pour le client ${client.phone} (ID: ${client.id})`,
+      riskLevel: 'low',
     })
 
     return NextResponse.json({

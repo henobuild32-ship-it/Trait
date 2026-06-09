@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
 
@@ -15,6 +14,7 @@ export default function AgentDepositScreen() {
   const { goBack, user, navigateTo } = useAppStore();
   const [clientPhone, setClientPhone] = useState('');
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState<'USD' | 'FC'>('USD');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,14 +32,14 @@ export default function AgentDepositScreen() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/transfer/deposit', {
+      const res = await fetch('/api/agent/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.id,
+          agentId: user?.id,
+          clientPhone: clientPhone.trim(),
           amount: parseFloat(amount),
-          method: 'agent',
-          agentPhone: clientPhone.trim(),
+          currency,
         }),
       });
 
@@ -50,7 +50,9 @@ export default function AgentDepositScreen() {
         return;
       }
 
-      toast.success(`Dépôt de $${amount} effectué avec succès !`);
+      toast.success(`Dépôt de ${amount} ${currency} effectué avec succès !`);
+      setClientPhone('');
+      setAmount('');
       navigateTo('agent-dashboard');
     } catch {
       toast.error('Erreur de connexion');
@@ -60,6 +62,7 @@ export default function AgentDepositScreen() {
   };
 
   const quickAmounts = [5, 10, 25, 50];
+  const agentIdentifier = user?.agentNumber || user?.agentCode || 'N/A';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -76,11 +79,7 @@ export default function AgentDepositScreen() {
       </header>
 
       <div className="flex-1 px-4 py-4 pb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* Agent info */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Card className="bg-amber-50 border-amber-200 mb-6">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
@@ -88,8 +87,8 @@ export default function AgentDepositScreen() {
               </div>
               <div>
                 <p className="text-xs text-amber-600">Agent</p>
-                <p className="text-sm font-semibold text-amber-800">
-                  {user?.agentCode || 'N/A'}
+                <p className="text-sm font-semibold text-amber-800 font-mono">
+                  {agentIdentifier}
                 </p>
               </div>
             </CardContent>
@@ -97,34 +96,47 @@ export default function AgentDepositScreen() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <Label className="text-foreground font-medium">
-                Numéro du client
-              </Label>
+              <Label className="text-foreground font-medium">Numéro du client</Label>
               <Input
                 type="tel"
                 placeholder="+228 90 11 22 33"
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
-                className="h-12  focus-visible:border-emerald-500 text-base"
+                className="h-12 focus-visible:border-emerald-500 text-base"
                 disabled={loading}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="text-foreground font-medium">
-                Montant (USD)
-              </Label>
+              <Label className="text-foreground font-medium">Devise</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['USD', 'FC'] as const).map((value) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant={currency === value ? 'default' : 'outline'}
+                    className={currency === value ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}
+                    onClick={() => setCurrency(value)}
+                    disabled={loading}
+                  >
+                    {value}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="text-foreground font-medium">Montant ({currency})</Label>
               <Input
                 type="number"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="h-12  focus-visible:border-emerald-500 text-base text-2xl font-bold"
+                className="h-12 focus-visible:border-emerald-500 text-base text-2xl font-bold"
                 disabled={loading}
               />
             </div>
 
-            {/* Quick amounts */}
             <div className="flex gap-2">
               {quickAmounts.map((amt) => (
                 <Button
@@ -136,7 +148,7 @@ export default function AgentDepositScreen() {
                   onClick={() => setAmount(amt.toString())}
                   disabled={loading}
                 >
-                  ${amt}
+                  {currency === 'USD' ? '$' : ''}{amt}{currency === 'FC' ? ' FC' : ''}
                 </Button>
               ))}
             </div>

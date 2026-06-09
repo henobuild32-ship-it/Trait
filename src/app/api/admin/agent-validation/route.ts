@@ -156,7 +156,8 @@ export async function POST(request: NextRequest) {
 
     // ACCEPT action
     if (action === 'accept') {
-      const agentNumber = await generateAgentNumber();
+      const agentNumber = agent.agentNumber || await generateAgentNumber();
+      const agentCode = agent.agentCode || agentNumber;
       const systemPassword = generateSystemPassword();
 
       const updated = await db.user.update({
@@ -164,6 +165,7 @@ export async function POST(request: NextRequest) {
         data: {
           validationStatus: 'validated',
           agentNumber,
+          agentCode,
           systemPassword,
           isVerified: true,
         },
@@ -178,6 +180,7 @@ export async function POST(request: NextRequest) {
           details: JSON.stringify({
             agentName: agent.name || agent.phone,
             agentNumber,
+            agentCode,
             systemPassword,
             hasPhoto: !!agent.photoId,
           }),
@@ -220,6 +223,7 @@ export async function POST(request: NextRequest) {
           name: updated.name,
           email: updated.email,
           agentNumber: updated.agentNumber,
+          agentCode: updated.agentCode,
           validationStatus: updated.validationStatus,
           systemPassword,
           emailSent,

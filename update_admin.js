@@ -1,14 +1,16 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
+  const hashedPassword = await bcrypt.hash('Azerty89H$', 10);
   // Check if admin exists, then update password
   const admins = await prisma.admin.findMany();
   if (admins.length > 0) {
     for (const admin of admins) {
       await prisma.admin.update({
         where: { id: admin.id },
-        data: { password: 'Azerty89H$' }
+        data: { password: hashedPassword }
       });
       console.log(`Updated password for admin: ${admin.username}`);
     }
@@ -17,7 +19,7 @@ async function main() {
     await prisma.admin.create({
       data: {
         username: 'admin',
-        password: 'Azerty89H$',
+        password: hashedPassword,
         name: 'Super Admin',
         role: 'super_admin'
       }

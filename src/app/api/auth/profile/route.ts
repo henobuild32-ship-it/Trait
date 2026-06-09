@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
         isVerified: true,
         suspended: true,
         hasCompletedOnboarding: true,
+        parentId: true,
         createdAt: true,
       },
     })
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
         bonusBalance: user.bonusBalance,
         bonusBalanceFC: user.bonusBalanceFC,
         isVerified: user.isVerified,
+        parentId: user.parentId,
       },
     })
   } catch (error) {

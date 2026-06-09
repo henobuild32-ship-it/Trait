@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { checkChildBalanceLimit } from '@/lib/security';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,13 @@ export async function POST(request: NextRequest) {
     }
 
     let receiver = await db.user.findUnique({ where: { phone: receiverPhone.trim() } });
+
+    if (receiver) {
+      const limitCheck = await checkChildBalanceLimit(receiver.id, amount, currency || 'USD');
+      if (!limitCheck.allowed) {
+        return NextResponse.json({ success: false, message: limitCheck.message }, { status: 400 });
+      }
+    }
 
     if (!receiver) {
       receiver = await db.user.create({

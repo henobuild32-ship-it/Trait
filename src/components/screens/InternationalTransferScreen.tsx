@@ -259,7 +259,7 @@ function formatExpiryDate(value: string): string {
 // ─── Component ─────────────────────────────────────────────────────
 
 export default function InternationalTransferScreen() {
-  const { user, goBack, navigateTo } = useAppStore();
+  const { user, goBack, navigateTo, setUser } = useAppStore();
 
   const [selectedType, setSelectedType] = useState<TransferType | null>(null);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
@@ -436,16 +436,25 @@ export default function InternationalTransferScreen() {
     setLoading(true);
 
     try {
+      const apiType = selectedType === 'mobile-money'
+        ? 'mobile_money'
+        : selectedType === 'qrcode'
+          ? 'qr_code'
+          : selectedType;
+
       const payload = {
         userId: user.id,
-        transferType: selectedType,
-        ...form,
+        type: apiType,
+        recipientName: form.beneficiaryName.trim(),
+        recipientPhone: form.recipientPhone || form.traitNumber || '',
+        recipientAccount: form.accountNumber || form.cardNumber.replace(/\s/g, '') || form.merchantReference || form.transactionReference || '',
+        recipientBank: form.bankName || form.mobileNetwork || '',
+        swiftBic: form.swiftBic || '',
+        iban: form.iban || '',
+        country: form.recipientCountry,
+        currency: form.currency,
         amount: numericAmount,
-        transferFee,
-        traitCommission,
-        conversionRate: conversionRate?.rate ?? null,
-        receivedAmount,
-        receivedCurrency,
+        description: form.motif || `${selectedTypeInfo?.label || 'Transfert'} vers ${countryLabel}`,
       };
 
       const res = await fetch('/api/transfers/international', {
@@ -457,6 +466,15 @@ export default function InternationalTransferScreen() {
       const data = await res.json();
 
       if (data.success) {
+        if (data.updatedBalances) {
+          setUser({
+            ...user,
+            realBalance: data.updatedBalances.realBalance,
+            realBalanceFC: data.updatedBalances.realBalanceFC,
+            bonusBalance: data.updatedBalances.bonusBalance,
+            bonusBalanceFC: data.updatedBalances.bonusBalanceFC,
+          } as any);
+        }
         setShowSuccess(true);
       } else {
         toast.error(data.message || 'Erreur lors du transfert international');

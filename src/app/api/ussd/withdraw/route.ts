@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { findActiveAgentByIdentifier } from '@/lib/agents';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,9 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' });
     }
 
-    const agent = await db.user.findFirst({
-      where: { agentCode: agentCode.trim(), role: 'agent', suspended: false },
-    });
+    const agent = await findActiveAgentByIdentifier(agentCode);
 
     if (!agent) {
       return NextResponse.json({ success: false, message: 'Agent non trouvé. Vérifiez le code agent.' });

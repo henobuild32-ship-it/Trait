@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
         bonusBalanceFC: user.bonusBalanceFC,
         pin: user.pin,
         isVerified: user.isVerified,
+        parentId: user.parentId,
         hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     })

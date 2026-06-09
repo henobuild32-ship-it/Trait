@@ -351,6 +351,33 @@ export default function HomeScreen() {
           </div>
         </div>
 
+        {/* ─── Recommandé (Client only) ────────────────────── */}
+        {!isAgent && (
+          <section className="space-y-3">
+            <h2 className="text-base font-bold text-foreground">Recommandé</h2>
+            <Card
+              className="border-primary/20 bg-gradient-to-br from-[#1E40AF]/5 via-background to-background dark:from-blue-950/20 shadow-md cursor-pointer hover:border-[#1E40AF]/40 active:scale-[0.98] transition-all relative overflow-hidden"
+              onClick={() => navigateTo('child-sponsorship')}
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#1E40AF]/10 to-transparent rounded-full -mr-8 -mt-8" />
+              <CardContent className="p-4 flex items-start gap-3 relative z-10">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center shrink-0 mt-0.5 text-amber-500 font-bold text-lg shadow-sm">
+                  ⭐
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground">
+                    Parrainage
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Créez une carte TRAIT pour votre enfant, rechargez-la à tout moment et suivez ses dépenses en temps réel depuis votre compte parent.
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground/60 shrink-0 self-center" />
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
         {/* ─── TRAIT Cards Section (Client only) ──────────── */}
         {!isAgent && (
           <section>

@@ -14,7 +14,7 @@ const FEE_RATES: Record<string, number> = {
 };
 
 const COMMISSION_RATE = 0.015; // 1.5%
-const MOCK_EXCHANGE_RATE = 2850; // 1 USD = 2850 FC
+const EXCHANGE_RATE_USD_FC = 2850; // 1 USD = 2850 FC
 
 const VALID_TYPES = ['wallet', 'mobile_money', 'bank', 'card', 'merchant', 'api', 'qr_code'];
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       userId,
-      type,
+      type: rawType,
       recipientName,
       recipientPhone,
       recipientAccount,
@@ -48,6 +48,9 @@ export async function POST(request: NextRequest) {
       description,
       otp,
     } = body;
+    const type = String(rawType || '')
+      .replace('mobile-money', 'mobile_money')
+      .replace('qrcode', 'qr_code');
 
     // Validate transfer type
     if (!type || !VALID_TYPES.includes(type)) {
@@ -226,41 +229,75 @@ export async function POST(request: NextRequest) {
       amountReceived = Math.max(0, amountReceived);
     } else {
       // Sending USD - if recipient currency is FC, apply exchange rate
-      exchangeRate = MOCK_EXCHANGE_RATE;
+      exchangeRate = EXCHANGE_RATE_USD_FC;
       // amountReceived stays in the transfer currency
       amountReceived = Math.max(0, amountReceived);
     }
 
-    // Create international transfer record
-    const transfer = await db.internationalTransfer.create({
-      data: {
-        userId,
-        type,
-        recipientName,
-        recipientPhone: recipientPhone || null,
-        recipientAccount: recipientAccount || null,
-        recipientBank: recipientBank || null,
-        swiftBic: swiftBic || null,
-        iban: iban || null,
-        country,
-        currency,
-        amount: transferAmount,
-        fee,
-        commission,
-        exchangeRate,
-        amountReceived,
-        status: 'processing',
-        otpVerified: !!otp,
-        description: description || null,
-      },
+    const transfer = await db.$transaction(async (tx) => {
+      const created = await tx.internationalTransfer.create({
+        data: {
+          userId,
+          type,
+          recipientName,
+          recipientPhone: recipientPhone || null,
+          recipientAccount: recipientAccount || null,
+          recipientBank: recipientBank || null,
+          swiftBic: swiftBic || null,
+          iban: iban || null,
+          country,
+          currency,
+          amount: transferAmount,
+          fee,
+          commission,
+          exchangeRate,
+          amountReceived,
+          status: 'processing',
+          otpVerified: !!otp,
+          description: description || null,
+        },
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: isFC
+          ? { realBalanceFC: { decrement: totalDeduction } }
+          : { realBalance: { decrement: totalDeduction } },
+      });
+
+      await tx.transaction.create({
+        data: {
+          type: 'international_transfer',
+          amount: transferAmount,
+          fee: fee + commission,
+          currency,
+          status: 'processing',
+          senderId: userId,
+          receiverId: userId,
+          description: `Transfert international ${type} vers ${recipientName}`,
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId,
+          title: 'Transfert international initié',
+          message: `Votre transfert de ${transferAmount.toFixed(2)} ${currency} vers ${recipientName} est en cours de traitement.`,
+          type: 'transfer_sent',
+        },
+      });
+
+      return created;
     });
 
-    // Deduct from user balance (realBalance only)
-    await db.user.update({
+    const updatedUser = await db.user.findUnique({
       where: { id: userId },
-      data: isFC
-        ? { realBalanceFC: { decrement: totalDeduction } }
-        : { realBalance: { decrement: totalDeduction } },
+      select: {
+        realBalance: true,
+        realBalanceFC: true,
+        bonusBalance: true,
+        bonusBalanceFC: true,
+      },
     });
 
     return NextResponse.json({
@@ -288,6 +325,7 @@ export async function POST(request: NextRequest) {
         exchangeRate: exchangeRate || 'N/A',
         amountReceived,
       },
+      updatedBalances: updatedUser,
     });
   } catch (error) {
     console.error('International transfer error:', error);

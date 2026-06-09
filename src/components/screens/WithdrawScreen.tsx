@@ -193,11 +193,10 @@ export default function WithdrawScreen() {
                 type="text"
                 placeholder="AGT-000001"
                 value={agentCode}
-                onChange={(e) => setAgentCode(e.target.value)}
+                onChange={(e) => setAgentCode(e.target.value.toUpperCase())}
                 className="h-11"
-                maxLength={12}
               />
-              <p className="text-xs text-muted-foreground">Entrez le code agent (ex: AGT-XXXXXX)</p>
+              <p className="text-xs text-muted-foreground">Entrez le code ou le numéro agent complet (ex: AGT-2026-00001)</p>
             </div>
 
             {/* Withdrawal Method */}

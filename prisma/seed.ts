@@ -1,30 +1,33 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const db = new PrismaClient();
 
-async function seed() {
+const seed = async () => {
   console.log('🌱 Seeding database...');
 
-  // Create admin account
+  const hash = async (pwd: string) => bcrypt.hash(pwd, 10);
+
+  // ── Admin ──────────────────────────────────────────────────────────
+  const hashedAdminPwd = await hash('admin1234');
   const admin = await db.admin.upsert({
     where: { username: 'admin' },
-    update: { password: 'admin1234' },
+    update: { password: hashedAdminPwd },
     create: {
       username: 'admin',
-      password: 'admin1234',
+      password: hashedAdminPwd,
       name: 'Administrateur TRAIT',
       role: 'super_admin',
     },
   });
+  console.log('✅ Admin:', admin.name, `(${admin.username})`);
 
-  console.log('✅ Admin created:', admin.name, `(username: ${admin.username})`);
-
-  // Create demo client users (RDC context for USSD)
+  // user1: Jean Mukendi
   const user1 = await db.user.upsert({
     where: { phone: '+243810000001' },
     update: {
-      password: '1234',
-      pin: '0000',
+      password: await hash('1234'),
+      pin: await hash('0000'),
       role: 'client',
       country: 'CD',
       realBalance: 50000,
@@ -42,19 +45,20 @@ async function seed() {
       realBalanceFC: 150000,
       bonusBalance: 10,
       bonusBalanceFC: 0,
-      password: '1234',
-      pin: '0000',
+      password: await hash('1234'),
+      pin: await hash('0000'),
       role: 'client',
       isVerified: true,
       hasCompletedOnboarding: true,
     },
   });
 
+  // user2: Marie Kabongo
   const user2 = await db.user.upsert({
     where: { phone: '+243820000002' },
     update: {
-      password: '1234',
-      pin: '0000',
+      password: await hash('1234'),
+      pin: await hash('0000'),
       role: 'client',
       country: 'CD',
       realBalance: 25000,
@@ -72,19 +76,20 @@ async function seed() {
       realBalanceFC: 75000,
       bonusBalance: 10,
       bonusBalanceFC: 0,
-      password: '1234',
-      pin: '0000',
+      password: await hash('1234'),
+      pin: await hash('0000'),
       role: 'client',
       isVerified: true,
       hasCompletedOnboarding: true,
     },
   });
 
+  // user3: Pierre Nsimba
   const user3 = await db.user.upsert({
     where: { phone: '+243830000003' },
     update: {
-      password: '1234',
-      pin: '0000',
+      password: await hash('1234'),
+      pin: await hash('0000'),
       role: 'client',
       country: 'CD',
       realBalance: 100000,
@@ -102,20 +107,23 @@ async function seed() {
       realBalanceFC: 300000,
       bonusBalance: 10,
       bonusBalanceFC: 0,
-      password: '1234',
-      pin: '0000',
+      password: await hash('1234'),
+      pin: await hash('0000'),
       role: 'client',
       isVerified: true,
       hasCompletedOnboarding: true,
     },
   });
 
-  // Create demo agent
+  // ── Agent ──────────────────────────────────────────────────────────
+  const agentPhone = '+243840000004';
+  const hashedAgentPwd = await hash('1234');
+  const hashedAgentPin = await hash('0000');
   const agent = await db.user.upsert({
-    where: { phone: '+243840000004' },
+    where: { phone: agentPhone },
     update: {
-      password: '1234',
-      pin: '0000',
+      password: hashedAgentPwd,
+      pin: hashedAgentPin,
       role: 'agent',
       agentCode: 'AGT-000001',
       country: 'CD',
@@ -126,7 +134,7 @@ async function seed() {
       hasCompletedOnboarding: true,
     },
     create: {
-      phone: '+243840000004',
+      phone: agentPhone,
       name: 'Agent TRAIT Kinshasa',
       pseudo: 'agent_kin',
       country: 'CD',
@@ -134,8 +142,8 @@ async function seed() {
       realBalanceFC: 1500000,
       bonusBalance: 10,
       bonusBalanceFC: 0,
-      password: '1234',
-      pin: '0000',
+      password: hashedAgentPwd,
+      pin: hashedAgentPin,
       role: 'agent',
       agentCode: 'AGT-000001',
       isVerified: true,
@@ -143,54 +151,67 @@ async function seed() {
     },
   });
 
-  console.log('✅ Users created:', user1.name, user2.name, user3.name);
-  console.log('✅ Agent created:', agent.name, '(Code:', agent.agentCode, ')');
+  console.log(
+    '👥 Clients:',
+    user1.name,
+    '|',
+    user2.name,
+    '|',
+    user3.name,
+  );
+  console.log('🏢 Agent:', agent.name, `(Code: ${agent.agentCode})`);
 
-  // Create user settings for all users
+  // ── User settings ─────────────────────────────────────────────────
   for (const u of [user1, user2, user3, agent]) {
     await db.userSettings.upsert({
       where: { userId: u.id },
       update: {},
-      create: { userId: u.id, ussdLanguage: 'fr', defaultCurrency: 'USD', smsNotifications: false },
+      create: {
+        userId: u.id,
+        ussdLanguage: 'fr',
+        defaultCurrency: 'USD',
+        smsNotifications: false,
+      },
     });
   }
+  console.log('✅ Paramètres utilisateur créés');
 
-  console.log('✅ User settings created for all users');
-
-  // Create sample favorites for user1
+  // ── Sample favorites ──────────────────────────────────────────────
   try {
     await db.ussdFavorite.createMany({
       data: [
         { userId: user1.id, label: 'Maman', phone: '+243820000002', type: 'transfer' },
         { userId: user1.id, label: 'Pierre', phone: '+243830000003', type: 'transfer' },
       ],
+      skipDuplicates: true,
     });
-    console.log('✅ Sample favorites created');
+    console.log('✅ Favoris USSD créés');
   } catch {
-    console.log('ℹ️ Favorites already exist');
+    console.log('ℹ️ Favoris déjà existants');
   }
 
-  // Log admin creation in activity log
+  // ── Activity log ──────────────────────────────────────────────────
   await db.adminActivityLog.create({
     data: {
       adminId: admin.id,
       action: 'system_init',
+      target: null,
       details: 'Initialisation du système avec données de démonstration',
     },
   });
 
-  console.log('\n🎉 Database seeded successfully!');
-  console.log('\n📋 Comptes de test:');
-  console.log('   Admin:  admin / admin1234');
-  console.log('   Client: +243810000001 / 1234 (PIN: 0000) — Jean Mukendi');
-  console.log('   Client: +243820000002 / 1234 (PIN: 0000) — Marie Kabongo');
-  console.log('   Client: +243830000003 / 1234 (PIN: 0000) — Pierre Nsimba');
-  console.log('   Agent:  +243840000004 / 1234 (PIN: 0000, Code: AGT-000001)');
+  console.log('\n🎉 Base de données initialisée avec succès !');
+  console.log('\n📋 Comptes de test (mdp en clair pour les tests uniquement) :');
+  console.log('   Admin  : admin / admin1234');
+  console.log('   Client : +243810000001 / 1234  (PIN: 0000) — Jean Mukendi');
+  console.log('   Client : +243820000002 / 1234  (PIN: 0000) — Marie Kabongo');
+  console.log('   Client : +243830000003 / 1234  (PIN: 0000) — Pierre Nsimba');
+  console.log('   Agent  : +243840000004 / 1234  (PIN: 0000, Code: AGT-000001)');
 }
 
 seed()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error('❌ Seed échoué:', e);
     process.exit(1);
   })
   .finally(() => db.$disconnect());

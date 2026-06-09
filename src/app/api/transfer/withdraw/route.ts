@@ -1,114 +1,189 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { findActiveAgentByIdentifier } from '@/lib/agents';
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { userId, amount, currency, method } = body as {
-      userId: string
-      amount: number
-      currency: string
-      method: string
-    }
+    const body = await request.json();
+    const { userId, amount, currency, method, agentCode } = body as {
+      userId: string;
+      amount: number;
+      currency?: string;
+      method?: string;
+      agentCode?: string;
+    };
 
-    if (!userId || !amount || amount <= 0) {
+    // ── Validation entrées ────────────────────────────────────────────
+    if (
+      !userId ||
+      typeof amount !== 'number' ||
+      amount <= 0 ||
+      !currency ||
+      !['USD', 'FC'].includes(currency) ||
+      !agentCode?.trim()
+    ) {
       return NextResponse.json(
-        { success: false, message: 'ID utilisateur et montant positif requis' },
-        { status: 400 }
-      )
+        {
+          success: false,
+          message: 'ID utilisateur, montant positif, devise (USD/FC) et code agent requis',
+        },
+        { status: 400 },
+      );
     }
 
-    // Get user
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    })
+    // ── Chargement user + agent ───────────────────────────────────────
+    const [user, agent] = await Promise.all([
+      db.user.findUnique({ where: { id: userId } }),
+      findActiveAgentByIdentifier(agentCode.trim()),
+    ]);
 
     if (!user) {
       return NextResponse.json(
         { success: false, message: 'Utilisateur non trouvé' },
-        { status: 404 }
-      )
+        { status: 404 },
+      );
     }
 
     if (user.tempBlocked) {
-      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' })
+      return NextResponse.json({
+        success: false,
+        message: 'Votre compte est temporairement bloqué.',
+      });
     }
 
-    const isFC = currency === 'FC'
-    const cur = isFC ? 'FC' : (currency || 'USD')
-    const realBal = isFC ? user.realBalanceFC : user.realBalance
+    if (user.suspended) {
+      return NextResponse.json({
+        success: false,
+        message: 'Votre compte est suspendu.',
+      });
+    }
 
-    // Calculate fee: 0.7%
-    const fee = Math.round(amount * 0.007 * 100) / 100
-    const totalDeduction = amount + fee
+    if (!agent) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Agent non trouvé. Vérifiez le code ou numéro agent.',
+        },
+        { status: 404 },
+      );
+    }
+
+    if (agent.id === userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Vous ne pouvez pas valider votre propre retrait comme agent.',
+        },
+        { status: 400 },
+      );
+    }
+
+    // ── Soldes + frais ────────────────────────────────────────────────
+    const cur = currency;
+    const realBal = cur === 'FC' ? user.realBalanceFC : user.realBalance;
+    const fee = round2(amount * 0.007);
+    const totalDeduction = round2(amount + fee);
 
     if (realBal < totalDeduction) {
       return NextResponse.json(
         {
           success: false,
-          message: `Solde insuffisant. Solde: ${realBal.toFixed(2)} ${cur}, Requis: ${totalDeduction.toFixed(2)} ${cur}`,
+          message: `Solde insuffisant. Solde : ${realBal.toFixed(2)} ${cur}, requis : ${totalDeduction.toFixed(2)} ${cur}`,
         },
-        { status: 400 }
-      )
+        { status: 400 },
+      );
     }
 
-    // Create withdrawal
-    const withdrawal = await db.withdrawal.create({
-      data: {
-        userId,
-        amount,
-        fee,
-        currency: cur,
-        method: method || 'mobile_money',
-        status: 'completed',
-      },
-    })
+    // ── Transaction atomique ──────────────────────────────────────────
+    const result = await db.$transaction(async (tx) => {
+      const withdrawal = await tx.withdrawal.create({
+        data: {
+          userId,
+          amount,
+          fee,
+          currency: cur,
+          method: method || 'agent',
+          status: 'pending',
+          agentId: agent.id,
+        },
+      });
 
-    // Deduct from correct balance based on currency
-    await db.user.update({
-      where: { id: userId },
-      data: isFC
-        ? { realBalanceFC: { decrement: totalDeduction } }
-        : { realBalance: { decrement: totalDeduction } },
-    })
+      await tx.user.update({
+        where: { id: userId },
+        data: cur === 'FC'
+          ? { realBalanceFC: { decrement: totalDeduction } }
+          : { realBalance: { decrement: totalDeduction } },
+      });
 
-    // Create notification
-    await db.notification.create({
-      data: {
-        userId,
-        title: 'Retrait effectué',
-        message: `Votre retrait de ${amount.toFixed(2)} ${cur} (frais: ${fee.toFixed(2)} ${cur}) via ${method || 'mobile money'} a été effectué.`,
-        type: 'withdrawal_validated',
-      },
-    })
+      // Crédit agent (commission sur le montant uniquement)
+      await tx.user.update({
+        where: { id: agent.id },
+        data: cur === 'FC'
+          ? { realBalanceFC: { increment: amount } }
+          : { realBalance: { increment: amount } },
+      });
 
-    // Return updated balances
-    const updatedUser = await db.user.findUnique({ where: { id: userId } })
+      const txDescription = `Retrait via agent ${agent.agentNumber || agent.agentCode}`;
+
+      await tx.transaction.create({
+        data: {
+          type: 'withdrawal',
+          amount,
+          fee,
+          currency: cur,
+          status: 'pending',
+          senderId: userId,
+          receiverId: agent.id,
+          agentId: agent.id,
+          description: txDescription,
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId,
+          title: 'Retrait en cours de validation',
+          message: `Votre retrait de ${amount.toFixed(2)} ${cur} (frais : ${fee.toFixed(2)} ${cur}) via l'agent ${agent.agentNumber || agent.agentCode} a été soumis et est en cours de validation.`,
+          type: 'withdrawal_validated',
+        },
+      });
+
+      return withdrawal;
+    });
+
+    const updatedUser = await db.user.findUnique({ where: { id: userId } });
 
     return NextResponse.json({
       success: true,
       withdrawal: {
-        id: withdrawal.id,
-        userId: withdrawal.userId,
-        amount: withdrawal.amount,
-        fee: withdrawal.fee,
-        currency: withdrawal.currency,
-        method: withdrawal.method,
-        status: withdrawal.status,
-        createdAt: withdrawal.createdAt,
+        id: result.id,
+        userId: result.userId,
+        amount: result.amount,
+        fee: result.fee,
+        currency: result.currency,
+        method: result.method,
+        status: result.status,
+        agentId: result.agentId,
+        createdAt: result.createdAt,
       },
-      updatedBalances: updatedUser ? {
-        realBalance: updatedUser.realBalance,
-        realBalanceFC: updatedUser.realBalanceFC,
-        bonusBalance: updatedUser.bonusBalance,
-        bonusBalanceFC: updatedUser.bonusBalanceFC,
-      } : undefined,
-    })
+      updatedBalances: updatedUser
+        ? {
+            realBalance: updatedUser.realBalance,
+            realBalanceFC: updatedUser.realBalanceFC,
+            bonusBalance: updatedUser.bonusBalance,
+            bonusBalanceFC: updatedUser.bonusBalanceFC,
+          }
+        : undefined,
+    });
   } catch (error) {
-    console.error('Withdrawal error:', error)
+    console.error('Withdrawal error:', error);
     return NextResponse.json(
       { success: false, message: 'Erreur interne du serveur' },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }

@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -76,6 +77,9 @@ model User {
   ussdFavorites          UssdFavorite[]
   agentWithdrawals       Withdrawal[]            @relation("AgentWithdrawals")
   withdrawals            Withdrawal[]
+  parentId               String?
+  parent                 User?                   @relation("ParentChild", fields: [parentId], references: [id])
+  children               User[]                  @relation("ParentChild")
 }
 
 model Admin {

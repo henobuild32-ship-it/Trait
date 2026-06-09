@@ -160,35 +160,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update KYC data
-    const updatedUser = await db.user.update({
+    const now = new Date();
+    const kycData = {
+      name: user.name,
+      phone: user.phone,
+      email: user.email,
+      documentType,
+      documentUrl,
+      selfieUrl,
+      submittedAt: now.toISOString(),
+      verificationMode: 'automatic_document_and_selfie_presence_check',
+    };
+
+    await db.user.update({
       where: { id: userId },
       data: {
-        kycStatus: 'pending',
-        kycSubmittedAt: new Date(),
+        kycStatus: 'verified',
+        kycSubmittedAt: now,
+        kycVerifiedAt: now,
+        kycRejectReason: null,
         kycDocumentType: documentType,
         kycDocumentUrl: documentUrl,
         kycSelfieUrl: selfieUrl,
-        kycData: JSON.stringify({
-          name: user.name,
-          phone: user.phone,
-          email: user.email,
-          documentType,
-          submittedAt: new Date().toISOString(),
-        }),
+        kycData: JSON.stringify(kycData),
       },
     });
 
-    // Log security event
     await db.securityLog.create({
       data: {
         userId,
-        action: 'kyc_submitted',
-        details: JSON.stringify({
-          documentType,
-          userName: user.name,
-          userPhone: user.phone,
-        }),
+        action: 'kyc_verified',
+        details: JSON.stringify(kycData),
         riskLevel: 'low',
       },
     });
@@ -206,7 +208,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Demande KYC soumise avec succès',
-      kycStatus: 'pending',
+      kycStatus: 'verified',
     });
   } catch (error) {
     console.error('KYC submit error:', error);

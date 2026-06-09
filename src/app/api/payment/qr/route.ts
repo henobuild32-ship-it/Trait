@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { sellerId, qrCode, amount, currency } = body
+    const { sellerId, qrCode, amount, currency, pin } = body
 
     if (!sellerId || !qrCode || !amount) {
       return NextResponse.json({ success: false, message: 'Champs requis manquants' }, { status: 400 })
@@ -40,26 +40,45 @@ export async function POST(request: NextRequest) {
 
     const isUSD = (currency || 'USD') === 'USD'
 
+    const isChild = client.parentId !== null
+    if (isChild) {
+      if (!pin) {
+        return NextResponse.json({
+          success: false,
+          requirePin: true,
+          message: "Le code PIN de l'enfant est obligatoire pour valider cet achat."
+        }, { status: 400 })
+      }
+      if (client.pin !== pin) {
+        return NextResponse.json({
+          success: false,
+          message: "Code PIN de l'enfant incorrect."
+        }, { status: 400 })
+      }
+    }
+    const fee = isChild ? Math.round(payAmount * 0.007 * 100) / 100 : 0
+    const totalDeduction = payAmount + fee
+
     // Check Balance
     if (isUSD) {
-      if (client.realBalance < payAmount) {
-        return NextResponse.json({ success: false, message: 'Solde insuffisant' }, { status: 400 })
+      if (client.realBalance < totalDeduction) {
+        return NextResponse.json({ success: false, message: `Solde insuffisant (Requis: ${totalDeduction.toFixed(2)} USD)` }, { status: 400 })
       }
     } else {
-      if (client.realBalanceFC < payAmount) {
-        return NextResponse.json({ success: false, message: 'Solde insuffisant' }, { status: 400 })
+      if (client.realBalanceFC < totalDeduction) {
+        return NextResponse.json({ success: false, message: `Solde insuffisant (Requis: ${totalDeduction.toFixed(2)} FC)` }, { status: 400 })
       }
     }
 
     // Process Payment
     await db.$transaction(async (tx) => {
-      // Deduct from client
+      // Deduct from client (including fee)
       await tx.user.update({
         where: { id: client.id },
-        data: isUSD ? { realBalance: { decrement: payAmount } } : { realBalanceFC: { decrement: payAmount } }
+        data: isUSD ? { realBalance: { decrement: totalDeduction } } : { realBalanceFC: { decrement: totalDeduction } }
       })
 
-      // Credit to seller
+      // Credit to seller (amount only, fee goes to TRAIT)
       await tx.user.update({
         where: { id: seller.id },
         data: isUSD ? { realBalance: { increment: payAmount } } : { realBalanceFC: { increment: payAmount } }
@@ -70,11 +89,12 @@ export async function POST(request: NextRequest) {
         data: {
           type: 'qr_payment',
           amount: payAmount,
+          fee,
           currency: currency || 'USD',
           status: 'completed',
           senderId: client.id,
           receiverId: seller.id,
-          description: `Paiement QR chez ${seller.businessName || 'Vendeur'}`,
+          description: `Paiement QR chez ${seller.businessName || 'Vendeur'}${isChild ? ` (Commission Enfant: ${fee} ${currency || 'USD'})` : ''}`,
         }
       })
     })

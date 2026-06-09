@@ -98,6 +98,7 @@ const quickActions: QuickAction[] = [
   { label: 'Messages Agents', page: 'admin-messages', icon: MessageSquare, color: 'text-cyan-600 dark:text-cyan-400', bgColor: 'bg-cyan-100 dark:bg-cyan-900/40' },
   { label: 'Messages Clients', page: 'admin-client-messages', icon: Mail, color: 'text-indigo-600 dark:text-indigo-400', bgColor: 'bg-indigo-100 dark:bg-indigo-900/40' },
   { label: 'Développeurs', page: 'admin-developers', icon: Code, color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-100 dark:bg-violet-900/40' },
+  { label: 'Gestion Parrainage', page: 'admin-children', icon: Users, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/40' },
 ];
 
 function formatStatValue(key: keyof DashboardStats, value: number): string {

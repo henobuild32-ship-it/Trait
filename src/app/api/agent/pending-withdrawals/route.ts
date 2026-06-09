@@ -1,11 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Fetch all pending withdrawals
+    const { searchParams } = new URL(request.url)
+    const agentId = searchParams.get('agentId')
+
     const withdrawals = await db.withdrawal.findMany({
-      where: { status: 'pending' },
+      where: { status: 'pending', ...(agentId ? { agentId } : {}) },
       include: {
         user: { select: { name: true, pseudo: true, phone: true } },
       },

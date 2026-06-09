@@ -77,6 +77,8 @@ import AdminCardsScreen from '@/components/admin/AdminCardsScreen';
 import AdminClientMessagesScreen from '@/components/admin/AdminClientMessagesScreen';
 import AdminSellerValidationScreen from '@/components/admin/AdminSellerValidationScreen';
 import AdminSellersScreen from '@/components/admin/AdminSellersScreen';
+import AdminChildrenScreen from '@/components/admin/AdminChildrenScreen';
+import ChildSponsorshipScreen from '@/components/screens/ChildSponsorshipScreen';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
@@ -143,6 +145,8 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'admin-client-messages': AdminClientMessagesScreen,
   'admin-seller-validation': AdminSellerValidationScreen,
   'admin-sellers': AdminSellersScreen,
+  'admin-children': AdminChildrenScreen,
+  'child-sponsorship': ChildSponsorshipScreen,
   // Seller pages
   'seller-register': SellerRegisterScreen,
   'seller-pending': SellerPendingScreen,
@@ -152,10 +156,10 @@ const screenMap: Record<PageName, React.ComponentType> = {
 };
 
 // Pages that show bottom navigation
-const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification', 'seller-dashboard'];
+const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification', 'seller-dashboard', 'child-sponsorship'];
 
 // Admin pages that don't show bottom nav
-const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'admin-seller-validation', 'admin-sellers', 'agent-register', 'agent-pending'];
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'admin-seller-validation', 'admin-sellers', 'admin-children', 'agent-register', 'agent-pending'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();

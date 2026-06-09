@@ -67,12 +67,14 @@ export type PageName =
   | 'admin-card-requests'
   | 'admin-cards'
   | 'admin-client-messages'
+  | 'admin-children'
   // Seller pages
   | 'seller-register'
   | 'seller-pending'
   | 'seller-dashboard'
   | 'seller-products'
-  | 'seller-qr-scanner';
+  | 'seller-qr-scanner'
+  | 'child-sponsorship';
 
 export type UserRole = 'client' | 'agent' | 'seller';
 
@@ -99,6 +101,7 @@ export interface User {
   bonusBalance: number;
   bonusBalanceFC: number;
   pin: string;
+  parentId?: string | null;
   isVerified: boolean;
   suspended: boolean;
   hasCompletedOnboarding: boolean;

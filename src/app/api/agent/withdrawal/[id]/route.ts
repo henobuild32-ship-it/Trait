@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { findActiveAgentByIdentifier } from '@/lib/agents'
 
 export async function PUT(
   request: NextRequest,
@@ -39,12 +40,8 @@ export async function PUT(
     // Resolve agentId from agentCode if provided
     let linkedAgentId: string | undefined
     if (agentCode) {
-      const agent = await db.user.findUnique({
-        where: { agentCode },
-      })
-      if (agent && agent.role === 'agent') {
-        linkedAgentId = agent.id
-      }
+      const agent = await findActiveAgentByIdentifier(agentCode)
+      if (agent) linkedAgentId = agent.id
     }
 
     // Create a pending Withdrawal record

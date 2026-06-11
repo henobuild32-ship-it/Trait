@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
 
 function generateAgentCode(): string {
   const prefix = '170';
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
   return prefix + random;
 }
 
-// GET all agents
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1');
@@ -72,20 +76,22 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: create, suspend, delete agent
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { adminId, action } = body;
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+    const adminId = auth.userId
 
-    if (!adminId || !action) {
+    const body = await request.json();
+    const { action } = body;
+
+    if (!action) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants' },
         { status: 400 }
       );
     }
 
-    // CREATE agent
     if (action === 'create') {
       const { name, phone, country, password, location } = body;
 
@@ -96,7 +102,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check phone uniqueness
       const existing = await db.user.findUnique({ where: { phone } });
       if (existing) {
         return NextResponse.json(
@@ -105,13 +110,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Generate unique agent code
       let agentCode = generateAgentCode();
       let codeExists = await db.user.findUnique({ where: { agentCode } });
       while (codeExists) {
         agentCode = generateAgentCode();
         codeExists = await db.user.findUnique({ where: { agentCode } });
       }
+
+      const hashedPassword = await hashPassword(password)
 
       const agent = await db.user.create({
         data: {
@@ -120,7 +126,7 @@ export async function POST(request: NextRequest) {
           country: country || 'TG',
           role: 'agent',
           agentCode,
-          password,
+          password: hashedPassword,
           realBalance: 0,
           bonusBalance: 0,
           isVerified: true,
@@ -149,7 +155,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // SUSPEND agent
     if (action === 'suspend') {
       const { agentId, reason } = body;
       if (!agentId || !reason) {
@@ -184,7 +189,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'Agent suspendu' });
     }
 
-    // UNSUSPEND agent
     if (action === 'unsuspend') {
       const { agentId } = body;
       const agent = await db.user.findUnique({ where: { id: agentId } });
@@ -212,7 +216,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'Agent réactivé' });
     }
 
-    // DELETE agent
     if (action === 'delete') {
       const { agentId } = body;
       const agent = await db.user.findUnique({ where: { id: agentId } });
@@ -237,9 +240,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'Agent supprimé' });
     }
 
-    // UPDATE agent
     if (action === 'update') {
-      const { agentId, name, phone, country, location } = body;
+      const { agentId, name, phone, country } = body;
       if (!agentId) {
         return NextResponse.json(
           { success: false, message: 'ID agent requis' },

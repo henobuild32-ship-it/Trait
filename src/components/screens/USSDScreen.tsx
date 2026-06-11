@@ -354,13 +354,22 @@ export default function USSDScreen() {
     nextStep: UssdStep,
     successMsg: string,
   ) => {
-    if (pinInput !== user?.pin) {
-      toast.error('Code PIN incorrect');
-      setPinInput('');
-      return;
-    }
     setLoading(true);
     try {
+      // Verify PIN via API
+      const pinRes = await fetch('/api/auth/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, pin: pinInput }),
+      });
+      const pinData = await pinRes.json();
+      if (!pinData.success) {
+        toast.error('Code PIN incorrect');
+        setPinInput('');
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -376,7 +385,7 @@ export default function USSDScreen() {
       }
     } catch { toast.error('Erreur de connexion'); }
     finally { setLoading(false); }
-  }, [pinInput, user?.pin]);
+  }, [pinInput, user?.id]);
 
   // ─── Reusable UI Components ────────────────────────────────────
 
@@ -1254,14 +1263,18 @@ export default function USSDScreen() {
             <p className="text-base font-semibold">PIN actuel</p>
             <p className="text-sm text-muted-foreground">Entrez votre code PIN actuel</p>
           </div>
-          <Input ref={inputRef} type="password" placeholder="••••" value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="h-14 text-2xl text-center tracking-[0.5em] max-w-[200px]" maxLength={8} onKeyDown={(e) => {
+          <Input ref={inputRef} type="password" placeholder="••••" value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="h-14 text-2xl text-center tracking-[0.5em] max-w-[200px]" maxLength={8} onKeyDown={async (e) => {
             if (e.key === 'Enter' && inputValue.length >= 4) {
-              if (inputValue === user?.pin) { updateTx({ currentPin: inputValue }); setStep('change-pin-new'); }
+              const res = await fetch('/api/auth/verify-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, pin: inputValue }) });
+              const data = await res.json();
+              if (data.success) { updateTx({ currentPin: inputValue }); setStep('change-pin-new'); }
               else { toast.error('PIN actuel incorrect'); setInputValue(''); }
             }
           }} autoFocus />
-          <Button className="w-full max-w-[300px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => {
-            if (inputValue === user?.pin) { updateTx({ currentPin: inputValue }); setStep('change-pin-new'); }
+          <Button className="w-full max-w-[300px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={async () => {
+            const res = await fetch('/api/auth/verify-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, pin: inputValue }) });
+            const data = await res.json();
+            if (data.success) { updateTx({ currentPin: inputValue }); setStep('change-pin-new'); }
             else { toast.error('PIN actuel incorrect'); setInputValue(''); }
           }} disabled={inputValue.length < 4}>
             Vérifier

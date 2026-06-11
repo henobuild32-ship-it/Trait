@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { logSecurityEvent } from '@/lib/security'
+import { verifyAndMigratePassword, signToken, setTokenCookie, clearTokenCookie } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,8 +36,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify password
-    if (!user.password || user.password !== password.trim()) {
+    if (!user.password) {
+      return NextResponse.json(
+        { success: false, message: 'Numéro ou mot de passe incorrect' },
+        { status: 401 }
+      )
+    }
+
+    // Verify password with lazy migration from plain text
+    const isValid = await verifyAndMigratePassword(user.id, password.trim(), user.password)
+
+    if (!isValid) {
       await logSecurityEvent({
         userId: user.id,
         action: 'login_failed',
@@ -49,7 +59,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if suspended (sellers can log in to view their status/messages)
     if (user.suspended && user.role !== 'seller') {
       return NextResponse.json(
         { success: false, message: `Compte suspendu. Motif: ${user.suspensionReason || 'Contactez le support'}` },
@@ -57,7 +66,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if temporarily blocked
     if (user.tempBlocked) {
       return NextResponse.json(
         { success: false, message: 'Votre compte est temporairement bloqué. Contactez le support TRAIT.' },
@@ -65,7 +73,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check agent validation status
     if (user.role === 'agent') {
       if (user.validationStatus === 'pending') {
         return NextResponse.json(
@@ -101,8 +108,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    // Sign JWT
+    const token = await signToken({ userId: user.id, role: user.role })
+
+    const response = NextResponse.json({
       success: true,
+      token,
       user: {
         id: user.id,
         phone: user.phone,
@@ -117,16 +128,21 @@ export async function POST(request: NextRequest) {
         agentNumber: user.agentNumber,
         validationStatus: user.validationStatus,
         validationRejectReason: user.validationRejectReason,
+        businessName: user.businessName,
+        businessType: user.businessType,
+        location: user.location,
         realBalance: user.realBalance,
         realBalanceFC: user.realBalanceFC,
         bonusBalance: user.bonusBalance,
         bonusBalanceFC: user.bonusBalanceFC,
-        pin: user.pin,
         isVerified: user.isVerified,
         parentId: user.parentId,
         hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     })
+
+    setTokenCookie(response, token)
+    return response
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(

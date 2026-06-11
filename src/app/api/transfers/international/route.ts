@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { checkDailyLimit, checkKYC, detectSuspiciousActivity, logSecurityEvent } from '@/lib/security';
+import { requireUser } from '@/lib/auth';
 
-// Fee rates by transfer type
 const FEE_RATES: Record<string, number> = {
-  wallet: 0.005,       // 0.5%
-  mobile_money: 0.01,  // 1%
-  bank: 0.015,         // 1.5%
-  card: 0.02,          // 2%
-  merchant: 0.01,      // 1%
-  api: 0.005,          // 0.5%
-  qr_code: 0.005,      // 0.5%
+  wallet: 0.005,
+  mobile_money: 0.01,
+  bank: 0.015,
+  card: 0.02,
+  merchant: 0.01,
+  api: 0.005,
+  qr_code: 0.005,
 };
 
-const COMMISSION_RATE = 0.015; // 1.5%
-const EXCHANGE_RATE_USD_FC = 2850; // 1 USD = 2850 FC
-
+const COMMISSION_RATE = 0.015;
+const EXCHANGE_RATE_USD_FC = 2850;
 const VALID_TYPES = ['wallet', 'mobile_money', 'bank', 'card', 'merchant', 'api', 'qr_code'];
 
-// Required fields per transfer type
 const REQUIRED_FIELDS: Record<string, string[]> = {
   wallet: ['recipientPhone', 'recipientName', 'country', 'currency', 'amount'],
   mobile_money: ['recipientPhone', 'recipientName', 'country', 'currency', 'amount'],
@@ -29,12 +27,14 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
   qr_code: ['recipientName', 'country', 'currency', 'amount'],
 };
 
-// POST - Create international transfer
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
+    const userId = auth.userId
     const body = await request.json();
     const {
-      userId,
       type: rawType,
       recipientName,
       recipientPhone,
@@ -48,37 +48,18 @@ export async function POST(request: NextRequest) {
       description,
       otp,
     } = body;
+
     const type = String(rawType || '')
       .replace('mobile-money', 'mobile_money')
       .replace('qrcode', 'qr_code');
 
-    // Validate transfer type
     if (!type || !VALID_TYPES.includes(type)) {
       return NextResponse.json(
-        {
-          success: false,
-          message: `Type de transfert invalide. Types valides: ${VALID_TYPES.join(', ')}`,
-        },
+        { success: false, message: `Type de transfert invalide. Types valides: ${VALID_TYPES.join(', ')}` },
         { status: 400 }
       );
     }
 
-    // Validate userId for wallet type
-    if (type === 'wallet' && !userId) {
-      return NextResponse.json(
-        { success: false, message: 'userId requis pour les transferts wallet' },
-        { status: 400 }
-      );
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'userId requis' },
-        { status: 400 }
-      );
-    }
-
-    // Validate required fields based on type
     const required = REQUIRED_FIELDS[type] || [];
     const missingFields: string[] = [];
     for (const field of required) {
@@ -90,15 +71,11 @@ export async function POST(request: NextRequest) {
 
     if (missingFields.length > 0) {
       return NextResponse.json(
-        {
-          success: false,
-          message: `Champs requis manquants pour le type ${type}: ${missingFields.join(', ')}`,
-        },
+        { success: false, message: `Champs requis manquants pour le type ${type}: ${missingFields.join(', ')}` },
         { status: 400 }
       );
     }
 
-    // Validate amount
     const transferAmount = Number(amount);
     if (isNaN(transferAmount) || transferAmount <= 0) {
       return NextResponse.json(
@@ -107,135 +84,87 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user and check balance
     const user = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, realBalance: true, realBalanceFC: true },
+      select: { id: true, realBalance: true, realBalanceFC: true, suspended: true },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, message: 'Utilisateur non trouvé' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 });
     }
 
-    // ─── SECURITY: Check suspended account ──────────────────────
-    const fullUser = await db.user.findUnique({ where: { id: userId }, select: { suspended: true } });
-    if (fullUser?.suspended) {
+    if (user.suspended) {
       await logSecurityEvent({
-        userId,
-        action: 'transfer_blocked',
+        userId, action: 'transfer_blocked',
         details: JSON.stringify({ reason: 'account_suspended', amount: transferAmount, type }),
         riskLevel: 'high',
       });
-      return NextResponse.json(
-        { success: false, message: 'Votre compte est suspendu. Contactez le support.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' }, { status: 403 });
     }
 
-    // ─── SECURITY: KYC check ────────────────────────────────────
     const kycResult = await checkKYC(userId);
     if (!kycResult.verified) {
       await logSecurityEvent({
-        userId,
-        action: 'transfer_blocked',
+        userId, action: 'transfer_blocked',
         details: JSON.stringify({ reason: 'kyc_not_verified', kycStatus: kycResult.status, amount: transferAmount, type }),
         riskLevel: 'medium',
       });
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Vérification KYC requise',
-          code: 'KYC_REQUIRED',
-          kycStatus: kycResult.status,
-          kycRejectReason: kycResult.rejectReason,
-        },
-        { status: 403 }
-      );
+      return NextResponse.json({
+        success: false, message: 'Vérification KYC requise', code: 'KYC_REQUIRED',
+        kycStatus: kycResult.status, kycRejectReason: kycResult.rejectReason,
+      }, { status: 403 });
     }
 
-    // ─── SECURITY: Daily transaction limit ──────────────────────
     const dailyCheck = await checkDailyLimit(userId);
     if (!dailyCheck.allowed) {
       await logSecurityEvent({
-        userId,
-        action: 'daily_limit_reached',
+        userId, action: 'daily_limit_reached',
         details: JSON.stringify({ count: dailyCheck.count, limit: dailyCheck.limit, amount: transferAmount, type }),
         riskLevel: 'high',
       });
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Limite journalière atteinte (${dailyCheck.limit} transactions/jour). Réessayez demain.`,
-          code: 'DAILY_LIMIT_REACHED',
-          dailyTransactions: dailyCheck.count,
-          dailyLimit: dailyCheck.limit,
-        },
-        { status: 429 }
-      );
+      return NextResponse.json({
+        success: false, message: `Limite journalière atteinte (${dailyCheck.limit} transactions/jour).`,
+        code: 'DAILY_LIMIT_REACHED', dailyTransactions: dailyCheck.count, dailyLimit: dailyCheck.limit,
+      }, { status: 429 });
     }
 
-    // ─── SECURITY: Suspicious activity detection ────────────────
     const suspicious = await detectSuspiciousActivity(userId, transferAmount);
     if (suspicious.suspicious) {
       await logSecurityEvent({
-        userId,
-        action: 'suspicious_activity',
+        userId, action: 'suspicious_activity',
         details: JSON.stringify({ reasons: suspicious.reasons, amount: transferAmount, type }),
         riskLevel: suspicious.reasons.length >= 2 ? 'critical' : 'medium',
       });
-
-      // If critical (2+ red flags), block the transfer
       if (suspicious.reasons.length >= 2) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: 'Activité suspecte détectée. Pour votre sécurité, veuillez contacter le support.',
-            code: 'SUSPICIOUS_ACTIVITY',
-          },
-          { status: 403 }
-        );
+        return NextResponse.json({
+          success: false, message: 'Activité suspecte détectée. Contactez le support.',
+          code: 'SUSPICIOUS_ACTIVITY',
+        }, { status: 403 });
       }
     }
 
-    // Calculate fee and commission
     const feeRate = FEE_RATES[type] || 0.01;
     const fee = Math.round(transferAmount * feeRate * 100) / 100;
     const commission = Math.round(transferAmount * COMMISSION_RATE * 100) / 100;
     const totalDeduction = transferAmount + fee + commission;
 
-    // Determine which balance to check
     const isFC = currency === 'FC';
     const userBalance = isFC ? user.realBalanceFC : user.realBalance;
 
     if (userBalance < totalDeduction) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Solde insuffisant. Solde disponible: ${userBalance.toFixed(2)} ${currency}, Montant nécessaire: ${totalDeduction.toFixed(2)} ${currency}`,
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        message: `Solde insuffisant. Solde: ${userBalance.toFixed(2)} ${currency}, nécessaire: ${totalDeduction.toFixed(2)} ${currency}`,
+      }, { status: 400 });
     }
 
-    // Calculate exchange rate and amount received
     let exchangeRate: number | null = null;
     let amountReceived = transferAmount - fee - commission;
+    amountReceived = Math.max(0, amountReceived);
 
-    if (isFC) {
-      // Sending FC - no exchange rate needed (assuming recipient also in FC)
-      amountReceived = Math.max(0, amountReceived);
-    } else {
-      // Sending USD - if recipient currency is FC, apply exchange rate
-      exchangeRate = EXCHANGE_RATE_USD_FC;
-      // amountReceived stays in the transfer currency
-      amountReceived = Math.max(0, amountReceived);
-    }
-
-    const transfer = await db.$transaction(async (tx) => {
-      const created = await tx.internationalTransfer.create({
+    // Atomic transaction
+    const [transfer] = await db.$transaction([
+      db.internationalTransfer.create({
         data: {
           userId,
           type,
@@ -256,16 +185,12 @@ export async function POST(request: NextRequest) {
           otpVerified: !!otp,
           description: description || null,
         },
-      });
-
-      await tx.user.update({
+      }),
+      db.user.update({
         where: { id: userId },
-        data: isFC
-          ? { realBalanceFC: { decrement: totalDeduction } }
-          : { realBalance: { decrement: totalDeduction } },
-      });
-
-      await tx.transaction.create({
+        data: isFC ? { realBalanceFC: { decrement: totalDeduction } } : { realBalance: { decrement: totalDeduction } },
+      }),
+      db.transaction.create({
         data: {
           type: 'international_transfer',
           amount: transferAmount,
@@ -276,28 +201,20 @@ export async function POST(request: NextRequest) {
           receiverId: userId,
           description: `Transfert international ${type} vers ${recipientName}`,
         },
-      });
-
-      await tx.notification.create({
+      }),
+      db.notification.create({
         data: {
           userId,
           title: 'Transfert international initié',
           message: `Votre transfert de ${transferAmount.toFixed(2)} ${currency} vers ${recipientName} est en cours de traitement.`,
           type: 'transfer_sent',
         },
-      });
-
-      return created;
-    });
+      }),
+    ]);
 
     const updatedUser = await db.user.findUnique({
       where: { id: userId },
-      select: {
-        realBalance: true,
-        realBalanceFC: true,
-        bonusBalance: true,
-        bonusBalanceFC: true,
-      },
+      select: { realBalance: true, realBalanceFC: true, bonusBalance: true, bonusBalanceFC: true },
     });
 
     return NextResponse.json({
@@ -312,57 +229,37 @@ export async function POST(request: NextRequest) {
         amount: transfer.amount,
         fee: transfer.fee,
         commission: transfer.commission,
-        exchangeRate: transfer.exchangeRate,
         amountReceived: transfer.amountReceived,
         status: transfer.status,
         createdAt: transfer.createdAt,
       },
       summary: {
-        amountSent: transferAmount,
-        fee,
-        commission,
-        totalDeduction,
-        exchangeRate: exchangeRate || 'N/A',
+        amountSent: transferAmount, fee, commission, totalDeduction,
         amountReceived,
       },
       updatedBalances: updatedUser,
     });
   } catch (error) {
     console.error('International transfer error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Erreur serveur' }, { status: 500 });
   }
 }
 
-// GET - List user's international transfers
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'userId requis' },
-        { status: 400 }
-      );
-    }
+    const userId = auth.userId
 
     const transfers = await db.internationalTransfer.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({
-      success: true,
-      transfers,
-    });
+    return NextResponse.json({ success: true, transfers });
   } catch (error) {
     console.error('International transfers list error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Erreur serveur' }, { status: 500 });
   }
 }

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { verifyAndMigratePin, requireUser } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { userId, pin } = body as { userId: string; pin: string }
 
@@ -10,6 +15,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'ID utilisateur requis' },
         { status: 400 }
+      )
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       )
     }
 
@@ -38,11 +50,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (user.pin !== pin) {
+    const isValid = await verifyAndMigratePin(user.id, pin, user.pin)
+
+    if (!isValid) {
+      // Increment pinAttempts for lockout
+      await db.user.update({
+        where: { id: userId },
+        data: { pinAttempts: { increment: 1 } },
+      })
+
+      // Check if should lock
+      if (user.pinAttempts >= 4) {
+        await db.user.update({
+          where: { id: userId },
+          data: { tempBlocked: true, pinAttempts: 0 },
+        })
+        return NextResponse.json(
+          { success: false, message: 'Trop de tentatives. Votre compte est temporairement bloqué.' },
+          { status: 429 }
+        )
+      }
+
       return NextResponse.json(
         { success: false, message: 'Code PIN incorrect' },
         { status: 401 }
       )
+    }
+
+    // Reset pin attempts on success
+    if (user.pinAttempts > 0) {
+      await db.user.update({
+        where: { id: userId },
+        data: { pinAttempts: 0 },
+      })
     }
 
     return NextResponse.json({

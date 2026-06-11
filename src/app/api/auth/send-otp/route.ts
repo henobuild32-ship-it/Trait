@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { otpStore } from '@/lib/otp-store'
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,12 +9,16 @@ export async function POST(request: NextRequest) {
 
     if (!phone || typeof phone !== 'string' || phone.trim().length === 0) {
       return NextResponse.json(
-        { success: false, message: 'Phone number is required' },
+        { success: false, message: 'Numéro de téléphone requis' },
         { status: 400 }
       )
     }
 
-    // Upsert user: create if doesn't exist, with default bonusBalance of 10
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const expires = Date.now() + 5 * 60 * 1000
+
+    otpStore.set(phone.trim(), { code, expires })
+
     await db.user.upsert({
       where: { phone: phone.trim() },
       update: {},
@@ -21,20 +26,22 @@ export async function POST(request: NextRequest) {
         phone: phone.trim(),
         bonusBalance: 10,
         realBalance: 0,
-        country: 'US',
+        country: 'CD',
       },
     })
 
-    // Demo mode: always return success, OTP code is "1234"
+    // TODO: Replace with actual SMS sending in production
+    console.log(`[OTP] Code for ${phone.trim()}: ${code}`)
+
     return NextResponse.json({
       success: true,
-      message: 'OTP sent',
-      demoOtp: '1234',
+      message: 'Code OTP envoyé',
+      ...(process.env.NODE_ENV === 'development' ? { demoOtp: code } : {}),
     })
   } catch (error) {
     console.error('Send OTP error:', error)
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Erreur interne du serveur' },
       { status: 500 }
     )
   }

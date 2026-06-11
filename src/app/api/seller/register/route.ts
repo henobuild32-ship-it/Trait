@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { hashPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +21,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if phone already exists
     const existingUser = await db.user.findUnique({
       where: { phone },
     })
@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const hashedPassword = await hashPassword(password)
+
     const user = await db.user.create({
       data: {
         phone,
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
         businessName,
         businessType,
         location,
-        password,
+        password: hashedPassword,
         role: 'seller',
         validationStatus: 'pending',
         realBalance: 0,
@@ -49,16 +51,17 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const safeUser = {
-      id: user.id,
-      phone: user.phone,
-      name: user.name,
-      role: user.role,
-      validationStatus: user.validationStatus,
-      businessName: user.businessName,
-    }
-
-    return NextResponse.json({ success: true, user: safeUser })
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        role: user.role,
+        validationStatus: user.validationStatus,
+        businessName: user.businessName,
+      },
+    })
   } catch (error) {
     console.error('Seller Register error:', error)
     return NextResponse.json(

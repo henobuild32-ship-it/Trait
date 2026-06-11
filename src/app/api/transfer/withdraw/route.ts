@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { findActiveAgentByIdentifier } from '@/lib/agents';
+import { requireUser } from '@/lib/auth';
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;
@@ -8,18 +9,20 @@ function round2(n: number) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json();
-    const { userId, amount, currency, method, agentCode } = body as {
-      userId: string;
+    const { amount, currency, method, agentCode } = body as {
       amount: number;
       currency?: string;
       method?: string;
       agentCode?: string;
     };
 
-    // ── Validation entrées ────────────────────────────────────────────
+    const userId = auth.userId
+
     if (
-      !userId ||
       typeof amount !== 'number' ||
       amount <= 0 ||
       !currency ||
@@ -29,13 +32,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: 'ID utilisateur, montant positif, devise (USD/FC) et code agent requis',
+          message: 'Montant positif, devise (USD/FC) et code agent requis',
         },
         { status: 400 },
       );
     }
 
-    // ── Chargement user + agent ───────────────────────────────────────
     const [user, agent] = await Promise.all([
       db.user.findUnique({ where: { id: userId } }),
       findActiveAgentByIdentifier(agentCode.trim()),
@@ -49,40 +51,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (user.tempBlocked) {
-      return NextResponse.json({
-        success: false,
-        message: 'Votre compte est temporairement bloqué.',
-      });
+      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' }, { status: 403 });
     }
 
     if (user.suspended) {
-      return NextResponse.json({
-        success: false,
-        message: 'Votre compte est suspendu.',
-      });
+      return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' }, { status: 403 });
     }
 
     if (!agent) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Agent non trouvé. Vérifiez le code ou numéro agent.',
-        },
+        { success: false, message: 'Agent non trouvé. Vérifiez le code ou numéro agent.' },
         { status: 404 },
       );
     }
 
     if (agent.id === userId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Vous ne pouvez pas valider votre propre retrait comme agent.',
-        },
+        { success: false, message: 'Vous ne pouvez pas valider votre propre retrait comme agent.' },
         { status: 400 },
       );
     }
 
-    // ── Soldes + frais ────────────────────────────────────────────────
     const cur = currency;
     const realBal = cur === 'FC' ? user.realBalanceFC : user.realBalance;
     const fee = round2(amount * 0.007);
@@ -98,9 +87,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Transaction atomique ──────────────────────────────────────────
-    const result = await db.$transaction(async (tx) => {
-      const withdrawal = await tx.withdrawal.create({
+    // Atomic transaction: create withdrawal, deduct sender, credit agent
+    const [withdrawal] = await db.$transaction([
+      db.withdrawal.create({
         data: {
           userId,
           amount,
@@ -110,26 +99,20 @@ export async function POST(request: NextRequest) {
           status: 'pending',
           agentId: agent.id,
         },
-      });
-
-      await tx.user.update({
+      }),
+      db.user.update({
         where: { id: userId },
         data: cur === 'FC'
           ? { realBalanceFC: { decrement: totalDeduction } }
           : { realBalance: { decrement: totalDeduction } },
-      });
-
-      // Crédit agent (commission sur le montant uniquement)
-      await tx.user.update({
+      }),
+      db.user.update({
         where: { id: agent.id },
         data: cur === 'FC'
           ? { realBalanceFC: { increment: amount } }
           : { realBalance: { increment: amount } },
-      });
-
-      const txDescription = `Retrait via agent ${agent.agentNumber || agent.agentCode}`;
-
-      await tx.transaction.create({
+      }),
+      db.transaction.create({
         data: {
           type: 'withdrawal',
           amount,
@@ -139,45 +122,38 @@ export async function POST(request: NextRequest) {
           senderId: userId,
           receiverId: agent.id,
           agentId: agent.id,
-          description: txDescription,
+          description: `Retrait via agent ${agent.agentNumber || agent.agentCode}`,
         },
-      });
-
-      await tx.notification.create({
+      }),
+      db.notification.create({
         data: {
           userId,
           title: 'Retrait en cours de validation',
           message: `Votre retrait de ${amount.toFixed(2)} ${cur} (frais : ${fee.toFixed(2)} ${cur}) via l'agent ${agent.agentNumber || agent.agentCode} a été soumis et est en cours de validation.`,
           type: 'withdrawal_validated',
         },
-      });
+      }),
+    ]);
 
-      return withdrawal;
+    const updatedUser = await db.user.findUnique({
+      where: { id: userId },
+      select: { realBalance: true, realBalanceFC: true, bonusBalance: true, bonusBalanceFC: true },
     });
-
-    const updatedUser = await db.user.findUnique({ where: { id: userId } });
 
     return NextResponse.json({
       success: true,
       withdrawal: {
-        id: result.id,
-        userId: result.userId,
-        amount: result.amount,
-        fee: result.fee,
-        currency: result.currency,
-        method: result.method,
-        status: result.status,
-        agentId: result.agentId,
-        createdAt: result.createdAt,
+        id: withdrawal.id,
+        userId: withdrawal.userId,
+        amount: withdrawal.amount,
+        fee: withdrawal.fee,
+        currency: withdrawal.currency,
+        method: withdrawal.method,
+        status: withdrawal.status,
+        agentId: withdrawal.agentId,
+        createdAt: withdrawal.createdAt,
       },
-      updatedBalances: updatedUser
-        ? {
-            realBalance: updatedUser.realBalance,
-            realBalanceFC: updatedUser.realBalanceFC,
-            bonusBalance: updatedUser.bonusBalance,
-            bonusBalanceFC: updatedUser.bonusBalanceFC,
-          }
-        : undefined,
+      updatedBalances: updatedUser,
     });
   } catch (error) {
     console.error('Withdrawal error:', error);

@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 
-// GET - Get user's cards and pending requests
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'userId est requis' },
-        { status: 400 }
-      );
-    }
+    const userId = auth.userId
 
-    // Get all TraitCards for the user
     const cards = await db.traitCard.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -22,7 +16,6 @@ export async function GET(request: NextRequest) {
         id: true,
         cardType: true,
         cardNumber: true,
-        cvv: true,
         qrCode: true,
         expiryDate: true,
         status: true,
@@ -31,54 +24,25 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get pending CardRequests for the user
     const pendingRequests = await db.cardRequest.findMany({
-      where: {
-        userId,
-        status: 'pending',
-      },
+      where: { userId, status: 'pending' },
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        cardType: true,
-        status: true,
-        rejectReason: true,
-        createdAt: true,
-      },
+      select: { id: true, cardType: true, status: true, rejectReason: true, createdAt: true },
     });
 
-    // Get recent card payments for the user
     const recentPayments = await db.cardPayment.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 20,
       select: {
-        id: true,
-        amount: true,
-        currency: true,
-        description: true,
-        status: true,
-        createdAt: true,
-        card: {
-          select: {
-            cardType: true,
-            cardNumber: true,
-          },
-        },
+        id: true, amount: true, currency: true, description: true, status: true, createdAt: true,
+        card: { select: { cardType: true, cardNumber: true } },
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      cards,
-      pendingRequests,
-      recentPayments,
-    });
+    return NextResponse.json({ success: true, cards, pendingRequests, recentPayments });
   } catch (error) {
     console.error('Get user cards error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Erreur serveur' }, { status: 500 });
   }
 }

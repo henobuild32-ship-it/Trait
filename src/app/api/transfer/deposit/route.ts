@@ -1,25 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkChildBalanceLimit } from '@/lib/security'
+import { requireUser } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
-    const { userId, amount, currency, method } = body as {
-      userId: string
+    const { amount, currency, method } = body as {
       amount: number
       currency: string
       method: string
     }
 
-    if (!userId || !amount || amount <= 0) {
+    const userId = auth.userId
+
+    if (!amount || amount <= 0) {
       return NextResponse.json(
-        { success: false, message: 'ID utilisateur et montant positif requis' },
+        { success: false, message: 'Montant positif requis' },
         { status: 400 }
       )
     }
 
-    // Get user
     const user = await db.user.findUnique({
       where: { id: userId },
     })
@@ -32,13 +36,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (user.tempBlocked) {
-      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' })
+      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' }, { status: 403 })
     }
 
     const isFC = currency === 'FC'
     const cur = isFC ? 'FC' : (currency || 'USD')
 
-    // Check child balance limit
     const limitCheck = await checkChildBalanceLimit(userId, amount, cur)
     if (!limitCheck.allowed) {
       return NextResponse.json(
@@ -47,37 +50,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create deposit
-    const deposit = await db.deposit.create({
-      data: {
-        userId,
-        amount,
-        currency: cur,
-        method: method || 'mobile_money',
-        status: 'completed',
-      },
-    })
+    // Atomic: create deposit + update balance + notification
+    const [deposit] = await db.$transaction([
+      db.deposit.create({
+        data: {
+          userId,
+          amount,
+          currency: cur,
+          method: method || 'mobile_money',
+          status: 'completed',
+        },
+      }),
+      db.user.update({
+        where: { id: userId },
+        data: isFC
+          ? { realBalanceFC: { increment: amount } }
+          : { realBalance: { increment: amount } },
+      }),
+      db.notification.create({
+        data: {
+          userId,
+          title: 'Dépôt effectué',
+          message: `Votre dépôt de ${amount.toFixed(2)} ${cur} via ${method || 'mobile money'} a été effectué.`,
+          type: 'general',
+        },
+      }),
+    ])
 
-    // Add amount to correct balance based on currency
-    await db.user.update({
+    const updatedUser = await db.user.findUnique({
       where: { id: userId },
-      data: isFC
-        ? { realBalanceFC: { increment: amount } }
-        : { realBalance: { increment: amount } },
+      select: { realBalance: true, realBalanceFC: true, bonusBalance: true, bonusBalanceFC: true },
     })
-
-    // Create notification
-    await db.notification.create({
-      data: {
-        userId,
-        title: 'Dépôt effectué',
-        message: `Votre dépôt de ${amount.toFixed(2)} ${cur} via ${method || 'mobile money'} a été effectué.`,
-        type: 'general',
-      },
-    })
-
-    // Return updated balances
-    const updatedUser = await db.user.findUnique({ where: { id: userId } })
 
     return NextResponse.json({
       success: true,
@@ -90,12 +93,7 @@ export async function POST(request: NextRequest) {
         status: deposit.status,
         createdAt: deposit.createdAt,
       },
-      updatedBalances: updatedUser ? {
-        realBalance: updatedUser.realBalance,
-        realBalanceFC: updatedUser.realBalanceFC,
-        bonusBalance: updatedUser.bonusBalance,
-        bonusBalanceFC: updatedUser.bonusBalanceFC,
-      } : undefined,
+      updatedBalances: updatedUser,
     })
   } catch (error) {
     console.error('Deposit error:', error)

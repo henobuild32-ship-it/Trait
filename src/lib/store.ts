@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Language } from '@/lib/i18n';
 
-// ─── Type Definitions ────────────────────────────────────────────────
-
 export type PageName =
   | 'welcome'
   | 'auth-role'
@@ -34,7 +32,6 @@ export type PageName =
   | 'agent-withdraw-validate'
   | 'agent-activity'
   | 'agent-messages'
-  // Admin pages
   | 'admin-dashboard'
   | 'admin-users'
   | 'admin-agents'
@@ -45,7 +42,6 @@ export type PageName =
   | 'admin-activity-log'
   | 'admin-seller-validation'
   | 'admin-sellers'
-  // Admin bonus pages
   | 'admin-bonus'
   | 'admin-bonus-adjust'
   | 'admin-bonus-history'
@@ -59,16 +55,13 @@ export type PageName =
   | 'agent-pending'
   | 'support'
   | 'kyc-verification'
-  // Card system pages
   | 'card-request'
   | 'card-payment'
   | 'card'
-  // Admin card pages
   | 'admin-card-requests'
   | 'admin-cards'
   | 'admin-client-messages'
   | 'admin-children'
-  // Seller pages
   | 'seller-register'
   | 'seller-pending'
   | 'seller-dashboard'
@@ -100,7 +93,6 @@ export interface User {
   realBalanceFC: number;
   bonusBalance: number;
   bonusBalanceFC: number;
-  pin: string;
   parentId?: string | null;
   isVerified: boolean;
   suspended: boolean;
@@ -124,8 +116,6 @@ export interface Notification {
   createdAt: string;
 }
 
-// ─── Store Slice Interfaces ─────────────────────────────────────────
-
 interface NavigationState {
   currentPage: PageName;
   pageParams: Record<string, any>;
@@ -138,9 +128,11 @@ interface AuthState {
   user: User | null;
   admin: AdminUser | null;
   selectedRole: UserRole;
+  token: string | null;
   setUser: (user: User | null) => void;
   setAdmin: (admin: AdminUser | null) => void;
   setSelectedRole: (role: UserRole) => void;
+  setToken: (token: string | null) => void;
   logout: () => void;
   adminLogout: () => void;
 }
@@ -180,24 +172,25 @@ interface LanguageState {
   setLanguage: (lang: Language) => void;
 }
 
-// ─── Combined Store Interface ───────────────────────────────────────
+interface VersionState {
+  lastSeenVersion: string | null;
+  setLastSeenVersion: (version: string) => void;
+}
 
-export interface AppStore extends NavigationState, AuthState, AuthFormState, PinState, NotificationState, ThemeState, LanguageState {}
+export interface AppStore extends NavigationState, AuthState, AuthFormState, PinState, NotificationState, ThemeState, LanguageState, VersionState {}
 
-// ─── The Store ──────────────────────────────────────────────────────
+// Store version for migration
+const STORE_VERSION = 2;
 
 export const useAppStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      // ── Navigation ─────────────────────────────────────────────
       currentPage: 'welcome',
       pageParams: {},
       navigationStack: [],
 
       navigateTo: (page, params) => {
         const { currentPage, pageParams, navigationStack } = get();
-
-        // Don't push duplicate entries
         if (currentPage !== page) {
           set({
             navigationStack: [
@@ -206,21 +199,15 @@ export const useAppStore = create<AppStore>()(
             ],
           });
         }
-
-        set({
-          currentPage: page,
-          pageParams: params ?? {},
-        });
+        set({ currentPage: page, pageParams: params ?? {} });
       },
 
       goBack: () => {
         const { navigationStack } = get();
-
         if (navigationStack.length === 0) {
           set({ currentPage: 'welcome', pageParams: {} });
           return;
         }
-
         const previous = navigationStack[navigationStack.length - 1];
         set({
           currentPage: previous.page,
@@ -229,19 +216,21 @@ export const useAppStore = create<AppStore>()(
         });
       },
 
-      // ── Auth ───────────────────────────────────────────────────
       user: null,
       admin: null,
       selectedRole: 'client',
+      token: null,
 
       setUser: (user) => set({ user }),
       setAdmin: (admin) => set({ admin }),
       setSelectedRole: (role) => set({ selectedRole: role }),
+      setToken: (token) => set({ token }),
 
       logout: () =>
         set({
           user: null,
           selectedRole: 'client',
+          token: null,
           currentPage: 'welcome',
           pageParams: {},
           navigationStack: [],
@@ -256,7 +245,6 @@ export const useAppStore = create<AppStore>()(
           navigationStack: [],
         }),
 
-      // ── Auth Form ────────────────────────────────────────────
       phoneNumber: '',
       registrationPassword: '',
       otpCode: '',
@@ -267,13 +255,10 @@ export const useAppStore = create<AppStore>()(
       setOtpCode: (code) => set({ otpCode: code }),
       setOtpVerified: (verified) => set({ otpVerified: verified }),
 
-      // ── PIN ────────────────────────────────────────────────────
       pendingPinAction: null,
-
       setPendingPinAction: (action) => set({ pendingPinAction: action }),
       clearPendingPinAction: () => set({ pendingPinAction: null }),
 
-      // ── Notifications ──────────────────────────────────────────
       notifications: [],
       unreadCount: 0,
 
@@ -294,27 +279,41 @@ export const useAppStore = create<AppStore>()(
         });
       },
 
-      clearNotifications: () =>
-        set({ notifications: [], unreadCount: 0 }),
+      clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
 
-      // ── Theme ──────────────────────────────────────────────────
       isDarkMode: false,
-
       toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
 
-      // ── Language ───────────────────────────────────────────────
       language: 'fr' as Language,
-
       setLanguage: (lang) => set({ language: lang }),
+
+      lastSeenVersion: null,
+      setLastSeenVersion: (version) => set({ lastSeenVersion: version }),
     }),
     {
       name: 'trait-app-storage',
+      version: STORE_VERSION,
+      migrate: (persistedState: any, version: number) => {
+        // Migration from v1 (old store with PIN in user object) to v2
+        let state = { ...persistedState };
+
+        if (version < 2) {
+          // Strip PIN from persisted user data
+          if (state.user && state.user.pin) {
+            const { pin, ...cleanUser } = state.user;
+            state.user = cleanUser;
+          }
+          state.lastSeenVersion = null;
+        }
+
+        return state as AppStore;
+      },
       partialize: (state) => ({
         user: state.user,
-        // admin is NOT persisted - password required on every login
         isDarkMode: state.isDarkMode,
         selectedRole: state.selectedRole,
         language: state.language,
+        lastSeenVersion: state.lastSeenVersion,
       }),
     },
   ),

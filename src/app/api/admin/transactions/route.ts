@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
-// GET all transactions
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || '';
     const status = searchParams.get('status') || '';
@@ -46,12 +49,15 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: block/validate/cancel transaction
 export async function POST(request: NextRequest) {
   try {
-    const { transactionId, adminId, action, reason } = await request.json();
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+    const adminId = auth.userId
 
-    if (!transactionId || !adminId || !action) {
+    const { transactionId, action, reason } = await request.json();
+
+    if (!transactionId || !action) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants' },
         { status: 400 }

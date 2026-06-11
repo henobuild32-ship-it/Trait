@@ -1,68 +1,31 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Aggregate totals
-    const [
-      totalBonusDistributed,
-      totalBonusUsed,
-      totalBonusRemaining,
-      bonusCompatibleProducts,
-      mostActiveUsers,
-      recentActivity,
-    ] = await Promise.all([
-      // Total bonus distributed (sum of positive amounts)
-      db.bonusHistory.aggregate({
-        _sum: { amount: true },
-        where: {
-          amount: { gt: 0 },
-        },
-      }),
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
 
-      // Total bonus used (sum of negative amounts from purchases)
-      db.bonusHistory.aggregate({
-        _sum: { amount: true },
-        where: {
-          type: 'purchase',
-        },
-      }),
-
-      // Total bonus remaining across all users
-      db.user.aggregate({
-        _sum: { bonusBalance: true, bonusBalanceFC: true },
-      }),
-
-      // Number of products compatible with bonus
-      db.marketplaceProduct.count({
-        where: { bonusEnabled: true },
-      }),
-
-      // Most active bonus users (top 10 by number of bonus history entries)
+    const [totalBonusDistributed, totalBonusUsed, totalBonusRemaining,
+      bonusCompatibleProducts, mostActiveUsers, recentActivity] = await Promise.all([
+      db.bonusHistory.aggregate({ _sum: { amount: true }, where: { amount: { gt: 0 } } }),
+      db.bonusHistory.aggregate({ _sum: { amount: true }, where: { type: 'purchase' } }),
+      db.user.aggregate({ _sum: { bonusBalance: true, bonusBalanceFC: true } }),
+      db.marketplaceProduct.count({ where: { bonusEnabled: true } }),
       db.bonusHistory.groupBy({
-        by: ['userId'],
-        _count: { id: true },
-        _sum: { amount: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 10,
+        by: ['userId'], _count: { id: true }, _sum: { amount: true },
+        orderBy: { _count: { id: 'desc' } }, take: 10,
       }),
-
-      // Recent bonus activity (last 20)
       db.bonusHistory.findMany({
-        take: 20,
-        orderBy: { createdAt: 'desc' },
+        take: 20, orderBy: { createdAt: 'desc' },
         include: {
-          user: {
-            select: { id: true, name: true, pseudo: true, phone: true },
-          },
-          campaign: {
-            select: { id: true, name: true },
-          },
+          user: { select: { id: true, name: true, pseudo: true, phone: true } },
+          campaign: { select: { id: true, name: true } },
         },
       }),
     ])
 
-    // Enrich most active users with user info
     const activeUserIds = mostActiveUsers.map((u) => u.userId)
     const activeUsersData = activeUserIds.length > 0
       ? await db.user.findMany({
@@ -79,9 +42,7 @@ export async function GET() {
       totalAmount: u._sum.amount ?? 0,
     }))
 
-    const activeCampaigns = await db.bonusCampaign.count({
-      where: { status: 'active' },
-    })
+    const activeCampaigns = await db.bonusCampaign.count({ where: { status: 'active' } })
 
     return NextResponse.json({
       success: true,
@@ -100,21 +61,14 @@ export async function GET() {
         currency: 'USD',
       })),
       history: recentActivity.map((entry) => ({
-        id: entry.id,
-        userId: entry.userId,
+        id: entry.id, userId: entry.userId,
         userName: entry.user?.name || entry.user?.pseudo || 'Utilisateur',
-        type: entry.type,
-        amount: entry.amount,
-        currency: entry.currency,
-        description: entry.description,
-        createdAt: entry.createdAt,
+        type: entry.type, amount: entry.amount, currency: entry.currency,
+        description: entry.description, createdAt: entry.createdAt,
       })),
     })
   } catch (error) {
     console.error('Bonus stats error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 })
   }
 }

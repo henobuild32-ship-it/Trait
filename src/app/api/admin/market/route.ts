@@ -1,41 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
-// GET all products
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const category = searchParams.get('category') || '';
-    const active = searchParams.get('active');
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
 
-    const where: any = {};
-
-    if (category) where.category = category;
-    if (active === 'true') where.active = true;
-    if (active === 'false') where.active = false;
-
-    const [products, total] = await Promise.all([
-      db.marketplaceProduct.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          seller: { select: { id: true, name: true, pseudo: true } },
-        },
-      }),
-      db.marketplaceProduct.count({ where }),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      products,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
+    const products = await db.marketplaceProduct.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        seller: { select: { id: true, name: true, pseudo: true } },
+      },
     });
+
+    return NextResponse.json({ success: true, products });
   } catch (error) {
     console.error('Admin market list error:', error);
     return NextResponse.json(
@@ -45,171 +24,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: create/update/delete/toggle product
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { adminId, action } = body;
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!adminId || !action) {
+    const { productId, action } = await request.json();
+
+    if (!productId || !action || !['remove', 'deactivate', 'activate'].includes(action)) {
       return NextResponse.json(
-        { success: false, message: 'Paramètres manquants' },
+        { success: false, message: 'Paramètres manquants ou invalides' },
         { status: 400 }
       );
     }
 
-    // CREATE product
-    if (action === 'create') {
-      const { name, description, price, category, imageUrl, currency, bonusEnabled, bonusOnly, bonusPrice, bonusMaxQty, bonusExpiryAt } = body;
-
-      if (!name || !description || !price || !category) {
-        return NextResponse.json(
-          { success: false, message: 'Nom, description, prix et catégorie requis' },
-          { status: 400 }
-        );
-      }
-
-      const product = await db.marketplaceProduct.create({
-        data: {
-          name,
-          description,
-          price: parseFloat(price),
-          category,
-          imageUrl: imageUrl || null,
-          currency: currency || 'USD',
-          active: true,
-          bonusEnabled: bonusEnabled === true,
-          bonusOnly: bonusOnly === true,
-          bonusPrice: bonusPrice ? parseFloat(bonusPrice) : null,
-          bonusMaxQty: bonusMaxQty ? parseInt(bonusMaxQty, 10) : null,
-          bonusExpiryAt: bonusExpiryAt ? new Date(bonusExpiryAt) : null,
-        },
-      });
-
-      await db.adminActivityLog.create({
-        data: {
-          adminId,
-          action: 'publish_product',
-          target: product.id,
-          details: `Produit publié: "${name}" - ${price} ${currency || 'USD'} (${category})${bonusEnabled ? ' [Bonus activé]' : ''}`,
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: 'Produit publié avec succès',
-        product,
-      });
-    }
-
-    // UPDATE product
-    if (action === 'update') {
-      const { productId, name, description, price, category, imageUrl, currency, bonusEnabled, bonusOnly, bonusPrice, bonusMaxQty, bonusExpiryAt } = body;
-
-      if (!productId) {
-        return NextResponse.json(
-          { success: false, message: 'ID produit requis' },
-          { status: 400 }
-        );
-      }
-
-      const updateData: any = {};
-      if (name) updateData.name = name;
-      if (description) updateData.description = description;
-      if (price) updateData.price = parseFloat(price);
-      if (category) updateData.category = category;
-      if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
-      if (currency) updateData.currency = currency;
-      if (bonusEnabled !== undefined) updateData.bonusEnabled = bonusEnabled === true;
-      if (bonusOnly !== undefined) updateData.bonusOnly = bonusOnly === true;
-      if (bonusPrice !== undefined) updateData.bonusPrice = bonusPrice ? parseFloat(bonusPrice) : null;
-      if (bonusMaxQty !== undefined) updateData.bonusMaxQty = bonusMaxQty ? parseInt(bonusMaxQty, 10) : null;
-      if (bonusExpiryAt !== undefined) updateData.bonusExpiryAt = bonusExpiryAt ? new Date(bonusExpiryAt) : null;
-
-      const product = await db.marketplaceProduct.update({
-        where: { id: productId },
-        data: updateData,
-      });
-
-      await db.adminActivityLog.create({
-        data: {
-          adminId,
-          action: 'update_product',
-          target: productId,
-          details: `Produit modifié: "${product.name}"`,
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: 'Produit modifié',
-        product,
-      });
-    }
-
-    // TOGGLE active status
-    if (action === 'toggle') {
-      const { productId } = body;
-
-      const product = await db.marketplaceProduct.findUnique({ where: { id: productId } });
-      if (!product) {
-        return NextResponse.json(
-          { success: false, message: 'Produit non trouvé' },
-          { status: 404 }
-        );
-      }
-
-      const updated = await db.marketplaceProduct.update({
-        where: { id: productId },
-        data: { active: !product.active },
-      });
-
-      await db.adminActivityLog.create({
-        data: {
-          adminId,
-          action: product.active ? 'deactivate_product' : 'activate_product',
-          target: productId,
-          details: `Produit "${product.name}" ${product.active ? 'désactivé' : 'activé'}`,
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: `Produit ${updated.active ? 'activé' : 'désactivé'}`,
-        product: updated,
-      });
-    }
-
-    // DELETE product
-    if (action === 'delete') {
-      const { productId } = body;
-
-      const product = await db.marketplaceProduct.findUnique({ where: { id: productId } });
-      if (!product) {
-        return NextResponse.json(
-          { success: false, message: 'Produit non trouvé' },
-          { status: 404 }
-        );
-      }
-
+    if (action === 'remove') {
       await db.marketplaceProduct.delete({ where: { id: productId } });
-
-      await db.adminActivityLog.create({
-        data: {
-          adminId,
-          action: 'delete_product',
-          target: productId,
-          details: `Produit "${product.name}" supprimé`,
-        },
+    } else {
+      await db.marketplaceProduct.update({
+        where: { id: productId },
+        data: { active: action === 'activate' },
       });
-
-      return NextResponse.json({ success: true, message: 'Produit supprimé' });
     }
 
-    return NextResponse.json(
-      { success: false, message: 'Action non reconnue' },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Admin market action error:', error);
     return NextResponse.json(

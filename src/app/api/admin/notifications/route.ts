@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
-// GET all global notifications
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const notifications = await db.globalNotification.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -25,19 +28,21 @@ export async function GET() {
   }
 }
 
-// POST: send global notification
 export async function POST(request: NextRequest) {
   try {
-    const { adminId, title, message, type } = await request.json();
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+    const adminId = auth.userId
 
-    if (!adminId || !title || !message) {
+    const { title, message, type } = await request.json();
+
+    if (!title || !message) {
       return NextResponse.json(
         { success: false, message: 'Titre et message requis' },
         { status: 400 }
       );
     }
 
-    // Create global notification
     const notification = await db.globalNotification.create({
       data: {
         adminId,
@@ -48,7 +53,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Also create individual notifications for all active (non-suspended) users
     const users = await db.user.findMany({
       where: { suspended: false },
       select: { id: true },
@@ -63,7 +67,13 @@ export async function POST(request: NextRequest) {
     }));
 
     if (notificationsData.length > 0) {
-      await db.notification.createMany({ data: notificationsData });
+      // Batch in chunks of 1000 to avoid memory issues with large user bases
+      const CHUNK_SIZE = 1000;
+      for (let i = 0; i < notificationsData.length; i += CHUNK_SIZE) {
+        await db.notification.createMany({
+          data: notificationsData.slice(i, i + CHUNK_SIZE),
+        });
+      }
     }
 
     await db.adminActivityLog.create({

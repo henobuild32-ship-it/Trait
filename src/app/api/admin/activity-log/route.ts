@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
-// GET activity logs
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action') || '';
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '30');
-
-    const where: any = {};
-
-    if (action) where.action = action;
+    const limit = parseInt(searchParams.get('limit') || '50');
 
     const [logs, total] = await Promise.all([
       db.adminActivityLog.findMany({
-        where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -23,7 +20,7 @@ export async function GET(request: NextRequest) {
           admin: { select: { name: true, username: true } },
         },
       }),
-      db.adminActivityLog.count({ where }),
+      db.adminActivityLog.count(),
     ]);
 
     return NextResponse.json({

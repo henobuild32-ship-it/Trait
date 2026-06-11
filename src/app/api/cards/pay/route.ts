@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser, verifyAndMigratePin } from '@/lib/auth';
 
-// POST - Card payment
 export async function POST(request: NextRequest) {
   try {
-    const { userId, cardId, amount, currency, description, pin } = await request.json() as {
-      userId: string;
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
+    const { cardId, amount, currency, description, pin } = await request.json() as {
       cardId: string;
       amount: number;
       currency: string;
@@ -13,9 +15,11 @@ export async function POST(request: NextRequest) {
       pin?: string;
     };
 
-    if (!userId || !cardId || !amount || amount <= 0) {
+    const userId = auth.userId
+
+    if (!cardId || !amount || amount <= 0) {
       return NextResponse.json(
-        { success: false, message: 'Paramètres manquants: userId, cardId, montant positif requis' },
+        { success: false, message: 'Paramètres manquants: cardId, montant positif requis' },
         { status: 400 }
       );
     }
@@ -27,7 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user exists
     const user = await db.user.findUnique({ where: { id: userId } });
     if (!user) {
       return NextResponse.json(
@@ -50,7 +53,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify card exists, is active, and belongs to user
     const card = await db.traitCard.findUnique({
       where: { id: cardId },
     });
@@ -76,7 +78,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify currency matches card type
     if (card.cardType !== currency) {
       return NextResponse.json(
         { success: false, message: `Cette carte est de type ${card.cardType}, mais vous essayez de payer en ${currency}` },
@@ -84,7 +85,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user has sufficient balance
     const isFC = currency === 'FC';
     const realBal = isFC ? user.realBalanceFC : user.realBalance;
 
@@ -97,7 +97,17 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      if (user.pin !== pin) {
+      if (!user.pin) {
+        return NextResponse.json(
+          { success: false, message: 'Aucun PIN défini.' },
+          { status: 400 }
+        );
+      }
+      const pinValid = user.pin.startsWith('$2')
+        ? await (await import('bcryptjs')).compare(pin, user.pin)
+        : await verifyAndMigratePin(userId, pin, user.pin)
+
+      if (!pinValid) {
         return NextResponse.json(
           { success: false, message: "Code PIN de l'enfant incorrect." },
           { status: 400 }
@@ -112,67 +122,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: `Solde insuffisant. Solde réel: ${realBal.toFixed(2)} ${currency}, requis: ${totalDeduction.toFixed(2)} ${currency} (dont commission parrainage: ${fee} ${currency})`,
+          message: `Solde insuffisant. Solde réel: ${realBal.toFixed(2)} ${currency}, requis: ${totalDeduction.toFixed(2)} ${currency}${fee > 0 ? ` (dont commission parrainage: ${fee} ${currency})` : ''}`,
         },
         { status: 400 }
       );
     }
 
-    // Deduct from user balance
-    await db.user.update({
-      where: { id: userId },
-      data: isFC
-        ? { realBalanceFC: { decrement: totalDeduction } }
-        : { realBalance: { decrement: totalDeduction } },
-    });
-
     const paymentDesc = description || `Paiement par carte ${card.cardNumber}${isChild ? ` (Commission Enfant: ${fee} ${currency})` : ''}`;
 
-    // Create CardPayment record
-    const cardPayment = await db.cardPayment.create({
-      data: {
-        cardId,
-        userId,
-        amount,
-        currency,
-        description: paymentDesc,
-        status: 'completed',
-      },
-    });
+    // Atomic transaction
+    const [cardPayment] = await db.$transaction([
+      db.cardPayment.create({
+        data: {
+          cardId,
+          userId,
+          amount,
+          currency,
+          description: paymentDesc,
+          status: 'completed',
+        },
+      }),
+      db.user.update({
+        where: { id: userId },
+        data: isFC
+          ? { realBalanceFC: { decrement: totalDeduction } }
+          : { realBalance: { decrement: totalDeduction } },
+      }),
+      db.transaction.create({
+        data: {
+          type: 'card_payment',
+          amount,
+          fee,
+          currency,
+          status: 'completed',
+          senderId: userId,
+          receiverId: userId,
+          description: description || `Paiement par carte TRAIT - ${String(card.cardNumber).slice(-4)}${isChild ? ` (Commission Enfant: ${fee} ${currency})` : ''}`,
+        },
+      }),
+      db.notification.create({
+        data: {
+          userId,
+          title: 'Paiement par carte effectué',
+          message: `Paiement de ${amount.toFixed(2)} ${currency} effectué avec votre carte TRAIT se terminant par ${String(card.cardNumber).slice(-4)}.`,
+          type: 'card_payment',
+        },
+      }),
+    ]);
 
-    // Create Transaction record for the payment
-    const transaction = await db.transaction.create({
-      data: {
-        type: 'card_payment',
-        amount,
-        fee,
-        currency,
-        status: 'completed',
-        senderId: userId,
-        receiverId: userId,
-        description: description || `Paiement par carte TRAIT - ${card.cardNumber.slice(-4)}${isChild ? ` (Commission Enfant: ${fee} ${currency})` : ''}`,
-      },
-    });
-
-    // Create notification for the user
-    await db.notification.create({
-      data: {
-        userId,
-        title: 'Paiement par carte effectué',
-        message: `Paiement de ${amount.toFixed(2)} ${currency} effectué avec votre carte TRAIT se terminant par ${card.cardNumber.slice(-4)}.`,
-        type: 'card_payment',
-      },
-    });
-
-    // Get updated user balance
     const updatedUser = await db.user.findUnique({
       where: { id: userId },
-      select: {
-        realBalance: true,
-        realBalanceFC: true,
-        bonusBalance: true,
-        bonusBalanceFC: true,
-      },
+      select: { realBalance: true, realBalanceFC: true, bonusBalance: true, bonusBalanceFC: true },
     });
 
     return NextResponse.json({
@@ -185,14 +185,6 @@ export async function POST(request: NextRequest) {
         description: cardPayment.description,
         status: cardPayment.status,
         createdAt: cardPayment.createdAt,
-      },
-      transaction: {
-        id: transaction.id,
-        type: transaction.type,
-        amount: transaction.amount,
-        currency: transaction.currency,
-        status: transaction.status,
-        createdAt: transaction.createdAt,
       },
       updatedBalances: updatedUser,
     });

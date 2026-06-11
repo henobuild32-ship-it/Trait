@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { hashPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +34,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if phone already exists
     const existingUser = await db.user.findUnique({
       where: { phone },
     })
@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if email already exists (for agents)
     if (role === 'agent' && email) {
       const existingEmail = await db.user.findFirst({
         where: { email: email.trim().toLowerCase() },
@@ -58,10 +57,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Agent vs Client settings
     const isAgent = role === 'agent'
     const validationStatus = isAgent ? 'pending' : 'validated'
     const bonusBalance = isAgent ? 0 : 10
+
+    // Hash password
+    const hashedPassword = await hashPassword(password)
+
+    // Hash pin if provided
+    let hashedPin: string | null = null
+    if (pin) {
+      const { hashPin } = await import('@/lib/auth')
+      hashedPin = await hashPin(pin)
+    }
 
     const user = await db.user.create({
       data: {
@@ -70,8 +78,8 @@ export async function POST(request: NextRequest) {
         pseudo,
         country,
         role,
-        pin: pin || null,
-        password,
+        pin: hashedPin,
+        password: hashedPassword,
         email: isAgent ? (email?.trim().toLowerCase() || null) : (email?.trim() || null),
         gender: gender || null,
         city: city?.trim() || null,
@@ -85,31 +93,32 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const safeUser = {
-      id: user.id,
-      phone: user.phone,
-      name: user.name,
-      pseudo: user.pseudo,
-      email: user.email,
-      gender: user.gender,
-      city: user.city,
-      country: user.country,
-      role: user.role,
-      agentCode: user.agentCode,
-      agentNumber: user.agentNumber,
-      validationStatus: user.validationStatus,
-      validationRejectReason: user.validationRejectReason,
-      realBalance: user.realBalance,
-      realBalanceFC: user.realBalanceFC,
-      bonusBalance: user.bonusBalance,
-      bonusBalanceFC: user.bonusBalanceFC,
-      isVerified: user.isVerified,
-      hasCompletedOnboarding: user.hasCompletedOnboarding,
-      address: user.address,
-      photoId: user.photoId,
-    }
-
-    return NextResponse.json({ success: true, user: safeUser })
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        pseudo: user.pseudo,
+        email: user.email,
+        gender: user.gender,
+        city: user.city,
+        country: user.country,
+        role: user.role,
+        agentCode: user.agentCode,
+        agentNumber: user.agentNumber,
+        validationStatus: user.validationStatus,
+        validationRejectReason: user.validationRejectReason,
+        realBalance: user.realBalance,
+        realBalanceFC: user.realBalanceFC,
+        bonusBalance: user.bonusBalance,
+        bonusBalanceFC: user.bonusBalanceFC,
+        isVerified: user.isVerified,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
+        address: user.address,
+        photoId: user.photoId,
+      },
+    })
   } catch (error) {
     console.error('Register error:', error)
     return NextResponse.json(

@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
-// GET: fetch current user balance/profile
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'User ID is required' },
-        { status: 400 }
-      )
-    }
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
 
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: auth.userId },
       select: {
         id: true,
         phone: true,
@@ -30,14 +23,23 @@ export async function GET(request: NextRequest) {
         agentNumber: true,
         validationStatus: true,
         validationRejectReason: true,
+        businessName: true,
+        businessType: true,
+        location: true,
+        address: true,
+        photoId: true,
         realBalance: true,
         realBalanceFC: true,
         bonusBalance: true,
         bonusBalanceFC: true,
         bonusBlocked: true,
+        bonusBlockedReason: true,
         isVerified: true,
         suspended: true,
+        suspensionReason: true,
+        tempBlocked: true,
         hasCompletedOnboarding: true,
+        kycStatus: true,
         parentId: true,
         createdAt: true,
       },
@@ -45,85 +47,16 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
+        { success: false, message: 'Utilisateur non trouvé' },
         { status: 404 }
       )
     }
 
     return NextResponse.json({ success: true, user })
   } catch (error) {
-    console.error('Get profile error:', error)
+    console.error('Profile error:', error)
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
-
-// POST: update user profile
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { userId, name, pseudo, country, validationRejectReason } = body as {
-      userId: string
-      name?: string
-      pseudo?: string
-      country?: string
-      validationRejectReason?: string | null
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'User ID is required' },
-        { status: 400 }
-      )
-    }
-
-    const user = await db.user.update({
-      where: { id: userId },
-      data: {
-        ...(name !== undefined && name !== null && { name: name.trim() || null }),
-        ...(pseudo !== undefined && pseudo !== null && { pseudo: pseudo.trim() || null }),
-        ...(country !== undefined && country !== null && { country: country.trim() || 'US' }),
-        ...(validationRejectReason !== undefined && { validationRejectReason }),
-      },
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: 'User not found' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        phone: user.phone,
-        name: user.name,
-        pseudo: user.pseudo,
-        email: user.email,
-        gender: user.gender,
-        city: user.city,
-        country: user.country,
-        role: user.role,
-        agentCode: user.agentCode,
-        agentNumber: user.agentNumber,
-        validationStatus: user.validationStatus,
-        validationRejectReason: user.validationRejectReason,
-        realBalance: user.realBalance,
-        realBalanceFC: user.realBalanceFC,
-        bonusBalance: user.bonusBalance,
-        bonusBalanceFC: user.bonusBalanceFC,
-        isVerified: user.isVerified,
-        parentId: user.parentId,
-      },
-    })
-  } catch (error) {
-    console.error('Update profile error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Erreur interne du serveur' },
       { status: 500 }
     )
   }

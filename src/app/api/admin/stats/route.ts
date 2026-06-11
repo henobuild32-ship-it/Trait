@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const [
       totalUsers,
       totalAgents,
@@ -24,7 +28,6 @@ export async function GET() {
       pendingSellers,
       totalSellers,
     ] = await Promise.all([
-      // clients only — agents/sellers counted separately below
       db.user.count({ where: { role: 'client' } }),
       db.user.count({ where: { role: 'agent' } }),
       db.user.count({ where: { suspended: true } }),
@@ -37,16 +40,12 @@ export async function GET() {
       db.barterOffer.count({ where: { status: 'active' } }),
       db.transaction.count({
         where: {
-          createdAt: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          },
+          createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
         },
       }),
       db.user.count({
         where: {
-          createdAt: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          },
+          createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
         },
       }),
       db.user.count({ where: { role: 'agent', validationStatus: 'pending' } }),
@@ -58,8 +57,6 @@ export async function GET() {
       db.user.count({ where: { role: 'seller' } }),
     ]);
 
-    // ── Volume net (sans double-compte P2P) ─────────────────────────
-    // On somme uniquement du côté récepteur : chaque flux ne compte qu'une fois.
     const completedTxs = await db.transaction.findMany({
       where: { status: 'completed', OR: [{ type: 'send' }, { type: 'withdrawal' }, { type: 'deposit' }] },
       select: { amount: true, fee: true, currency: true, type: true },
@@ -70,14 +67,12 @@ export async function GET() {
       .filter((t) => t.type === 'send')
       .reduce((s, t) => s + t.amount, 0);
 
-    // ── Activité récente ─────────────────────────────────────────────
     const recentLogs = await db.adminActivityLog.findMany({
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: { admin: { select: { name: true, username: true } } },
     });
 
-    // ── Stats 30 derniers jours ──────────────────────────────────────
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -129,7 +124,7 @@ export async function GET() {
     console.error('Admin stats error:', error);
     return NextResponse.json(
       { success: false, message: 'Erreur serveur' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

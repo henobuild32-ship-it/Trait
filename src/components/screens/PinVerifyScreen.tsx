@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X, Fingerprint } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
@@ -12,18 +12,28 @@ export default function PinVerifyScreen() {
   const [error, setError] = useState('');
   const [shaking, setShaking] = useState(false);
 
-  const handleDigit = (digit: string) => {
+  const handleDigit = useCallback(async (digit: string) => {
     if (pin.length >= 4) return;
     const newPin = pin + digit;
     setPin(newPin);
 
     if (newPin.length === 4) {
-      setTimeout(() => {
-        if (user && newPin === user.pin) {
-          clearPendingPinAction?.();
-          pendingPinAction?.();
-        } else {
-          setError('Code PIN incorrect');
+      setTimeout(async () => {
+        try {
+          const res = await fetch('/api/auth/verify-pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user?.id, pin: newPin }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            clearPendingPinAction?.();
+            pendingPinAction?.();
+          } else {
+            throw new Error(data.message || 'Code PIN incorrect');
+          }
+        } catch (err: any) {
+          setError(err.message || 'Code PIN incorrect');
           setShaking(true);
           setTimeout(() => {
             setPin('');
@@ -33,7 +43,7 @@ export default function PinVerifyScreen() {
         }
       }, 300);
     }
-  };
+  }, [pin, user, pendingPinAction, clearPendingPinAction]);
 
   const handleDelete = () => {
     setPin((prev) => prev.slice(0, -1));

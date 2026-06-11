@@ -82,6 +82,7 @@ import ChildSponsorshipScreen from '@/components/screens/ChildSponsorshipScreen'
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
+import { UpdateNotice } from '@/components/layout/UpdateNotice';
 
 const screenMap: Record<PageName, React.ComponentType> = {
   welcome: WelcomeScreen,
@@ -201,6 +202,7 @@ export default function TraitApp() {
       </div>
       {showNav && <BottomNavigation />}
       {!isAdminPage && <PWAInstallBanner />}
+      <UpdateNotice />
     </div>
   );
 }

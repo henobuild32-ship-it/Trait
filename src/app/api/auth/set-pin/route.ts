@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { hashPin, requireUser } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { userId, pin } = body as { userId: string; pin: string }
 
@@ -13,6 +18,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Verify the authenticated user matches
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
+      )
+    }
+
     if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 8 || !/^\d{4,8}$/.test(pin)) {
       return NextResponse.json(
         { success: false, message: 'Le code PIN doit comporter entre 4 et 8 chiffres' },
@@ -20,9 +33,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const hashedPin = await hashPin(pin)
+
     const user = await db.user.update({
       where: { id: userId },
-      data: { pin },
+      data: { pin: hashedPin },
     })
 
     if (!user) {
@@ -45,7 +60,6 @@ export async function POST(request: NextRequest) {
         agentCode: user.agentCode,
         realBalance: user.realBalance,
         bonusBalance: user.bonusBalance,
-        pin: user.pin,
         isVerified: user.isVerified,
         hasCompletedOnboarding: user.hasCompletedOnboarding,
       },

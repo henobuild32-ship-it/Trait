@@ -47,7 +47,6 @@ export default function PinSetupScreen() {
               const data = await res.json();
 
               if (data.success && user) {
-                setUser({ ...user, pin: newConfirm });
                 setStep('success');
                 setTimeout(() => {
                   navigateTo('onboarding');

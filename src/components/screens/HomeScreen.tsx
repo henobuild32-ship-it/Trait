@@ -147,6 +147,13 @@ export default function HomeScreen() {
     fetchRecentTransactions();
     refreshUserBalance();
     fetchUserCards();
+    
+    // Real-time balance polling every 30 seconds
+    const balanceInterval = setInterval(() => {
+      refreshUserBalance();
+    }, 30000);
+    
+    return () => clearInterval(balanceInterval);
   }, [user?.id]);
 
   async function refreshUserBalance() {

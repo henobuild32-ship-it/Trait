@@ -2,9 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { logSecurityEvent } from '@/lib/security'
 import { verifyAndMigratePassword, signToken, setTokenCookie, clearTokenCookie } from '@/lib/auth'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 attempts per minute per IP
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const rateLimit = checkRateLimit({
+      windowMs: 60 * 1000,
+      maxRequests: 5,
+      key: `login:${ip}`,
+    })
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetIn)
+    }
+
     const body = await request.json()
     const { phone, password } = body as {
       phone?: string

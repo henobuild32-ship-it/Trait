@@ -52,12 +52,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'validate') {
-      // The withdrawal was already deducted when created (pending status)
-      // Just mark as completed
-      const updated = await db.withdrawal.update({
-        where: { id: withdrawalId },
-        data: { status: 'completed' },
-      })
+      // Credit the agent only after validation
+      const isFC = withdrawal.currency === 'FC';
+      const [updated] = await db.$transaction([
+        db.withdrawal.update({
+          where: { id: withdrawalId },
+          data: { status: 'completed' },
+        }),
+        db.user.update({
+          where: { id: withdrawal.agentId! },
+          data: isFC
+            ? { realBalanceFC: { increment: withdrawal.amount } }
+            : { realBalance: { increment: withdrawal.amount } },
+        }),
+      ]);
 
       // Log agent validation
       if (withdrawal.agent) {

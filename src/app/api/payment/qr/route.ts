@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { verifyAndMigratePin } from '@/lib/auth'
+import { verifyAndMigratePin, requireUser } from '@/lib/auth'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
+    // Rate limit: 10 payments per minute per user
+    const rateLimit = checkRateLimit({
+      windowMs: 60 * 1000,
+      maxRequests: 10,
+      key: `qr:${auth.userId}`,
+    })
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetIn)
+    }
+
     const body = await request.json()
     const { sellerId, qrCode, amount, currency, pin } = body
 

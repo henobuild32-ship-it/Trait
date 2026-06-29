@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { checkDailyLimit, checkKYC, detectSuspiciousActivity, logSecurityEvent } from '@/lib/security';
 import { requireUser } from '@/lib/auth';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const FEE_RATES: Record<string, number> = {
   wallet: 0.005,
@@ -13,7 +14,6 @@ const FEE_RATES: Record<string, number> = {
 };
 
 const COMMISSION_RATE = 0.015;
-const EXCHANGE_RATE_USD_FC = 2850;
 const VALID_TYPES = ['wallet', 'mobile_money', 'bank', 'card', 'merchant', 'qr_code'];
 
 const REQUIRED_FIELDS: Record<string, string[]> = {
@@ -30,6 +30,16 @@ export async function POST(request: NextRequest) {
     const auth = await requireUser(request)
     if (auth instanceof NextResponse) return auth
 
+    // Rate limit: 5 transfers per hour per user
+    const rateLimit = checkRateLimit({
+      windowMs: 60 * 60 * 1000,
+      maxRequests: 5,
+      key: `intl:${auth.userId}`,
+    })
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetIn)
+    }
+
     const userId = auth.userId
     const body = await request.json();
     const {
@@ -44,7 +54,6 @@ export async function POST(request: NextRequest) {
       currency,
       amount,
       description,
-      otp,
     } = body;
 
     const type = String(rawType || '')
@@ -160,6 +169,12 @@ export async function POST(request: NextRequest) {
     let amountReceived = transferAmount - fee - commission;
     amountReceived = Math.max(0, amountReceived);
 
+    // Fetch dynamic exchange rate
+    const rateConfig = await db.systemConfig.findUnique({
+      where: { key: 'exchange_rate_usd_fc' },
+    });
+    exchangeRate = rateConfig ? parseFloat(rateConfig.value) : 2850;
+
     // Atomic transaction
     const [transfer] = await db.$transaction([
       db.internationalTransfer.create({
@@ -180,7 +195,6 @@ export async function POST(request: NextRequest) {
           exchangeRate,
           amountReceived,
           status: 'processing',
-          otpVerified: !!otp,
           description: description || null,
         },
       }),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { findActiveAgentByIdentifier } from '@/lib/agents';
 import { requireUser } from '@/lib/auth';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;
@@ -11,6 +12,16 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requireUser(request)
     if (auth instanceof NextResponse) return auth
+
+    // Rate limit: 3 withdrawals per hour per user
+    const rateLimit = checkRateLimit({
+      windowMs: 60 * 60 * 1000,
+      maxRequests: 3,
+      key: `withdraw:${auth.userId}`,
+    })
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetIn)
+    }
 
     const body = await request.json();
     const { amount, currency, method, agentCode } = body as {
@@ -87,7 +98,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Atomic transaction: create withdrawal, deduct sender, credit agent
+    // Atomic transaction: create withdrawal, deduct sender (agent credited only after validation)
     const [withdrawal] = await db.$transaction([
       db.withdrawal.create({
         data: {
@@ -106,12 +117,6 @@ export async function POST(request: NextRequest) {
           ? { realBalanceFC: { decrement: totalDeduction } }
           : { realBalance: { decrement: totalDeduction } },
       }),
-      db.user.update({
-        where: { id: agent.id },
-        data: cur === 'FC'
-          ? { realBalanceFC: { increment: amount } }
-          : { realBalance: { increment: amount } },
-      }),
       db.transaction.create({
         data: {
           type: 'withdrawal',
@@ -129,7 +134,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId,
           title: 'Retrait en cours de validation',
-          message: `Votre retrait de ${amount.toFixed(2)} ${cur} (frais : ${fee.toFixed(2)} ${cur}) via l'agent ${agent.agentNumber || agent.agentCode} a été soumis et est en cours de validation.`,
+          message: `Votre retrait de ${amount.toFixed(2)} ${cur} (frais : ${fee.toFixed(2)} ${cur}) via l'agent ${agent.agentNumber || agent.agentCode} a été soumis et est en attente de validation par l'agent.`,
           type: 'withdrawal_validated',
         },
       }),

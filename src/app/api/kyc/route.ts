@@ -194,9 +194,9 @@ export async function POST(request: NextRequest) {
     await db.user.update({
       where: { id: userId },
       data: {
-        kycStatus: 'verified',
+        kycStatus: 'pending',
         kycSubmittedAt: now,
-        kycVerifiedAt: now,
+        kycVerifiedAt: null,
         kycRejectReason: null,
         kycDocumentType: documentType,
         kycDocumentUrl: documentUrl,
@@ -208,18 +208,17 @@ export async function POST(request: NextRequest) {
     await db.securityLog.create({
       data: {
         userId,
-        action: 'kyc_verified',
+        action: 'kyc_submitted',
         details: JSON.stringify(kycData),
         riskLevel: 'low',
       },
     });
 
-    // Notify user
     await db.notification.create({
       data: {
         userId,
         title: 'Vérification KYC soumise',
-        message: `Votre demande de vérification d'identité a été soumise avec succès. Vous serez notifié une fois la vérification terminée. Type de document: ${documentType}.`,
+        message: `Votre demande de vérification d'identité a été soumise. Elle sera examinée par notre équipe. Type de document: ${documentType}.`,
         type: 'security',
       },
     });
@@ -227,7 +226,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Demande KYC soumise avec succès',
-      kycStatus: 'verified',
+      kycStatus: 'pending',
     });
   } catch (error) {
     console.error('KYC submit error:', error);

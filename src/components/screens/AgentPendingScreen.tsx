@@ -194,20 +194,23 @@ export default function AgentPendingScreen() {
 
         {/* TRAIT Logo */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
           className="mt-8 mb-4"
         >
-          <div className="rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-lg">
-            <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-2 py-1">
-              <Image
-                src="/trait-logo.png"
-                alt="TRAIT"
-                width={120}
-                height={58}
-                className="object-contain"
-              />
+          <div className="relative">
+            <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[#1E40AF]/20 via-blue-400/10 to-[#2563EB]/15 blur-lg pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
+            <div className="relative rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-xl shadow-blue-500/25 dark:shadow-blue-900/40">
+              <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1.5">
+                <Image
+                  src="/trait-logo.png"
+                  alt="TRAIT"
+                  width={120}
+                  height={120}
+                  className="object-contain"
+                />
+              </div>
             </div>
           </div>
         </motion.div>

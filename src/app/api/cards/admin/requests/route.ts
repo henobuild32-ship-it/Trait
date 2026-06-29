@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
+import { randomInt, randomBytes } from 'crypto';
+
+function maskCardNumber(num: string): string {
+  return num.length >= 4 ? `****${num.slice(-4)}` : num;
+}
 
 // Helper: Generate 16-digit card number starting with 4927
 function generateCardNumber(): string {
   const prefix = '4927';
   let remaining = '';
   for (let i = 0; i < 12; i++) {
-    remaining += Math.floor(Math.random() * 10).toString();
+    remaining += randomInt(0, 10).toString();
   }
   return prefix + remaining;
 }
@@ -15,7 +21,7 @@ function generateCardNumber(): string {
 function generateCVV(): string {
   let cvv = '';
   for (let i = 0; i < 3; i++) {
-    cvv += Math.floor(Math.random() * 10).toString();
+    cvv += randomInt(0, 10).toString();
   }
   return cvv;
 }
@@ -31,12 +37,14 @@ function generateExpiryDate(): string {
 
 // Helper: Generate unique QR code string
 function generateQRCode(cardId: string): string {
-  return `TRAIT-QR-${cardId}-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  return `TRAIT-QR-${cardId}-${Date.now()}-${randomBytes(4).toString('hex').toUpperCase()}`;
 }
 
 // GET - Get all card requests for admin
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'all';
 
@@ -78,9 +86,17 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const safeRequests = requests.map(req => ({
+      ...req,
+      card: req.card ? {
+        ...req.card,
+        cardNumber: maskCardNumber(req.card.cardNumber),
+      } : null,
+    }));
+
     return NextResponse.json({
       success: true,
-      requests,
+      requests: safeRequests,
     });
   } catch (error) {
     console.error('Admin card requests list error:', error);
@@ -94,6 +110,8 @@ export async function GET(request: NextRequest) {
 // POST - Manage card request (approve/reject/suspend)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
     const { adminId, requestId, action, reason } = await request.json() as {
       adminId: string;
       requestId: string;
@@ -105,6 +123,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants: adminId, requestId, action requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== adminId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -188,7 +213,7 @@ export async function POST(request: NextRequest) {
             userId: cardRequest.userId,
             userName: cardRequest.user?.name || cardRequest.user?.phone,
             cardType: cardRequest.cardType,
-            cardNumber,
+            cardNumber: maskCardNumber(cardNumber),
           }),
         },
       });
@@ -198,7 +223,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: cardRequest.userId,
           title: 'Carte TRAIT approuvée ✓',
-          message: `Votre demande de carte ${cardRequest.cardType} a été approuvée. Votre carte ${cardNumber} est maintenant active. Date d'expiration: ${expiryDate}.`,
+          message: `Votre demande de carte ${cardRequest.cardType} a été approuvée. Votre carte ${maskCardNumber(cardNumber)} est maintenant active. Date d'expiration: ${expiryDate}.`,
           type: 'card_approved',
         },
       });
@@ -213,8 +238,7 @@ export async function POST(request: NextRequest) {
         card: {
           id: card.id,
           cardType: card.cardType,
-          cardNumber: card.cardNumber,
-          cvv: card.cvv,
+          cardNumber: maskCardNumber(card.cardNumber),
           expiryDate: card.expiryDate,
           status: card.status,
         },

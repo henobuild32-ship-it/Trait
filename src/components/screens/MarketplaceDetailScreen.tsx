@@ -319,7 +319,7 @@ export default function MarketplaceDetailScreen() {
             <p className="text-sm font-medium">
               {product.seller?.name || product.seller?.pseudo || 'Anonyme'}
             </p>
-            <p className="text-xs text-muted-foreground">Vendeur</p>
+            <p className="text-xs text-muted-foreground">Service</p>
           </div>
         </motion.div>
 

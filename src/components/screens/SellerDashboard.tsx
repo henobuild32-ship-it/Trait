@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus, QrCode, CreditCard, LogOut, Package, History, RefreshCw, Loader2, Sparkles } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { useAppStore } from '@/lib/store'
 import {
   Dialog,
@@ -14,9 +14,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-export function SellerDashboard() {
-  const { toast } = useToast()
-  const { user, navigateTo, logout } = useAppStore()
+export default function SellerDashboard() {
+  const { user, setUser, navigateTo, logout } = useAppStore()
   const [requestingCard, setRequestingCard] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [showWelcome, setShowWelcome] = useState(!!(user && user.validationStatus === 'validated' && user.validationRejectReason))
@@ -35,12 +34,12 @@ export function SellerDashboard() {
       })
       const data = await res.json()
       if (data.success) {
-        useAppStore.setState({ user: { ...user, validationRejectReason: null } })
+        setUser({ ...user, validationRejectReason: null })
       }
       setShowWelcome(false)
     } catch (error) {
       console.error(error)
-      useAppStore.setState({ user: { ...user, validationRejectReason: null } })
+      setUser({ ...user, validationRejectReason: null })
       setShowWelcome(false)
     } finally {
       setClearingWelcome(false)
@@ -53,13 +52,13 @@ export function SellerDashboard() {
       const res = await fetch(`/api/auth/profile?userId=${user.id}`)
       const data = await res.json()
       if (data.success && data.user) {
-        useAppStore.setState({ user: { ...user, ...data.user } })
-        toast({ title: 'Succès', description: 'Données mises à jour' })
+        setUser({ ...user, ...data.user })
+        toast('Succès', { description: 'Données mises à jour' })
       } else {
-        toast({ title: 'Info', description: 'Données à jour', variant: 'default' })
+        toast('Info', { description: 'Données à jour' })
       }
     } catch (error) {
-      toast({ title: 'Erreur', description: 'Erreur lors de la mise à jour', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Erreur lors de la mise à jour' })
     } finally {
       setRefreshing(false)
     }
@@ -75,12 +74,12 @@ export function SellerDashboard() {
       })
       const data = await res.json()
       if (data.success) {
-        toast({ title: 'Succès', description: 'Demande de Carte Trait envoyée à l\'administration.' })
+        toast('Succès', { description: 'Demande de Carte Trait envoyée à l\'administration.' })
       } else {
-        toast({ title: 'Erreur', description: data.message || 'Erreur lors de la demande', variant: 'destructive' })
+        toast.error('Erreur', { description: data.message || 'Erreur lors de la demande' })
       }
     } catch (error) {
-      toast({ title: 'Erreur', description: 'Erreur réseau', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Erreur réseau' })
     } finally {
       setRequestingCard(false)
     }
@@ -133,7 +132,7 @@ export function SellerDashboard() {
         <div className="absolute top-0 right-0 p-4 opacity-20">
           <CreditCard className="w-24 h-24" />
         </div>
-        <p className="text-blue-100 mb-1">Solde Vendeur</p>
+        <p className="text-blue-100 mb-1">Solde Service</p>
         <h2 className="text-4xl font-bold mb-4">${user.realBalance?.toFixed(2) || '0.00'}</h2>
         <div className="flex gap-2">
           <Button onClick={handleRequestCard} disabled={requestingCard} variant="secondary" className="bg-white/20 hover:bg-white/30 border-none text-white">
@@ -145,14 +144,14 @@ export function SellerDashboard() {
 
       {/* Actions */}
       <div className="grid grid-cols-2 gap-4">
-        <Button onClick={() => navigateTo('seller-qr-scanner' as any)} className="h-24 flex flex-col items-center justify-center bg-white text-gray-800 border hover:border-indigo-500 hover:bg-indigo-50 transition-all rounded-2xl shadow-sm">
+        <Button onClick={() => navigateTo('seller-qr-scanner')} className="h-24 flex flex-col items-center justify-center bg-white text-gray-800 border hover:border-indigo-500 hover:bg-indigo-50 transition-all rounded-2xl shadow-sm">
           <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-2">
             <QrCode className="w-5 h-5" />
           </div>
           <span className="font-semibold">Scanner Paiement</span>
         </Button>
 
-        <Button onClick={() => navigateTo('seller-products' as any)} className="h-24 flex flex-col items-center justify-center bg-white text-gray-800 border hover:border-blue-500 hover:bg-blue-50 transition-all rounded-2xl shadow-sm">
+        <Button onClick={() => navigateTo('seller-products')} className="h-24 flex flex-col items-center justify-center bg-white text-gray-800 border hover:border-blue-500 hover:bg-blue-50 transition-all rounded-2xl shadow-sm">
           <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
             <Package className="w-5 h-5" />
           </div>
@@ -183,7 +182,7 @@ export function SellerDashboard() {
               Bienvenue dans le réseau TRAIT !
             </DialogTitle>
             <DialogDescription className="text-xs text-gray-500">
-              Votre compte vendeur a été officiellement approuvé par l'administrateur.
+              Votre compte service a été officiellement approuvé par l'administrateur.
             </DialogDescription>
           </DialogHeader>
 

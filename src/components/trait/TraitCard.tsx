@@ -137,9 +137,9 @@ export default function TraitCard({
                   <Image
                     src="/trait-logo.png"
                     alt="TRAIT"
-                    width={32}
-                    height={32}
-                    className="w-7 h-7 object-contain"
+                    width={28}
+                    height={28}
+                    className="object-contain"
                     style={{ filter: 'brightness(0) invert(1)' }}
                   />
                 </div>

@@ -29,7 +29,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { useAppStore } from '@/lib/store';
+import { useAppStore, type PageName } from '@/lib/store';
 import { toast } from 'sonner';
 
 interface DashboardStats {
@@ -76,7 +76,7 @@ const statsConfig: StatCard[] = [
 
 interface QuickAction {
   label: string;
-  page: string;
+  page: PageName;
   icon: React.ElementType;
   color: string;
   bgColor: string;
@@ -85,8 +85,8 @@ interface QuickAction {
 const quickActions: QuickAction[] = [
   { label: 'Gestion Utilisateurs', page: 'admin-users', icon: Users, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/40' },
   { label: 'Gestion Agents', page: 'admin-agents', icon: Bot, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
-  { label: 'Validation Vendeurs', page: 'admin-seller-validation', icon: UserCheck, color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-100 dark:bg-rose-900/40' },
-  { label: 'Gestion Vendeurs', page: 'admin-sellers', icon: Store, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/40' },
+  { label: 'Validation Services', page: 'admin-seller-validation', icon: UserCheck, color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-100 dark:bg-rose-900/40' },
+  { label: 'Gestion Services', page: 'admin-sellers', icon: Store, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/40' },
   { label: 'Cartes', page: 'admin-cards', icon: CreditCard, color: 'text-sky-600 dark:text-sky-400', bgColor: 'bg-sky-100 dark:bg-sky-900/40' },
   { label: 'Demandes de Cartes', page: 'admin-card-requests', icon: Clock, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/40' },
   { label: 'Transactions', page: 'admin-transactions', icon: ArrowLeftRight, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/40' },
@@ -356,7 +356,7 @@ export default function AdminDashboard() {
                 >
                   <Card
                     className="border-border hover:shadow-md transition-all cursor-pointer group"
-                    onClick={() => navigateTo(action.page as any)}
+                    onClick={() => navigateTo(action.page)}
                   >
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg ${action.bgColor} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>

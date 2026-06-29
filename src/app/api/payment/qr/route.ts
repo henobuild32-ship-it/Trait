@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { verifyAndMigratePin } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     // Verify Seller
     const seller = await db.user.findUnique({ where: { id: sellerId } })
     if (!seller || seller.role !== 'seller' || seller.validationStatus !== 'validated') {
-      return NextResponse.json({ success: false, message: 'Vendeur non autorisé' }, { status: 403 })
+      return NextResponse.json({ success: false, message: 'Service non autorisé' }, { status: 403 })
     }
 
     // Verify Client via QR Code
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
           message: "Le code PIN de l'enfant est obligatoire pour valider cet achat."
         }, { status: 400 })
       }
-      if (client.pin !== pin) {
+      const pinOk = await verifyAndMigratePin(client.id, pin, client.pin)
+      if (!pinOk) {
         return NextResponse.json({
           success: false,
           message: "Code PIN de l'enfant incorrect."
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
           status: 'completed',
           senderId: client.id,
           receiverId: seller.id,
-          description: `Paiement QR chez ${seller.businessName || 'Vendeur'}${isChild ? ` (Commission Enfant: ${fee} ${currency || 'USD'})` : ''}`,
+          description: `Paiement QR chez ${seller.businessName || 'Service'}${isChild ? ` (Commission Enfant: ${fee} ${currency || 'USD'})` : ''}`,
         }
       })
     })

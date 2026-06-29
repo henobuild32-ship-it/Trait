@@ -180,7 +180,7 @@ export default function CardPaymentScreen() {
           </p>
           <Button
             className="rounded-xl font-semibold"
-            onClick={() => navigateTo('card-request' as any)}
+            onClick={() => navigateTo('card-request')}
           >
             Demander une carte
           </Button>

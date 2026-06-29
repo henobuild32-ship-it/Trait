@@ -4,14 +4,13 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, Plus, Trash2, Edit2, Loader2, Package } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
 import { Label } from '@/components/ui/label'
 
 import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
 
-export function SellerProductsScreen() {
+export default function SellerProductsScreen() {
   const { user, goBack } = useAppStore()
-  const { toast } = useToast()
   if (!user) {
     return null
   }
@@ -39,7 +38,7 @@ export function SellerProductsScreen() {
         setProducts(data.products)
       }
     } catch (e) {
-      toast({ title: 'Erreur', description: 'Impossible de charger les produits', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Impossible de charger les produits' })
     } finally {
       setLoading(false)
     }
@@ -56,15 +55,15 @@ export function SellerProductsScreen() {
       })
       const data = await res.json()
       if (data.success) {
-        toast({ title: 'Succès', description: 'Produit ajouté' })
+        toast('Succès', { description: 'Produit ajouté' })
         setShowAdd(false)
         fetchProducts()
         setNewProduct({ name: '', description: '', price: '', category: 'vetements', imageUrl: '' })
       } else {
-        toast({ title: 'Erreur', description: data.message, variant: 'destructive' })
+        toast.error('Erreur', { description: data.message })
       }
     } catch (e) {
-      toast({ title: 'Erreur', description: 'Erreur réseau', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Erreur réseau' })
     } finally {
       setSubmitting(false)
     }
@@ -76,11 +75,11 @@ export function SellerProductsScreen() {
       const res = await fetch(`/api/seller/products?productId=${productId}&sellerId=${user.id}`, { method: 'DELETE' })
       const data = await res.json()
       if (data.success) {
-        toast({ title: 'Succès', description: 'Produit supprimé' })
+        toast('Succès', { description: 'Produit supprimé' })
         fetchProducts()
       }
     } catch (e) {
-      toast({ title: 'Erreur', description: 'Erreur réseau', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Erreur réseau' })
     }
   }
 

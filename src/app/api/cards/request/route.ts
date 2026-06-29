@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 
 // POST - Client requests a card
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const { userId, cardType } = await request.json() as {
       userId: string;
       cardType: 'USD' | 'FC';
@@ -13,6 +16,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'userId est requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 

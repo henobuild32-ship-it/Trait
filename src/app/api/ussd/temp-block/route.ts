@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
     const { userId, action } = body;
+
+    if (auth.userId !== userId) {
+      return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 403 });
+    }
 
     if (!userId || !action) {
       return NextResponse.json({ success: false, message: 'Paramètres manquants' }, { status: 400 });

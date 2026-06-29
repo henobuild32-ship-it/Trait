@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { logSecurityEvent } from '@/lib/security'
+import { requireUser } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { withdrawalId, action } = body as {
       withdrawalId: string
@@ -37,6 +41,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Ce retrait a déjà été traité' },
         { status: 400 }
+      )
+    }
+
+    if (withdrawal.agentId !== auth.userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       )
     }
 

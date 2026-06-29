@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
 // GET: List all active barter offers
 export async function GET() {
@@ -42,6 +43,8 @@ export async function GET() {
 // POST: Create new barter offer
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
     const body = await request.json()
     const { title, description, category, offeredBy, wantedItem } = body as {
       title: string
@@ -55,6 +58,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Title, description, category, and offeredBy are required' },
         { status: 400 }
+      )
+    }
+
+    if (auth.userId !== offeredBy) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       )
     }
 

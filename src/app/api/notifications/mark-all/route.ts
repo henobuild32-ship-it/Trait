@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
 // POST: Mark all notifications as read for a user
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
     const body = await request.json()
     const { userId } = body as { userId: string }
 
@@ -11,6 +14,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'User ID is required' },
         { status: 400 }
+      )
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       )
     }
 

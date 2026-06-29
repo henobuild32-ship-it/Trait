@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -9,7 +9,8 @@ import {
   Building,
   CreditCard,
   Store,
-  Code,
+  Camera,
+  CameraOff,
   QrCode,
   Globe,
   DollarSign,
@@ -50,6 +51,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
+import jsQR from 'jsqr';
 
 // ─── Constants ─────────────────────────────────────────────────────
 
@@ -105,7 +107,6 @@ type TransferType =
   | 'bank'
   | 'card'
   | 'merchant'
-  | 'api'
   | 'qrcode';
 
 interface TransferTypeOption {
@@ -142,9 +143,6 @@ interface FormData {
   // Merchant
   merchantId: string;
   merchantReference: string;
-  // API
-  apiKey: string;
-  transactionReference: string;
   // QR Code (no extra fields)
 }
 
@@ -182,12 +180,6 @@ const TRANSFER_TYPES: TransferTypeOption[] = [
     icon: Store,
   },
   {
-    id: 'api',
-    label: 'Paiement API',
-    description: 'Paiement via API',
-    icon: Code,
-  },
-  {
     id: 'qrcode',
     label: 'QR Code',
     description: 'Transfert par QR Code',
@@ -216,8 +208,7 @@ const EMPTY_FORM: FormData = {
   billingAddress: '',
   merchantId: '',
   merchantReference: '',
-  apiKey: '',
-  transactionReference: '',
+
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -234,7 +225,6 @@ function getEstimatedTime(type: TransferType): string {
     case 'mobile-money':
     case 'qrcode':
     case 'merchant':
-    case 'api':
       return 'Instantané';
     case 'card':
       return '24 heures';
@@ -271,6 +261,93 @@ export default function InternationalTransferScreen() {
   const [kycStatus, setKycStatus] = useState<string | null>(null);
   const [dailyRemaining, setDailyRemaining] = useState<number | null>(null);
   const [kycLoading, setKycLoading] = useState(true);
+
+  // QR Scanner state (for 'qrcode' type)
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanningRef = useRef(false);
+  const animationRef = useRef(0);
+  const [qrCameraActive, setQrCameraActive] = useState(false);
+  const [qrCameraError, setQrCameraError] = useState('');
+  const [qrScannedData, setQrScannedData] = useState('');
+
+  function stopQrScanner() {
+    scanningRef.current = false;
+    cancelAnimationFrame(animationRef.current);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setQrCameraActive(false);
+  }
+
+  async function startQrScanner() {
+    setQrCameraError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setQrCameraActive(true);
+      scanningRef.current = true;
+      qrScanLoop();
+    } catch {
+      setQrCameraError("Impossible d'accéder à la caméra.");
+    }
+  }
+
+  function qrScanLoop() {
+    if (!scanningRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (video && canvas && video.readyState >= 2) {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        const raw = code.data;
+        setQrScannedData(raw);
+        stopQrScanner();
+        // Try to parse as TraitCard JSON
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed.holder) {
+            updateForm('beneficiaryName', parsed.holder);
+          }
+          if (parsed.type === 'USD' || parsed.type === 'FC') {
+            updateForm('currency', parsed.type);
+          }
+          if (parsed.card) {
+            updateForm('traitNumber', parsed.card);
+          }
+          toast.success('QR Code détecté', { description: `Bénéficiaire: ${parsed.holder || 'Inconnu'}` });
+        } catch {
+          // Plain text QR — use as beneficiary name or reference
+          updateForm('beneficiaryName', raw);
+          toast.success('QR Code détecté', { description: raw.length > 30 ? raw.slice(0, 30) + '...' : raw });
+        }
+        return;
+      }
+    }
+    animationRef.current = requestAnimationFrame(qrScanLoop);
+  }
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      scanningRef.current = false;
+      cancelAnimationFrame(animationRef.current);
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
 
   // ─── Fetch KYC + Security on mount ────────────────────────────────
   useEffect(() => {
@@ -405,16 +482,6 @@ export default function InternationalTransferScreen() {
         }
         if (!form.merchantReference.trim()) {
           toast.error('Veuillez entrer la référence marchand');
-          return false;
-        }
-        break;
-      case 'api':
-        if (!form.apiKey.trim()) {
-          toast.error('Veuillez entrer la clé API');
-          return false;
-        }
-        if (!form.transactionReference.trim()) {
-          toast.error('Veuillez entrer la référence transaction');
           return false;
         }
         break;
@@ -736,68 +803,72 @@ export default function InternationalTransferScreen() {
           </>
         );
 
-      case 'api':
-        return (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="apiKey" className="text-sm font-medium">
-                Clé API <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <Code className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
-                  id="apiKey"
-                  type="password"
-                  placeholder="Votre clé API"
-                  value={form.apiKey}
-                  onChange={(e) => updateForm('apiKey', e.target.value)}
-                  className="h-11 pl-10"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="transactionReference" className="text-sm font-medium">
-                Référence transaction <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="transactionReference"
-                type="text"
-                placeholder="Référence unique de la transaction"
-                value={form.transactionReference}
-                onChange={(e) => updateForm('transactionReference', e.target.value)}
-                className="h-11"
-              />
-            </div>
-          </>
-        );
-
       case 'qrcode':
         return (
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <div className="relative w-48 h-48 bg-white rounded-2xl border-2 border-dashed border-emerald-300 flex items-center justify-center">
-              {/* Fake QR Code Visual */}
-              <div className="grid grid-cols-7 gap-[3px] p-3">
-                {Array.from({ length: 49 }).map((_, i) => {
-                  const row = Math.floor(i / 7);
-                  const col = i % 7;
-                  const isCorner = (row < 2 && col < 2) || (row < 2 && col > 4) || (row > 4 && col < 2);
-                  const isFilled = isCorner || Math.random() > 0.45;
-                  return (
-                    <div
-                      key={i}
-                      className={`w-[5px] h-[5px] rounded-[1px] ${isFilled ? 'bg-emerald-600' : 'bg-emerald-100'}`}
-                    />
-                  );
-                })}
-              </div>
-              <QrCode className="absolute -bottom-2 -right-2 size-8 text-emerald-500 bg-background rounded-full p-1 border-2 border-emerald-200" />
+          <div className="flex flex-col items-center py-4 space-y-4">
+            {/* Camera preview */}
+            <div className="relative w-full max-w-[220px] aspect-square mx-auto bg-white rounded-2xl border-2 border-dashed border-emerald-300 flex items-center justify-center overflow-hidden">
+              {qrCameraActive ? (
+                <>
+                  <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+                  <canvas ref={canvasRef} className="hidden" />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-3/4 h-3/4 border-2 border-emerald-400/60 rounded-xl" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-emerald-400 p-4">
+                  <QrCode className="size-12" />
+                  <Button type="button" onClick={startQrScanner} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
+                    <Camera className="size-4 mr-1" />
+                    Ouvrir caméra
+                  </Button>
+                </div>
+              )}
             </div>
+
+            {qrCameraActive && (
+              <Button type="button" variant="outline" size="sm" onClick={stopQrScanner} className="text-xs">
+                <CameraOff className="size-3 mr-1" />
+                Arrêter la caméra
+              </Button>
+            )}
+
+            {qrCameraError && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-2">{qrCameraError}</p>
+            )}
+
+            {/* Scanned data display */}
+            {qrScannedData && (
+              <div className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                <p className="text-xs font-semibold text-emerald-600 mb-1">QR Code détecté</p>
+                <p className="text-sm text-foreground break-all">{qrScannedData}</p>
+              </div>
+            )}
+
             <div className="text-center space-y-1">
               <p className="text-sm font-medium text-foreground">Scannez le QR Code du destinataire</p>
               <p className="text-xs text-muted-foreground">
-                Le QR Code sera scanné pour récupérer les informations du destinataire
+                Les informations du bénéficiaire seront automatiquement remplies
               </p>
             </div>
+
+            <Input
+              placeholder="Ou collez le contenu du QR Code ici"
+              value={qrScannedData}
+              onChange={(e) => {
+                setQrScannedData(e.target.value);
+                const raw = e.target.value;
+                try {
+                  const parsed = JSON.parse(raw);
+                  if (parsed.holder) updateForm('beneficiaryName', parsed.holder);
+                  if (parsed.type === 'USD' || parsed.type === 'FC') updateForm('currency', parsed.type);
+                } catch {
+                  if (raw) updateForm('beneficiaryName', raw);
+                }
+              }}
+              className="text-center text-sm h-10"
+            />
           </div>
         );
 
@@ -1277,18 +1348,6 @@ export default function InternationalTransferScreen() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Référence</span>
                     <span className="font-medium">{form.merchantReference}</span>
-                  </div>
-                </>
-              )}
-              {selectedType === 'api' && (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Clé API</span>
-                    <span className="font-medium font-mono">••••••{form.apiKey.slice(-4)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Réf. Transaction</span>
-                    <span className="font-medium">{form.transactionReference}</span>
                   </div>
                 </>
               )}

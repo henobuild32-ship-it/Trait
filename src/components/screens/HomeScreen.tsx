@@ -71,7 +71,7 @@ const clientQuickActions = [
   { labelKey: 'action.intl_transfer', icon: Globe, page: 'international-transfer' as const, color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
   { labelKey: 'action.history', icon: History, page: 'history' as const, color: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
   { labelKey: 'action.marketplace', icon: Store, page: 'marketplace' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
-  { labelKey: 'Espace Vendeur', icon: Store, page: 'seller-dashboard' as const, color: 'bg-pink-50 text-pink-600 dark:bg-pink-950 dark:text-pink-400' },
+  { labelKey: 'Espace Service', icon: Store, page: 'seller-dashboard' as const, color: 'bg-pink-50 text-pink-600 dark:bg-pink-950 dark:text-pink-400' },
 ];
 
 const agentQuickActions = [
@@ -220,15 +220,17 @@ export default function HomeScreen() {
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            {/* TRAIT Logo */}
-            <div className="relative h-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center shrink-0 px-1 py-1">
-              <Image
-                src="/trait-logo.png"
-                alt="TRAIT"
-                width={80}
-                height={30}
-                className="object-contain"
-              />
+            {/* TRAIT Logo - WhatsApp style */}
+            <div className="relative h-9 w-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+              <div className="rounded-[6px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden w-[30px] h-[30px]">
+                <Image
+                  src="/trait-logo.png"
+                  alt="TRAIT"
+                  width={26}
+                  height={26}
+                  className="object-contain"
+                />
+              </div>
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground leading-none">
@@ -390,7 +392,7 @@ export default function HomeScreen() {
                 variant="ghost"
                 size="sm"
                 className="text-[#1E40AF] hover:text-[#1E40AF]/80 hover:bg-[#1E40AF]/10 text-xs font-semibold dark:text-blue-400"
-                onClick={() => navigateTo('card' as any)}
+                onClick={() => navigateTo('card')}
               >
                 Voir tout
                 <ChevronRight className="h-3 w-3 ml-0.5" />
@@ -441,7 +443,7 @@ export default function HomeScreen() {
             {/* Demander une carte button */}
             {showCardButton && (
               <button
-                onClick={() => navigateTo('card-request' as any)}
+                onClick={() => navigateTo('card-request')}
                 className="w-full rounded-2xl p-4 shadow-sm border border-[#1E40AF]/20 bg-gradient-to-r from-[#0A1628] via-[#1E3A5F] to-[#0D2847] hover:shadow-lg hover:border-[#1E40AF]/40 transition-all active:scale-[0.98] relative overflow-hidden"
               >
                 <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-blue-500/10" />
@@ -476,8 +478,8 @@ export default function HomeScreen() {
                 <button
                   key={action.page}
                   onClick={() => {
-                    if (action.labelKey === 'Espace Vendeur') {
-                      navigateTo(user?.role === 'seller' ? 'seller-dashboard' : 'seller-register' as any);
+                    if (action.labelKey === 'Espace Service') {
+                      navigateTo(user?.role === 'seller' ? 'seller-dashboard' : 'seller-register');
                     } else {
                       navigateTo(action.page);
                     }
@@ -488,8 +490,8 @@ export default function HomeScreen() {
                     <Icon className="size-5" />
                   </div>
                   <span className="text-[11px] font-semibold text-foreground text-center leading-tight">
-                    {action.labelKey === 'Espace Vendeur' 
-                      ? (user?.role === 'seller' ? 'Espace Vendeur' : 'Devenir Vendeur') 
+                    {action.labelKey === 'Espace Service' 
+                      ? (user?.role === 'seller' ? 'Espace Service' : 'Devenir Service') 
                       : t(action.labelKey)}
                   </span>
                 </button>

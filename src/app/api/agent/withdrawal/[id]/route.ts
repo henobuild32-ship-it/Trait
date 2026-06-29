@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { findActiveAgentByIdentifier } from '@/lib/agents'
+import { requireUser } from '@/lib/auth'
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { id } = await params
     const body = await request.json()
     const { userId, amount, fee, currency, method, agentCode } = body as {
@@ -22,6 +26,13 @@ export async function PUT(
       return NextResponse.json(
         { success: false, message: 'User ID and positive amount are required' },
         { status: 400 }
+      )
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       )
     }
 

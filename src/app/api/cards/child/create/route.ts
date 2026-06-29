@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logSecurityEvent } from '@/lib/security';
+import { requireUser, hashPin } from '@/lib/auth';
+import { randomInt, randomBytes } from 'crypto';
+
+function maskCardNumber(num: string): string {
+  return num.length >= 4 ? `****${num.slice(-4)}` : num;
+}
 
 function generateCardNumber(): string {
   const prefix = '4927';
   let remaining = '';
   for (let i = 0; i < 12; i++) {
-    remaining += Math.floor(Math.random() * 10).toString();
+    remaining += randomInt(0, 10).toString();
   }
   return prefix + remaining;
 }
@@ -14,7 +20,7 @@ function generateCardNumber(): string {
 function generateCVV(): string {
   let cvv = '';
   for (let i = 0; i < 3; i++) {
-    cvv += Math.floor(Math.random() * 10).toString();
+    cvv += randomInt(0, 10).toString();
   }
   return cvv;
 }
@@ -28,11 +34,13 @@ function generateExpiryDate(): string {
 }
 
 function generateQRCode(cardId: string): string {
-  return `TRAIT-QR-${cardId}-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  return `TRAIT-QR-${cardId}-${Date.now()}-${randomBytes(4).toString('hex').toUpperCase()}`;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const body = await request.json();
     const { parentId, childName, cardType, pin } = body as {
       parentId: string;
@@ -45,6 +53,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants: parentId, childName et cardType sont requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== parentId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -107,7 +122,7 @@ export async function POST(request: NextRequest) {
         pseudo,
         country: parent.country || 'CD',
         role: 'client', // child is a client for compatibility
-        pin: pin,
+        pin: await hashPin(pin),
         password: parent.password || '1234', // default password or parent password
         realBalance: 0,
         realBalanceFC: 0,
@@ -162,7 +177,7 @@ export async function POST(request: NextRequest) {
         childPhone,
         cardId: card.id,
         cardType,
-        cardNumber,
+        cardNumber: maskCardNumber(cardNumber),
       }),
       riskLevel: 'low',
     });
@@ -194,8 +209,17 @@ export async function POST(request: NextRequest) {
 Rendez-vous à l'administration TRAIT pour récupérer la carte physique de votre enfant.
 
 La carte est actuellement active avec un solde de 0 USD et 0 CDF. Vous pouvez commencer à l'utiliser après l'avoir rechargée.`,
-      child,
-      card,
+      child: {
+        id: child.id,
+        name: child.name,
+        phone: child.phone,
+      },
+      card: {
+        id: card.id,
+        cardType: card.cardType,
+        cardNumber: maskCardNumber(card.cardNumber),
+        status: card.status,
+      },
     });
   } catch (error) {
     console.error('Create child account error:', error);

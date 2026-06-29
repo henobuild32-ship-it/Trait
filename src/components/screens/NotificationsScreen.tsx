@@ -206,8 +206,8 @@ export default function NotificationsScreen() {
         setLocalNotifications((prev) =>
           prev.map((n) => ({ ...n, read: true }))
         );
-        setNotifications(
-          notifications.map((n) => ({ ...n, read: true }))
+        setNotifications((prev) =>
+          prev.map((n) => ({ ...n, read: true }))
         );
         toast.success(`${data.markedCount} notification(s) marquée(s) comme lue(s)`);
       }

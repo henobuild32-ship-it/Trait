@@ -181,11 +181,11 @@ export async function POST(request: NextRequest) {
           adminId,
           action: 'validate_seller',
           target: userId,
-          details: `Vendeur ${user.businessName || user.name} validé`,
+          details: `Service ${user.businessName || user.name} validé`,
         },
       });
 
-      return NextResponse.json({ success: true, message: 'Vendeur validé' });
+      return NextResponse.json({ success: true, message: 'Service validé' });
     }
 
     if (action === 'reject_seller') {
@@ -199,11 +199,11 @@ export async function POST(request: NextRequest) {
           adminId,
           action: 'reject_seller',
           target: userId,
-          details: `Vendeur ${user.businessName || user.name} rejeté`,
+          details: `Service ${user.businessName || user.name} rejeté`,
         },
       });
 
-      return NextResponse.json({ success: true, message: 'Vendeur rejeté' });
+      return NextResponse.json({ success: true, message: 'Service rejeté' });
     }
 
     return NextResponse.json(

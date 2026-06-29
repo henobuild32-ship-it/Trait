@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
 // POST: Create or get chat for an offer
 // POST: Send message to a chat
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
     const body = await request.json()
     const { chatId, offerId, initiatedBy, senderId, content } = body as {
       chatId?: string
@@ -16,6 +19,12 @@ export async function POST(request: NextRequest) {
 
     // Case 1: Create or get chat for an offer
     if (offerId && initiatedBy && !content) {
+      if (auth.userId !== initiatedBy) {
+        return NextResponse.json(
+          { success: false, message: 'Non autorisé' },
+          { status: 403 }
+        )
+      }
       const offer = await db.barterOffer.findUnique({
         where: { id: offerId },
       })
@@ -89,6 +98,12 @@ export async function POST(request: NextRequest) {
 
     // Case 2: Send message to a chat
     if (chatId && senderId && content) {
+      if (auth.userId !== senderId) {
+        return NextResponse.json(
+          { success: false, message: 'Non autorisé' },
+          { status: 403 }
+        )
+      }
       const chat = await db.barterChat.findUnique({
         where: { id: chatId },
       })

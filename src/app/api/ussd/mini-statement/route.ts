@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    if (auth.userId !== userId) {
+      return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 403 });
+    }
 
     if (!userId) {
       return NextResponse.json({ success: false, message: 'User ID requis' }, { status: 400 });
     }
 
-    // Get all transactions for mini statement (last 5)
     const sentTransactions = await db.transaction.findMany({
       where: { senderId: userId, status: 'completed' },
       include: { receiver: { select: { phone: true, name: true } } },

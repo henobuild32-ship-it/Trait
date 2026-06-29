@@ -165,7 +165,7 @@ export default function AdminSellerValidationScreen() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-gray-800 dark:text-white">Validation Vendeurs</h1>
+            <h1 className="text-lg font-bold text-gray-800 dark:text-white">Validation Services</h1>
             <p className="text-xs text-gray-500">{sellers.length} demande(s) affichée(s)</p>
           </div>
         </div>
@@ -227,9 +227,9 @@ export default function AdminSellerValidationScreen() {
         ) : sellers.length === 0 ? (
           <Card className="border-dashed border-2 py-12 flex flex-col items-center justify-center text-center">
             <AlertCircle className="w-12 h-12 text-gray-300 dark:text-slate-700 mb-3" />
-            <h3 className="text-base font-bold text-gray-750 dark:text-white">Aucune demande vendeur</h3>
+            <h3 className="text-base font-bold text-gray-750 dark:text-white">Aucune demande service</h3>
             <p className="text-xs text-gray-500 max-w-sm mt-1">
-              Il n'y a actuellement aucune demande de compte vendeur correspondant à vos filtres.
+              Il n'y a actuellement aucune demande de compte service correspondant à vos filtres.
             </p>
           </Card>
         ) : (
@@ -359,7 +359,7 @@ export default function AdminSellerValidationScreen() {
             </DialogTitle>
             <DialogDescription>
               {actionType === 'validate'
-                ? `Veuillez saisir le message de bienvenue que recevra le vendeur.`
+                ? `Veuillez saisir le message de bienvenue que recevra le service.`
                 : `Veuillez spécifier le motif administratif de votre décision.`}
             </DialogDescription>
           </DialogHeader>
@@ -367,7 +367,7 @@ export default function AdminSellerValidationScreen() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="justification-message" className="text-xs font-bold text-gray-700">
-                Message envoyé au Vendeur *
+                Message envoyé au Service *
               </Label>
               <Textarea
                 id="justification-message"
@@ -379,7 +379,7 @@ export default function AdminSellerValidationScreen() {
                 required
               />
               <p className="text-[10px] text-gray-400">
-                Ce message sera envoyé en notification au vendeur et justifiera l'action commise.
+                Ce message sera envoyé en notification au service et justifiera l'action commise.
               </p>
             </div>
           </div>

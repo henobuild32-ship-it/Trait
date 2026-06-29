@@ -5,14 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useToast } from '@/hooks/use-toast'
 import { Loader2, ArrowLeft } from 'lucide-react'
 
 import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
 
-export function SellerRegisterScreen() {
+export default function SellerRegisterScreen() {
   const { setUser, navigateTo, goBack } = useAppStore()
-  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -32,12 +31,12 @@ export function SellerRegisterScreen() {
     e.preventDefault()
     
     if (!formData.phone.startsWith('+243')) {
-      toast({ title: "Erreur", description: "Le numéro doit commencer par +243", variant: "destructive" })
+      toast.error("Erreur", { description: "Le numéro doit commencer par +243" })
       return
     }
     
     if (formData.password !== formData.confirmPassword) {
-      toast({ title: "Erreur", description: "Les mots de passe ne correspondent pas", variant: "destructive" })
+      toast.error("Erreur", { description: "Les mots de passe ne correspondent pas" })
       return
     }
 
@@ -52,13 +51,13 @@ export function SellerRegisterScreen() {
       const data = await res.json()
       if (data.success) {
         setUser(data.user)
-        toast({ title: "Succès", description: "Inscription réussie! En attente de validation." })
-        navigateTo('seller-pending' as any)
+        toast("Succès", { description: "Inscription réussie! En attente de validation." })
+        navigateTo('seller-pending')
       } else {
-        toast({ title: "Erreur", description: data.message, variant: "destructive" })
+        toast.error("Erreur", { description: data.message })
       }
     } catch (error) {
-      toast({ title: "Erreur", description: "Une erreur s'est produite", variant: "destructive" })
+      toast.error("Erreur", { description: "Une erreur s'est produite" })
     } finally {
       setLoading(false)
     }
@@ -71,7 +70,7 @@ export function SellerRegisterScreen() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-          Devenir Vendeur Trait
+          Devenir Service Trait
         </h2>
       </div>
 
@@ -123,7 +122,7 @@ export function SellerRegisterScreen() {
         </div>
 
         <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl py-6 mt-4 hover:shadow-lg transition-all" disabled={loading}>
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Créer mon compte vendeur'}
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Créer mon compte service'}
         </Button>
       </form>
     </div>

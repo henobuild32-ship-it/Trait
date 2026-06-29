@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 
 // ─── Constants ───────────────────────────────────────────────────────
 
@@ -9,6 +10,8 @@ const DAILY_TRANSACTION_LIMIT = 10;
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -16,6 +19,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'userId requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -116,6 +126,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const body = await request.json() as {
       userId: string;
       documentType: string;
@@ -129,6 +141,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Tous les champs sont requis: documentType, documentUrl, selfieUrl' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 

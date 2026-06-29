@@ -4,11 +4,10 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, Clock, XCircle, AlertOctagon, Headphones, LogOut, ArrowLeft } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
-export function SellerPendingScreen() {
+export default function SellerPendingScreen() {
   const { user, setUser, navigateTo, logout } = useAppStore()
-  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
   const handleRefresh = async () => {
@@ -20,18 +19,18 @@ export function SellerPendingScreen() {
       if (data.success && data.user) {
         setUser({ ...user, ...data.user })
         if (data.user.validationStatus === 'validated') {
-          toast({ title: 'Félicitations !', description: 'Votre compte vendeur a été validé.' })
-          navigateTo('seller-dashboard' as any)
+          toast('Félicitations !', { description: 'Votre compte service a été validé.' })
+navigateTo('seller-dashboard')
         } else if (data.user.validationStatus === 'rejected') {
-          toast({ title: 'Demande refusée', description: 'Votre demande vendeur a été rejetée.', variant: 'destructive' })
+          toast.error('Demande refusée', { description: 'Votre demande service a été rejetée.' })
         } else if (data.user.suspended) {
-          toast({ title: 'Compte suspendu', description: 'Votre compte vendeur est suspendu.', variant: 'destructive' })
+          toast.error('Compte suspendu', { description: 'Votre compte service est suspendu.' })
         } else {
-          toast({ title: 'En attente', description: 'Votre demande est toujours en cours de validation.' })
+          toast('En attente', { description: 'Votre demande est toujours en cours de validation.' })
         }
       }
     } catch (e) {
-      toast({ title: 'Erreur', description: 'Impossible de rafraîchir le statut', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Impossible de rafraîchir le statut' })
     } finally {
       setLoading(false)
     }
@@ -40,7 +39,7 @@ export function SellerPendingScreen() {
   // If validation status is already validated on load, go straight to dashboard
   useEffect(() => {
     if (user && user.validationStatus === 'validated' && !user.suspended) {
-      navigateTo('seller-dashboard' as any)
+      navigateTo('seller-dashboard')
     }
   }, [user, navigateTo])
 
@@ -59,7 +58,7 @@ export function SellerPendingScreen() {
             Demande Refusée
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            Votre demande de compte vendeur a été rejetée par l'administration.
+            Votre demande de compte service a été rejetée par l'administration.
           </p>
         </div>
 
@@ -104,7 +103,7 @@ export function SellerPendingScreen() {
             Compte Suspendu
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            Votre accès vendeur a été temporairement désactivé.
+            Votre accès service a été temporairement désactivé.
           </p>
         </div>
 
@@ -148,7 +147,7 @@ export function SellerPendingScreen() {
       </h2>
       
       <p className="text-gray-600 mb-6 leading-relaxed">
-        Votre demande de compte vendeur est en cours de vérification par l'administration Trait.
+        Votre demande de compte service est en cours de vérification par l'administration Trait.
         L'accès peut prendre un moment. Veuillez actualiser pour voir si l'accès est autorisé.
       </p>
 

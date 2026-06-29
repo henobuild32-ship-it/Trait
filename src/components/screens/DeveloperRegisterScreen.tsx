@@ -144,8 +144,8 @@ export default function DeveloperRegisterScreen() {
         return;
       }
 
-      toast.success('Demande envoyée ! Vous serez contacté par email.');
-      navigateTo('welcome');
+      toast.success('Demande envoyée ! Accédez à votre espace développeur.');
+      navigateTo('developer-dashboard');
     } catch {
       toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {

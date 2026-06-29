@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
+
+function maskCardNumber(num: string): string {
+  return num.length >= 4 ? `****${num.slice(-4)}` : num;
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const { searchParams } = new URL(request.url);
     const parentId = searchParams.get('parentId');
 
@@ -10,6 +17,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'parentId est requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== parentId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -30,7 +44,6 @@ export async function GET(request: NextRequest) {
             id: true,
             cardType: true,
             cardNumber: true,
-            cvv: true,
             qrCode: true,
             expiryDate: true,
             status: true,
@@ -81,9 +94,17 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
+    const safeChildren = children.map(child => ({
+      ...child,
+      cards: child.cards.map(card => ({
+        ...card,
+        cardNumber: maskCardNumber(card.cardNumber),
+      })),
+    }));
+
     return NextResponse.json({
       success: true,
-      children,
+      children: safeChildren,
       recharges,
       expenses,
     });

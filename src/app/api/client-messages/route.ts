@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 
 // GET - Get client messages from admin
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -11,6 +14,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'userId est requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -44,6 +54,8 @@ export async function GET(request: NextRequest) {
 // POST - Mark a message as read
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const { userId, messageId } = await request.json() as {
       userId: string;
       messageId: string;
@@ -53,6 +65,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants: userId, messageId requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 

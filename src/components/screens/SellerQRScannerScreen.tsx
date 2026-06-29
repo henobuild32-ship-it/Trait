@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Camera, CheckCircle2, Loader2, QrCode, XCircle, Lock } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { ArrowLeft, Camera, CameraOff, CheckCircle2, Loader2, QrCode, XCircle, Lock } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAppStore } from '@/lib/store'
 import {
   Dialog,
@@ -14,13 +14,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import jsQR from 'jsqr'
 
-export function SellerQRScannerScreen() {
+export default function SellerQRScannerScreen() {
   const { user, goBack } = useAppStore()
-  const { toast } = useToast()
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const scanningRef = useRef(false)
+  const animationRef = useRef(0)
   const [qrCodeData, setQrCodeData] = useState('')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState<'USD' | 'FC'>('USD')
@@ -33,6 +35,7 @@ export function SellerQRScannerScreen() {
 
   function stopCamera() {
     scanningRef.current = false
+    cancelAnimationFrame(animationRef.current)
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
     setCameraActive(false)
@@ -43,11 +46,6 @@ export function SellerQRScannerScreen() {
   async function startCamera() {
     setCameraError('')
     setStatus('idle')
-
-    if (!('BarcodeDetector' in window)) {
-      setCameraError('Scanner caméra non supporté par ce navigateur. Collez le code QR manuellement.')
-      return
-    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -63,42 +61,45 @@ export function SellerQRScannerScreen() {
       scanningRef.current = true
       scanLoop()
     } catch {
-      setCameraError("Impossible d'accéder à la caméra. Autorisez la caméra ou saisissez le code QR.")
+      setCameraError("Impossible d'accéder à la caméra. Autorisez la caméra ou saisissez le code QR manuellement.")
     }
   }
 
-  async function scanLoop() {
-    const BarcodeDetectorCtor = (window as any).BarcodeDetector
-    const detector = new BarcodeDetectorCtor({ formats: ['qr_code'] })
+  function scanLoop() {
+    if (!scanningRef.current) return
 
-    while (scanningRef.current) {
-      if (videoRef.current && videoRef.current.readyState >= 2) {
-        try {
-          const codes = await detector.detect(videoRef.current)
-          const value = codes?.[0]?.rawValue
-          if (value) {
-            setQrCodeData(value)
-            toast({ title: 'QR Code détecté', description: 'Vous pouvez confirmer le paiement.' })
-            stopCamera()
-            return
-          }
-        } catch {
-          setCameraError('Lecture QR impossible. Réessayez ou saisissez le code manuellement.')
-          stopCamera()
-          return
-        }
+    const video = videoRef.current
+    const canvas = canvasRef.current
+
+    if (video && canvas && video.readyState >= 2) {
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const code = jsQR(imageData.data, imageData.width, imageData.height)
+
+      if (code) {
+        setQrCodeData(code.data)
+        toast('QR Code détecté', { description: 'Vous pouvez confirmer le paiement.' })
+        stopCamera()
+        return
       }
-      await new Promise((resolve) => window.setTimeout(resolve, 250))
     }
+
+    animationRef.current = requestAnimationFrame(scanLoop)
   }
 
   const handleScanAndPay = async (pinOverride?: string) => {
     if (!user?.id) {
-      toast({ title: 'Erreur', description: 'Session vendeur introuvable', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Session service introuvable' })
       return
     }
     if (!qrCodeData.trim() || !amount || parseFloat(amount) <= 0) {
-      toast({ title: 'Erreur', description: 'Veuillez scanner le QR Code et saisir un montant valide', variant: 'destructive' })
+      toast.error('Erreur', { description: 'Veuillez scanner le QR Code et saisir un montant valide' })
       return
     }
 
@@ -129,7 +130,7 @@ export function SellerQRScannerScreen() {
       } else if (data.requirePin) {
         setStatus('idle')
         setShowPinPrompt(true)
-        toast({ title: 'PIN requis', description: "Veuillez demander à l'enfant de saisir son code PIN." })
+        toast('PIN requis', { description: "Veuillez demander à l'enfant de saisir son code PIN." })
       } else {
         setStatus('error')
         setMessage(data.message || 'Erreur de paiement')
@@ -156,9 +157,21 @@ export function SellerQRScannerScreen() {
           <h3 className="font-bold text-gray-800 mb-2">QR Code de la carte TRAIT</h3>
           <p className="text-sm text-gray-500 mb-5">Scannez la carte du client ou collez le code QR.</p>
 
-          <div className="w-full aspect-square mx-auto border border-indigo-100 rounded-2xl flex items-center justify-center bg-indigo-50/50 mb-4 overflow-hidden">
+          <div className="w-full aspect-square mx-auto border-2 border-indigo-100 rounded-2xl flex items-center justify-center bg-indigo-50/50 mb-4 overflow-hidden relative">
             {cameraActive ? (
-              <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+              <>
+                <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+                <canvas ref={canvasRef} className="hidden" />
+                {/* Scan overlay frame */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-3/4 h-3/4 border-2 border-indigo-400/60 rounded-xl" />
+                </div>
+                <div className="absolute top-3 left-3 right-3 flex justify-center">
+                  <span className="bg-indigo-600/80 text-white text-xs px-3 py-1 rounded-full">
+                    Placez le QR code dans le cadre
+                  </span>
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center gap-3 text-indigo-300">
                 <QrCode className="w-16 h-16" />
@@ -172,6 +185,7 @@ export function SellerQRScannerScreen() {
 
           {cameraActive && (
             <Button type="button" variant="outline" onClick={stopCamera} className="w-full mb-4">
+              <CameraOff className="w-4 h-4 mr-2" />
               Arrêter la caméra
             </Button>
           )}

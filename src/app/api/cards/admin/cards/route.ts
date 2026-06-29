@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
+import { randomInt, randomBytes } from 'crypto';
+
+function maskCardNumber(num: string): string {
+  return num.length >= 4 ? `****${num.slice(-4)}` : num;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -7,7 +13,7 @@ function generateCardNumber(): string {
   const prefix = '4927';
   let remaining = '';
   for (let i = 0; i < 12; i++) {
-    remaining += Math.floor(Math.random() * 10).toString();
+    remaining += randomInt(0, 10).toString();
   }
   return prefix + remaining;
 }
@@ -15,7 +21,7 @@ function generateCardNumber(): string {
 function generateCVV(): string {
   let cvv = '';
   for (let i = 0; i < 3; i++) {
-    cvv += Math.floor(Math.random() * 10).toString();
+    cvv += randomInt(0, 10).toString();
   }
   return cvv;
 }
@@ -29,13 +35,15 @@ function generateExpiryDate(): string {
 }
 
 function generateQRCode(cardId: string): string {
-  return `TRAIT-QR-${cardId}-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  return `TRAIT-QR-${cardId}-${Date.now()}-${randomBytes(4).toString('hex').toUpperCase()}`;
 }
 
 // ─── GET – List all generated cards with filters ──────────────────────
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'all';
     const cardType = searchParams.get('cardType') || 'all';
@@ -98,9 +106,14 @@ export async function GET(request: NextRequest) {
     const usdCards = await db.traitCard.count({ where: { cardType: 'USD' } });
     const fcCards = await db.traitCard.count({ where: { cardType: 'FC' } });
 
+    const safeCards = cards.map(({ cvv, ...rest }) => ({
+      ...rest,
+      cardNumber: maskCardNumber(rest.cardNumber),
+    }));
+
     return NextResponse.json({
       success: true,
-      cards,
+      cards: safeCards,
       stats: {
         total: totalCards,
         active: activeCards,
@@ -123,6 +136,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
     const body = await request.json() as {
       adminId: string;
       userId: string;
@@ -138,6 +153,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== adminId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -252,7 +274,7 @@ export async function POST(request: NextRequest) {
             userId,
             userName: user.name || user.phone,
             cardType,
-            cardNumber,
+            cardNumber: maskCardNumber(cardNumber),
           }),
         },
       });
@@ -273,7 +295,7 @@ export async function POST(request: NextRequest) {
           adminId,
           recipientId: userId,
           title: `Carte TRAIT ${cardType} – Informations`,
-          message: `Cher(e) ${user.name || 'Client'},\n\nVotre carte TRAIT ${cardType} a été générée avec succès.\n\nNuméro de carte: ${cardNumber}\nCCV: ${cvv}\nDate d'expiration: ${expiryDate}\nType: ${cardType}\n\nSécurité:\n- Ne partagez jamais votre CCV\n- Conservez votre carte en lieu sûr\n- En cas de perte ou vol, contactez immédiatement le support\n\nTRAIT – Votre partenaire de confiance`,
+          message: `Cher(e) ${user.name || 'Client'},\n\nVotre carte TRAIT ${cardType} a été générée avec succès.\n\nNuméro de carte: ${maskCardNumber(cardNumber)}\nDate d'expiration: ${expiryDate}\nType: ${cardType}\n\nSécurité:\n- Ne partagez jamais votre CCV\n- Conservez votre carte en lieu sûr\n- En cas de perte ou vol, contactez immédiatement le support\n\nTRAIT – Votre partenaire de confiance`,
           type: 'individual',
           allowCopy: true,
         },
@@ -285,8 +307,7 @@ export async function POST(request: NextRequest) {
         card: {
           id: card.id,
           cardType: card.cardType,
-          cardNumber: card.cardNumber,
-          cvv: card.cvv,
+          cardNumber: maskCardNumber(card.cardNumber),
           qrCode: card.qrCode,
           expiryDate: card.expiryDate,
           status: card.status,
@@ -326,7 +347,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: card.userId,
           title: 'Rappel – Informations de votre carte TRAIT',
-          message: `Voici vos informations de carte TRAIT ${card.cardType}:\nNuméro: ${card.cardNumber}\nCCV: ${card.cvv}\nExpiration: ${card.expiryDate}\nStatut: ${card.status}\n\nConservez ces informations en sécurité.`,
+          message: `Voici vos informations de carte TRAIT ${card.cardType}:\nNuméro: ${maskCardNumber(card.cardNumber)}\nExpiration: ${card.expiryDate}\nStatut: ${card.status}\n\nConservez ces informations en sécurité.`,
           type: 'security',
         },
       });
@@ -337,7 +358,7 @@ export async function POST(request: NextRequest) {
           adminId,
           recipientId: card.userId,
           title: `Rappel – Carte TRAIT ${card.cardType}`,
-          message: `Cher(e) ${card.user?.name || 'Client'},\n\nVoici un rappel des informations de votre carte TRAIT ${card.cardType}:\n\nNuméro de carte: ${card.cardNumber}\nCCV: ${card.cvv}\nDate d'expiration: ${card.expiryDate}\nStatut: ${card.status}\n\nSécurité:\n- Ne partagez jamais votre CCV\n- Si vous n'avez pas demandé ce rappel, contactez le support immédiatement\n\nTRAIT – Sécurité & Confiance`,
+          message: `Cher(e) ${card.user?.name || 'Client'},\n\nVoici un rappel des informations de votre carte TRAIT ${card.cardType}:\n\nNuméro de carte: ${maskCardNumber(card.cardNumber)}\nDate d'expiration: ${card.expiryDate}\nStatut: ${card.status}\n\nSécurité:\n- Ne partagez jamais votre CCV\n- Si vous n'avez pas demandé ce rappel, contactez le support immédiatement\n\nTRAIT – Sécurité & Confiance`,
           type: 'individual',
           allowCopy: true,
         },
@@ -350,7 +371,7 @@ export async function POST(request: NextRequest) {
           action: 'send_card_info',
           target: cardId,
           details: JSON.stringify({
-            cardNumber: card.cardNumber,
+            cardNumber: maskCardNumber(card.cardNumber),
             cardType: card.cardType,
             userId: card.userId,
           }),
@@ -401,7 +422,7 @@ export async function POST(request: NextRequest) {
           action: 'block_card',
           target: cardId,
           details: JSON.stringify({
-            cardNumber: card.cardNumber,
+            cardNumber: maskCardNumber(card.cardNumber),
             cardType: card.cardType,
             userId: card.userId,
             reason: message || 'Non spécifié',
@@ -414,7 +435,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: card.userId,
           title: 'Carte TRAIT bloquée',
-          message: `Votre carte TRAIT ${card.cardNumber} (${card.cardType}) a été bloquée par l'administration. ${message ? `Motif: ${message}` : ''} Contactez le support pour plus d'informations.`,
+          message: `Votre carte TRAIT ${maskCardNumber(card.cardNumber)} (${card.cardType}) a été bloquée par l'administration. ${message ? `Motif: ${message}` : ''} Contactez le support pour plus d'informations.`,
           type: 'security',
         },
       });

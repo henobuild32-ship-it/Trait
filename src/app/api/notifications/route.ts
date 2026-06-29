@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
 // GET: Get notifications for user
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
@@ -11,6 +14,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'User ID is required' },
         { status: 400 }
+      )
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       )
     }
 
@@ -43,6 +53,8 @@ export async function GET(request: NextRequest) {
 // POST: Mark notification as read
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
     const body = await request.json()
     const { notificationId } = body as { notificationId: string }
 
@@ -53,7 +65,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const notification = await db.notification.update({
+    const notification = await db.notification.findUnique({
+      where: { id: notificationId },
+    })
+
+    if (!notification) {
+      return NextResponse.json(
+        { success: false, message: 'Notification not found' },
+        { status: 404 }
+      )
+    }
+
+    if (notification.userId !== auth.userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
+      )
+    }
+
+    await db.notification.update({
       where: { id: notificationId },
       data: { read: true },
     })

@@ -104,7 +104,7 @@ export default function AdminSellersScreen() {
         setStats(data.stats);
         setTotalPages(data.totalPages || 1);
       } else {
-        toast.error(data.message || 'Erreur lors du chargement des vendeurs');
+        toast.error(data.message || 'Erreur lors du chargement des services');
       }
     } catch (error) {
       console.error(error);
@@ -196,9 +196,9 @@ export default function AdminSellersScreen() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-gray-800 dark:text-white">Gestion des Vendeurs</h1>
+            <h1 className="text-lg font-bold text-gray-800 dark:text-white">Gestion des Services</h1>
             <p className="text-xs text-gray-500">
-              {stats ? `${stats.totalSellers} vendeurs au total` : 'Chargement...'}
+              {stats ? `${stats.totalSellers} services au total` : 'Chargement...'}
             </p>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function AdminSellersScreen() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Card className="border border-gray-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
               <CardContent className="p-4">
-                <p className="text-xs text-gray-400">Total Vendeurs</p>
+                <p className="text-xs text-gray-400">Total Services</p>
                 <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
                   {stats.totalSellers}
                 </h3>
@@ -323,9 +323,9 @@ export default function AdminSellersScreen() {
         ) : sellers.length === 0 ? (
           <Card className="border-dashed border-2 py-12 flex flex-col items-center justify-center text-center">
             <Store className="w-12 h-12 text-gray-300 dark:text-slate-700 mb-3" />
-            <h3 className="text-base font-bold text-gray-750 dark:text-white">Aucun vendeur</h3>
+            <h3 className="text-base font-bold text-gray-750 dark:text-white">Aucun service</h3>
             <p className="text-xs text-gray-500 max-w-sm mt-1">
-              Aucun vendeur correspondant n'a été trouvé dans le système.
+              Aucun service correspondant n'a été trouvé dans le système.
             </p>
           </Card>
         ) : (
@@ -499,12 +499,12 @@ export default function AdminSellersScreen() {
               {actionType === 'suspend' ? (
                 <>
                   <Ban className="h-5 w-5 text-amber-600" />
-                  Suspendre le vendeur
+                  Suspendre le service
                 </>
               ) : actionType === 'activate' ? (
                 <>
                   <CheckCircle className="h-5 w-5 text-emerald-600" />
-                  Réactiver le vendeur
+                  Réactiver le service
                 </>
               ) : (
                 <>
@@ -535,7 +535,7 @@ export default function AdminSellersScreen() {
                 required
               />
               <p className="text-[10px] text-gray-400">
-                Ce message sera envoyé au vendeur (sauf suppression) et consigné dans l'historique d'activité de l'administration.
+                Ce message sera envoyé au service (sauf suppression) et consigné dans l'historique d'activité de l'administration.
               </p>
             </div>
           </div>

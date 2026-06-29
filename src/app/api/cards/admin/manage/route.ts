@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
+
+function maskCardNumber(num: string): string {
+  return num.length >= 4 ? `****${num.slice(-4)}` : num;
+}
 
 // POST - Admin suspend or activate a card
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
     const { adminId, cardId, action } = await request.json() as {
       adminId: string;
       cardId: string;
@@ -14,6 +21,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants: adminId, cardId, action requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== adminId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -71,7 +85,7 @@ export async function POST(request: NextRequest) {
           action: 'suspend_card',
           target: cardId,
           details: JSON.stringify({
-            cardNumber: card.cardNumber,
+            cardNumber: maskCardNumber(card.cardNumber),
             cardType: card.cardType,
             userId: card.userId,
             userName: card.user?.name || card.user?.phone,
@@ -84,7 +98,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: card.userId,
           title: 'Carte TRAIT suspendue',
-          message: `Votre carte TRAIT ${card.cardNumber} (${card.cardType}) a été suspendue par l'administration. Contactez le support pour plus d'informations.`,
+          message: `Votre carte TRAIT ${maskCardNumber(card.cardNumber)} (${card.cardType}) a été suspendue par l'administration. Contactez le support pour plus d'informations.`,
           type: 'card_suspended',
         },
       });
@@ -94,7 +108,7 @@ export async function POST(request: NextRequest) {
         message: 'Carte suspendue avec succès',
         card: {
           id: updatedCard.id,
-          cardNumber: updatedCard.cardNumber,
+          cardNumber: maskCardNumber(updatedCard.cardNumber),
           status: updatedCard.status,
         },
       });
@@ -121,7 +135,7 @@ export async function POST(request: NextRequest) {
           action: 'activate_card',
           target: cardId,
           details: JSON.stringify({
-            cardNumber: card.cardNumber,
+            cardNumber: maskCardNumber(card.cardNumber),
             cardType: card.cardType,
             userId: card.userId,
             userName: card.user?.name || card.user?.phone,
@@ -134,7 +148,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: card.userId,
           title: 'Carte TRAIT réactivée ✓',
-          message: `Votre carte TRAIT ${card.cardNumber} (${card.cardType}) a été réactivée. Vous pouvez maintenant l'utiliser pour vos paiements.`,
+          message: `Votre carte TRAIT ${maskCardNumber(card.cardNumber)} (${card.cardType}) a été réactivée. Vous pouvez maintenant l'utiliser pour vos paiements.`,
           type: 'card_approved',
         },
       });
@@ -144,7 +158,7 @@ export async function POST(request: NextRequest) {
         message: 'Carte réactivée avec succès',
         card: {
           id: updatedCard.id,
-          cardNumber: updatedCard.cardNumber,
+          cardNumber: maskCardNumber(updatedCard.cardNumber),
           status: updatedCard.status,
         },
       });

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 
 // GET - Get messages for an agent
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -11,6 +14,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'userId requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -40,12 +50,21 @@ export async function GET(request: NextRequest) {
 // POST - Mark message(s) as read
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const { userId, messageIds } = await request.json();
 
     if (!userId) {
       return NextResponse.json(
         { success: false, message: 'userId requis' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== userId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 

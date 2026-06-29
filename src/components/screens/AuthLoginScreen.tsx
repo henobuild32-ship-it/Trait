@@ -95,7 +95,7 @@ export default function AuthLoginScreen() {
 
       // Verify role matches
       if (user.role !== selectedRole) {
-        const roleLabel = user.role === 'agent' ? 'Agent' : user.role === 'seller' ? 'Vendeur' : 'Client';
+        const roleLabel = user.role === 'agent' ? 'Agent' : user.role === 'seller' ? 'Service' : 'Client';
         toast.error(`Ce compte est un compte ${roleLabel}. Veuillez sélectionner le bon rôle.`);
         return;
       }
@@ -110,9 +110,9 @@ export default function AuthLoginScreen() {
       } else if (user.role === 'seller') {
         // If seller account is not fully validated or is suspended, show status screen
         if (user.validationStatus !== 'validated' || user.suspended) {
-          navigateTo('seller-pending' as any);
+          navigateTo('seller-pending');
         } else {
-          navigateTo('seller-dashboard' as any);
+          navigateTo('seller-dashboard');
         }
       } else {
         navigateTo('home');
@@ -158,22 +158,25 @@ export default function AuthLoginScreen() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="flex-1 flex flex-col px-6 pt-4 pb-8"
       >
-        {/* TRAIT Logo */}
-        <div className="flex flex-col items-center gap-2 mb-6">
+        {/* TRAIT Logo - WhatsApp style */}
+        <div className="flex flex-col items-center gap-2 mb-8">
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 18, duration: 0.4 }}
           >
-            <div className="rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-lg shadow-blue-200/40 dark:shadow-blue-900/30">
-              <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-2 py-1.5">
-                <Image
-                  src="/trait-logo.png"
-                  alt="TRAIT"
-                  width={140}
-                  height={67}
-                  className="object-contain"
-                />
+            <div className="relative">
+              <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[#1E40AF]/20 via-blue-400/10 to-[#2563EB]/15 blur-lg pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
+              <div className="relative rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-xl shadow-blue-500/25 dark:shadow-blue-900/40">
+                <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1.5">
+                  <Image
+                    src="/trait-logo.png"
+                    alt="TRAIT"
+                    width={120}
+                    height={120}
+                    className="object-contain"
+                  />
+                </div>
               </div>
             </div>
           </motion.div>
@@ -220,7 +223,7 @@ export default function AuthLoginScreen() {
             }`}
           >
             <Store className="w-4 h-4" />
-            Vendeur
+            Service
           </button>
         </div>
 

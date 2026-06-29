@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logSecurityEvent } from '@/lib/security';
+import { requireUser, verifyAndMigratePin, verifyAndMigratePassword } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
     const body = await request.json();
     const { parentId, childId, amount, currency, pinOrPassword } = body as {
       parentId: string;
@@ -17,6 +20,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Paramètres manquants ou invalides' },
         { status: 400 }
+      );
+    }
+
+    if (auth.userId !== parentId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       );
     }
 
@@ -41,8 +51,8 @@ export async function POST(request: NextRequest) {
 
     // Authenticate parent (accept PIN or Password)
     const isAuthentic = 
-      parent.pin === pinOrPassword || 
-      parent.password === pinOrPassword;
+      await verifyAndMigratePin(parent.id, pinOrPassword, parent.pin) || 
+      await verifyAndMigratePassword(parent.id, pinOrPassword, parent.password);
 
     if (!isAuthentic) {
       return NextResponse.json(

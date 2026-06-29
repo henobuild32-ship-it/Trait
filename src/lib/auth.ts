@@ -3,9 +3,11 @@ import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'fallback-dev-secret-do-not-use-in-production-32chars'
-);
+const secret = process.env.JWT_SECRET
+if (!secret) {
+  throw new Error('JWT_SECRET environment variable is required')
+}
+const SECRET = new TextEncoder().encode(secret)
 
 const TOKEN_COOKIE = 'trait_token';
 const ADMIN_TOKEN_COOKIE = 'trait_admin_token';

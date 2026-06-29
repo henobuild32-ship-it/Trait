@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
     const { searchParams } = new URL(request.url)
     const agentId = searchParams.get('agentId')
 
@@ -10,6 +13,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "L'ID de l'agent est requis" },
         { status: 400 }
+      )
+    }
+
+    if (auth.userId !== agentId) {
+      return NextResponse.json(
+        { success: false, message: 'Non autorisé' },
+        { status: 403 }
       )
     }
 

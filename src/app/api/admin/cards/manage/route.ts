@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
 
       // Generate card details
       const cardNumber = Array.from({ length: 4 }, () =>
-        Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+        crypto.randomInt(0, 10000).toString().padStart(4, '0')
       ).join(' ');
 
-      const cvv = Math.floor(Math.random() * 900 + 100).toString();
+      const cvv = crypto.randomInt(100, 1000).toString();
       const expiryMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
       const expiryYear = String(new Date().getFullYear() + 4);
       const expiryDate = `${expiryMonth}/${expiryYear}`;

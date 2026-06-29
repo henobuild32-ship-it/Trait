@@ -1,34 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
 import { findActiveAgentByIdentifier } from '@/lib/agents';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
     const { userId, agentCode, amount, currency } = body;
+
+    if (auth.userId !== userId) {
+      return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 403 });
+    }
 
     if (!userId || !agentCode || !amount || amount <= 0) {
       return NextResponse.json({ success: false, message: 'Tous les champs sont requis' }, { status: 400 });
     }
 
     const user = await db.user.findUnique({ where: { id: userId } });
-
     if (!user) {
       return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 });
     }
-
     if (user.tempBlocked) {
-      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' });
+      return NextResponse.json({ success: false, message: 'Votre compte est temporairement bloqué.' }, { status: 403 });
     }
-
     if (user.suspended) {
-      return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' });
+      return NextResponse.json({ success: false, message: 'Votre compte est suspendu.' }, { status: 403 });
     }
 
     const agent = await findActiveAgentByIdentifier(agentCode);
-
     if (!agent) {
-      return NextResponse.json({ success: false, message: 'Agent non trouvé. Vérifiez le code agent.' });
+      return NextResponse.json({ success: false, message: 'Agent non trouvé. Vérifiez le code agent.' }, { status: 404 });
     }
 
     const isFC = currency === 'FC';
@@ -37,70 +41,65 @@ export async function POST(request: NextRequest) {
     const totalDeduction = amount + fee;
 
     if (realBal < totalDeduction) {
-      return NextResponse.json({ success: false, message: `Solde insuffisant. Solde: ${realBal.toFixed(2)} ${currency}, Requis: ${totalDeduction.toFixed(2)} ${currency}` });
+      return NextResponse.json({ success: false, message: `Solde insuffisant. Solde: ${realBal.toFixed(2)} ${currency}, Requis: ${totalDeduction.toFixed(2)} ${currency}` }, { status: 400 });
     }
 
-    // Create withdrawal
-    const withdrawal = await db.withdrawal.create({
-      data: {
-        userId,
-        amount,
-        fee,
-        currency: currency || 'USD',
-        method: 'ussd_agent',
-        status: 'completed',
-        agentId: agent.id,
-      },
-    });
-
-    // Deduct from user
-    await db.user.update({
-      where: { id: userId },
-      data: isFC
-        ? { realBalanceFC: { decrement: totalDeduction } }
-        : { realBalance: { decrement: totalDeduction } },
-    });
-
-    // Credit agent
-    await db.user.update({
-      where: { id: agent.id },
-      data: isFC
-        ? { realBalanceFC: { increment: amount } }
-        : { realBalance: { increment: amount } },
-    });
-
-    // Create transaction record
-    await db.transaction.create({
-      data: {
-        type: 'withdrawal',
-        amount,
-        fee,
-        currency: currency || 'USD',
-        status: 'completed',
-        senderId: userId,
-        receiverId: agent.id,
-        agentId: agent.id,
-        description: `Retrait de ${amount.toFixed(2)} ${currency} via agent ${agent.agentCode}`,
-      },
-    });
-
-    await db.notification.create({
-      data: {
-        userId,
-        title: 'Retrait effectué',
-        message: `Votre retrait de ${amount.toFixed(2)} ${currency} (frais: ${fee.toFixed(2)} ${currency}) a été effectué via l'agent ${agent.agentCode}.`,
-        type: 'withdrawal_validated',
-      },
+    const result = await db.$transaction(async (tx) => {
+      const withdrawal = await tx.withdrawal.create({
+        data: {
+          userId,
+          amount,
+          fee,
+          currency: currency || 'USD',
+          method: 'ussd_agent',
+          status: 'completed',
+          agentId: agent.id,
+        },
+      });
+      await tx.user.update({
+        where: { id: userId },
+        data: isFC
+          ? { realBalanceFC: { decrement: totalDeduction } }
+          : { realBalance: { decrement: totalDeduction } },
+      });
+      await tx.user.update({
+        where: { id: agent.id },
+        data: isFC
+          ? { realBalanceFC: { increment: amount } }
+          : { realBalance: { increment: amount } },
+      });
+      await tx.transaction.create({
+        data: {
+          type: 'withdrawal',
+          amount,
+          fee,
+          currency: currency || 'USD',
+          status: 'completed',
+          senderId: userId,
+          receiverId: agent.id,
+          agentId: agent.id,
+          description: `Retrait de ${amount.toFixed(2)} ${currency} via agent ${agent.agentCode}`,
+        },
+      });
+      await tx.notification.create({
+        data: {
+          userId,
+          title: 'Retrait effectué',
+          message: `Votre retrait de ${amount.toFixed(2)} ${currency} (frais: ${fee.toFixed(2)} ${currency}) a été effectué via l'agent ${agent.agentCode}.`,
+          type: 'withdrawal_validated',
+        },
+      });
+      return withdrawal;
     });
 
     return NextResponse.json({
       success: true,
       withdrawal: {
-        id: withdrawal.id,
-        amount: withdrawal.amount,
-        fee: withdrawal.fee,
-        currency: withdrawal.currency,
-        status: withdrawal.status,
+        id: result.id,
+        amount: result.amount,
+        fee: result.fee,
+        currency: result.currency,
+        status: result.status,
         agentCode: agent.agentCode,
       },
     });

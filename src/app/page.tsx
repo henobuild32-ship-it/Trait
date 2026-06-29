@@ -54,6 +54,7 @@ import AdminAgentValidationScreen from '@/components/admin/AdminAgentValidationS
 import AdminMessagesScreen from '@/components/admin/AdminMessagesScreen';
 import AgentMessagesScreen from '@/components/screens/AgentMessagesScreen';
 import InternationalTransferScreen from '@/components/screens/InternationalTransferScreen';
+import DeveloperDashboardScreen from '@/components/screens/DeveloperDashboardScreen';
 import DeveloperRegisterScreen from '@/components/screens/DeveloperRegisterScreen';
 import AgentRegisterScreen from '@/components/screens/AgentRegisterScreen';
 import AgentPendingScreen from '@/components/screens/AgentPendingScreen';
@@ -64,11 +65,11 @@ import CardPaymentScreen from '@/components/screens/CardPaymentScreen';
 import CardScreen from '@/components/screens/CardScreen';
 
 // Seller screens
-import { SellerRegisterScreen } from '@/components/screens/SellerRegisterScreen';
-import { SellerPendingScreen } from '@/components/screens/SellerPendingScreen';
-import { SellerDashboard } from '@/components/screens/SellerDashboard';
-import { SellerProductsScreen } from '@/components/screens/SellerProductsScreen';
-import { SellerQRScannerScreen } from '@/components/screens/SellerQRScannerScreen';
+import SellerRegisterScreen from '@/components/screens/SellerRegisterScreen';
+import SellerPendingScreen from '@/components/screens/SellerPendingScreen';
+import SellerDashboard from '@/components/screens/SellerDashboard';
+import SellerProductsScreen from '@/components/screens/SellerProductsScreen';
+import SellerQRScannerScreen from '@/components/screens/SellerQRScannerScreen';
 
 // Admin screens continued
 import AdminDevelopersScreen from '@/components/admin/AdminDevelopersScreen';
@@ -131,6 +132,7 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'admin-developers': AdminDevelopersScreen,
   'agent-messages': AgentMessagesScreen,
   'international-transfer': InternationalTransferScreen,
+  'developer-dashboard': DeveloperDashboardScreen,
   'developer-register': DeveloperRegisterScreen,
   'agent-register': AgentRegisterScreen,
   'agent-pending': AgentPendingScreen,

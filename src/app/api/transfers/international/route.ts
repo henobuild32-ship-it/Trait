@@ -9,13 +9,12 @@ const FEE_RATES: Record<string, number> = {
   bank: 0.015,
   card: 0.02,
   merchant: 0.01,
-  api: 0.005,
   qr_code: 0.005,
 };
 
 const COMMISSION_RATE = 0.015;
 const EXCHANGE_RATE_USD_FC = 2850;
-const VALID_TYPES = ['wallet', 'mobile_money', 'bank', 'card', 'merchant', 'api', 'qr_code'];
+const VALID_TYPES = ['wallet', 'mobile_money', 'bank', 'card', 'merchant', 'qr_code'];
 
 const REQUIRED_FIELDS: Record<string, string[]> = {
   wallet: ['recipientPhone', 'recipientName', 'country', 'currency', 'amount'],
@@ -23,7 +22,6 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
   bank: ['recipientName', 'recipientAccount', 'recipientBank', 'country', 'currency', 'amount'],
   card: ['recipientName', 'country', 'currency', 'amount'],
   merchant: ['recipientName', 'country', 'currency', 'amount'],
-  api: ['recipientName', 'country', 'currency', 'amount'],
   qr_code: ['recipientName', 'country', 'currency', 'amount'],
 };
 

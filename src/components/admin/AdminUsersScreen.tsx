@@ -63,7 +63,7 @@ const filterTabs: { key: FilterTab; label: string }[] = [
   { key: 'all', label: 'Tous' },
   { key: 'clients', label: 'Clients' },
   { key: 'agents', label: 'Agents' },
-  { key: 'sellers', label: 'Vendeurs' },
+  { key: 'sellers', label: 'Services' },
   { key: 'suspended', label: 'Suspendus' },
   { key: 'active', label: 'Actifs' },
 ];
@@ -472,7 +472,7 @@ export default function AdminUsersScreen() {
                                 : 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800/40'
                             }`}
                           >
-                            {user.role === 'agent' ? 'Agent' : user.role === 'seller' ? 'Vendeur' : 'Client'}
+                            {user.role === 'agent' ? 'Agent' : user.role === 'seller' ? 'Service' : 'Client'}
                           </Badge>
                           {user.suspended && (
                             <Badge variant="destructive" className="text-xs">
@@ -519,7 +519,7 @@ export default function AdminUsersScreen() {
                                 className="h-8 w-8 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                                 onClick={() => handleSellerValidation(user.id, 'validate_seller')}
                                 disabled={actionLoading}
-                                title="Valider le vendeur"
+                                title="Valider le service"
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -529,7 +529,7 @@ export default function AdminUsersScreen() {
                                 className="h-8 w-8 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                                 onClick={() => handleSellerValidation(user.id, 'reject_seller')}
                                 disabled={actionLoading}
-                                title="Rejeter le vendeur"
+                                title="Rejeter le service"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -542,7 +542,7 @@ export default function AdminUsersScreen() {
                               className="h-8 w-8 rounded-md text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                               onClick={() => handleSellerValidation(user.id, 'validate_seller')}
                               disabled={actionLoading}
-                              title="Ré-approuver le vendeur"
+                                title="Ré-approuver le service"
                             >
                               <Check className="h-4 w-4" />
                             </Button>

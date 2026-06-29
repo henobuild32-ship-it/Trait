@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const sellerId = searchParams.get('sellerId')
 
     if (!sellerId) {
-      return NextResponse.json({ success: false, message: 'Vendeur non spécifié' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Service non spécifié' }, { status: 400 })
     }
 
     const products = await db.marketplaceProduct.findMany({
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const seller = await db.user.findUnique({ where: { id: sellerId } })
     if (!seller || seller.role !== 'seller' || seller.validationStatus !== 'validated') {
-      return NextResponse.json({ success: false, message: 'Vendeur non autorisé ou non validé' }, { status: 403 })
+      return NextResponse.json({ success: false, message: 'Service non autorisé ou non validé' }, { status: 403 })
     }
 
     const product = await db.marketplaceProduct.create({

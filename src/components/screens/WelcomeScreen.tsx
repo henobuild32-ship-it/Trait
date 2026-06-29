@@ -319,34 +319,32 @@ export default function WelcomeScreen() {
           {/* ═══════════════════════════════════════════════════════════
               HERO — Logo + Headline + CTA
           ═══════════════════════════════════════════════════════════ */}
-          <motion.section variants={heroItem} className="pt-6 sm:pt-10 text-center">
-            {/* Logo */}
+          <motion.section variants={heroItem} className="pt-8 sm:pt-14 text-center">
+            {/* Logo - WhatsApp-style centered hero */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.6, rotateY: -15 }}
-              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
-              className="inline-block mb-6 sm:mb-8"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.1 }}
+              className="flex justify-center mb-8 sm:mb-10"
             >
               <div className="relative">
-                {/* Outer glow */}
-                <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[#1E40AF]/20 via-blue-400/10 to-[#DC2626]/15 blur-xl pointer-events-none" style={{ animation: 'traitGlow 4s ease-in-out infinite' }} />
-                {/* Spinning ring */}
+                {/* Outer glow pulse - WhatsApp style */}
+                <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-[#1E40AF]/25 via-blue-400/15 to-[#2563EB]/20 blur-2xl pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
+                {/* Animated ring pulse */}
                 <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                  className="absolute -inset-2 rounded-[22px] pointer-events-none"
-                >
-                  <div className="w-full h-full rounded-[22px] border border-dashed border-blue-300/30 dark:border-blue-600/20" />
-                </motion.div>
+                  animate={{ scale: [1, 1.04, 1], opacity: [0.4, 0.7, 0.4] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute -inset-3 rounded-[32px] border-2 border-blue-300/25 dark:border-blue-500/20 pointer-events-none"
+                />
                 {/* Logo container */}
-                <div className="relative rounded-2xl bg-gradient-to-br from-[#1E40AF] to-[#1E3A8A] p-1.5 shadow-2xl shadow-blue-500/20 dark:shadow-blue-900/40">
-                  <div className="rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-3 py-2.5">
+                <div className="relative rounded-2xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-2xl shadow-blue-600/30 dark:shadow-blue-900/50">
+                  <div className="rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-2">
                     <Image
                       src="/trait-logo.png"
                       alt="TRAIT"
-                      width={180}
-                      height={86}
-                      className="object-contain drop-shadow-sm"
+                      width={200}
+                      height={200}
+                      className="object-contain"
                       priority
                     />
                   </div>
@@ -432,7 +430,7 @@ export default function WelcomeScreen() {
                 className="w-full flex items-center justify-center gap-2.5 px-6 h-11 rounded-xl border-2 border-pink-400/40 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/20 dark:border-pink-700/30 hover:border-pink-500/60 hover:shadow-lg hover:shadow-pink-500/10 transition-all duration-300 cursor-pointer active:scale-[0.98] group"
               >
                 <Store className="w-4 h-4 text-pink-600 dark:text-pink-400 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-bold text-pink-700 dark:text-pink-300">🏪 Devenir Vendeur Trait</span>
+                <span className="text-sm font-bold text-pink-700 dark:text-pink-300">🏪 Devenir Service Trait</span>
                 <ChevronRight className="w-4 h-4 text-pink-500/60 group-hover:translate-x-1 group-hover:text-pink-500 transition-all" />
               </button>
             </motion.div>
@@ -893,8 +891,8 @@ export default function WelcomeScreen() {
 
                 {/* App badge preview */}
                 <div className="mt-5 p-3 rounded-xl bg-muted/30 border border-border/30 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#1E3A8A] flex items-center justify-center p-0.5 shadow-md">
-                    <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden px-0.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center p-0.5 shadow-lg shadow-blue-500/20">
+                    <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1">
                       <img src="/trait-logo.png" alt="TRAIT" className="w-full h-full object-contain" />
                     </div>
                   </div>

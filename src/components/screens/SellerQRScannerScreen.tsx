@@ -157,27 +157,26 @@ export default function SellerQRScannerScreen() {
           <h3 className="font-bold text-gray-800 mb-2">QR Code de la carte TRAIT</h3>
           <p className="text-sm text-gray-500 mb-5">Scannez la carte du client ou collez le code QR.</p>
 
-          <div className="w-full aspect-square mx-auto border-2 border-indigo-100 rounded-2xl flex items-center justify-center bg-indigo-50/50 mb-4 overflow-hidden relative">
+          <div className="w-full aspect-square mx-auto bg-black rounded-2xl mb-4 overflow-hidden relative shadow-lg">
             {cameraActive ? (
               <>
-                <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+                <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline autoPlay />
                 <canvas ref={canvasRef} className="hidden" />
-                {/* Scan overlay frame */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-3/4 h-3/4 border-2 border-indigo-400/60 rounded-xl" />
                 </div>
                 <div className="absolute top-3 left-3 right-3 flex justify-center">
-                  <span className="bg-indigo-600/80 text-white text-xs px-3 py-1 rounded-full">
+                  <span className="bg-indigo-600/80 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">
                     Placez le QR code dans le cadre
                   </span>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center gap-3 text-indigo-300">
-                <QrCode className="w-16 h-16" />
-                <Button type="button" onClick={startCamera} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted">
+                <QrCode className="w-16 h-16 text-indigo-400" />
+                <Button type="button" onClick={startCamera} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-xl">
                   <Camera className="w-4 h-4 mr-2" />
-                  Ouvrir caméra
+                  Ouvrir la caméra
                 </Button>
               </div>
             )}

@@ -805,40 +805,44 @@ export default function InternationalTransferScreen() {
 
       case 'qrcode':
         return (
-          <div className="flex flex-col items-center py-4 space-y-4">
-            {/* Camera preview */}
-            <div className="relative w-full max-w-[220px] aspect-square mx-auto bg-white rounded-2xl border-2 border-dashed border-emerald-300 flex items-center justify-center overflow-hidden">
+          <div className="flex flex-col items-center space-y-4">
+            {/* Camera preview - full width, real-time */}
+            <div className="relative w-full aspect-square max-w-sm mx-auto bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-emerald-300">
               {qrCameraActive ? (
                 <>
-                  <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+                  <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline autoPlay />
                   <canvas ref={canvasRef} className="hidden" />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="w-3/4 h-3/4 border-2 border-emerald-400/60 rounded-xl" />
                   </div>
+                  <div className="absolute top-3 left-3 right-3 flex justify-center">
+                    <span className="bg-emerald-600/80 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">
+                      Placez le QR code dans le cadre
+                    </span>
+                  </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center gap-2 text-emerald-400 p-4">
-                  <QrCode className="size-12" />
-                  <Button type="button" onClick={startQrScanner} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
-                    <Camera className="size-4 mr-1" />
-                    Ouvrir caméra
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted">
+                  <QrCode className="size-16 text-emerald-400" />
+                  <Button type="button" onClick={startQrScanner} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg">
+                    <Camera className="size-4 mr-2" />
+                    Ouvrir la caméra
                   </Button>
                 </div>
               )}
             </div>
 
             {qrCameraActive && (
-              <Button type="button" variant="outline" size="sm" onClick={stopQrScanner} className="text-xs">
+              <Button type="button" variant="outline" onClick={stopQrScanner} className="text-xs rounded-xl">
                 <CameraOff className="size-3 mr-1" />
                 Arrêter la caméra
               </Button>
             )}
 
             {qrCameraError && (
-              <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-2">{qrCameraError}</p>
+              <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-2 w-full">{qrCameraError}</p>
             )}
 
-            {/* Scanned data display */}
             {qrScannedData && (
               <div className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
                 <p className="text-xs font-semibold text-emerald-600 mb-1">QR Code détecté</p>

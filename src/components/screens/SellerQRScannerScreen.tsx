@@ -33,6 +33,8 @@ export default function SellerQRScannerScreen() {
   const [showPinPrompt, setShowPinPrompt] = useState(false)
   const [clientPin, setClientPin] = useState('')
 
+  const pendingStreamRef = useRef<MediaStream | null>(null)
+
   function stopCamera() {
     scanningRef.current = false
     cancelAnimationFrame(animationRef.current)
@@ -43,25 +45,33 @@ export default function SellerQRScannerScreen() {
 
   useEffect(() => stopCamera, [])
 
+  // Attach pending stream once video element is rendered
+  useEffect(() => {
+    if (cameraActive && videoRef.current && pendingStreamRef.current) {
+      const video = videoRef.current
+      video.srcObject = pendingStreamRef.current
+      streamRef.current = pendingStreamRef.current
+      pendingStreamRef.current = null
+      video.play().then(() => {
+        scanningRef.current = true
+        scanLoop()
+      }).catch(() => {})
+    }
+  }, [cameraActive])
+
   async function startCamera() {
     setCameraError('')
     setStatus('idle')
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-      }
+      pendingStreamRef.current = stream
       setCameraActive(true)
-      scanningRef.current = true
-      scanLoop()
     } catch {
-      setCameraError("Impossible d'accéder à la caméra. Autorisez la caméra ou saisissez le code QR manuellement.")
+      setCameraError("Impossible d'accéder à la caméra. Autorisez la caméra dans les paramètres.")
     }
   }
 

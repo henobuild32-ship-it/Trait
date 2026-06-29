@@ -271,6 +271,7 @@ export default function InternationalTransferScreen() {
   const [qrCameraActive, setQrCameraActive] = useState(false);
   const [qrCameraError, setQrCameraError] = useState('');
   const [qrScannedData, setQrScannedData] = useState('');
+  const pendingStreamRef = useRef<MediaStream | null>(null);
 
   function stopQrScanner() {
     scanningRef.current = false;
@@ -280,23 +281,32 @@ export default function InternationalTransferScreen() {
     setQrCameraActive(false);
   }
 
+  // Attach pending stream once video element is rendered
+  useEffect(() => {
+    if (qrCameraActive && videoRef.current && pendingStreamRef.current) {
+      const video = videoRef.current;
+      video.srcObject = pendingStreamRef.current;
+      streamRef.current = pendingStreamRef.current;
+      pendingStreamRef.current = null;
+      video.play().then(() => {
+        scanningRef.current = true;
+        qrScanLoop();
+      }).catch(() => {});
+    }
+  }, [qrCameraActive]);
+
   async function startQrScanner() {
     setQrCameraError('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+      // Store stream, then activate camera state so video element renders
+      pendingStreamRef.current = stream;
       setQrCameraActive(true);
-      scanningRef.current = true;
-      qrScanLoop();
     } catch {
-      setQrCameraError("Impossible d'accéder à la caméra.");
+      setQrCameraError("Impossible d'accéder à la caméra. Autorisez la caméra dans les paramètres.");
     }
   }
 

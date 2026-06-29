@@ -70,7 +70,7 @@ export default function SellerRegisterScreen() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-          Devenir Service Trait
+          Devenir un fournisseur de services Trait
         </h2>
       </div>
 

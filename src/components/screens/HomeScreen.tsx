@@ -491,7 +491,7 @@ export default function HomeScreen() {
                   </div>
                   <span className="text-[11px] font-semibold text-foreground text-center leading-tight">
                     {action.labelKey === 'Espace Service' 
-                      ? (user?.role === 'seller' ? 'Espace Service' : 'Devenir Service') 
+                      ? (user?.role === 'seller' ? 'Espace Service' : 'Devenir un fournisseur de services') 
                       : t(action.labelKey)}
                   </span>
                 </button>

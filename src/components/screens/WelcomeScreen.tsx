@@ -430,7 +430,7 @@ export default function WelcomeScreen() {
                 className="w-full flex items-center justify-center gap-2.5 px-6 h-11 rounded-xl border-2 border-pink-400/40 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/20 dark:border-pink-700/30 hover:border-pink-500/60 hover:shadow-lg hover:shadow-pink-500/10 transition-all duration-300 cursor-pointer active:scale-[0.98] group"
               >
                 <Store className="w-4 h-4 text-pink-600 dark:text-pink-400 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-bold text-pink-700 dark:text-pink-300">🏪 Devenir Service Trait</span>
+                <span className="text-sm font-bold text-pink-700 dark:text-pink-300">🏪 Devenir un fournisseur de services Trait</span>
                 <ChevronRight className="w-4 h-4 text-pink-500/60 group-hover:translate-x-1 group-hover:text-pink-500 transition-all" />
               </button>
             </motion.div>

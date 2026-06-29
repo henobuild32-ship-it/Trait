@@ -1,91 +1,103 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import { useAppStore, PageName } from '@/lib/store';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Auth screens
-import WelcomeScreen from '@/components/screens/WelcomeScreen';
-import AuthRoleScreen from '@/components/screens/AuthRoleScreen';
-import AuthPhoneScreen from '@/components/screens/AuthPhoneScreen';
-import AuthLoginScreen from '@/components/screens/AuthLoginScreen';
-import AuthOtpScreen from '@/components/screens/AuthOtpScreen';
-import AuthProfileScreen from '@/components/screens/AuthProfileScreen';
-import PinSetupScreen from '@/components/screens/PinSetupScreen';
-import PinVerifyScreen from '@/components/screens/PinVerifyScreen';
-import OnboardingScreen from '@/components/screens/OnboardingScreen';
+const WelcomeScreen = lazy(() => import('@/components/screens/WelcomeScreen'));
+const AuthRoleScreen = lazy(() => import('@/components/screens/AuthRoleScreen'));
+const AuthPhoneScreen = lazy(() => import('@/components/screens/AuthPhoneScreen'));
+const AuthLoginScreen = lazy(() => import('@/components/screens/AuthLoginScreen'));
+const AuthOtpScreen = lazy(() => import('@/components/screens/AuthOtpScreen'));
+const AuthProfileScreen = lazy(() => import('@/components/screens/AuthProfileScreen'));
+const PinSetupScreen = lazy(() => import('@/components/screens/PinSetupScreen'));
+const PinVerifyScreen = lazy(() => import('@/components/screens/PinVerifyScreen'));
+const OnboardingScreen = lazy(() => import('@/components/screens/OnboardingScreen'));
 
 // Main screens
-import HomeScreen from '@/components/screens/HomeScreen';
-import SendScreen from '@/components/screens/SendScreen';
-import WithdrawScreen from '@/components/screens/WithdrawScreen';
-import DepositScreen from '@/components/screens/DepositScreen';
-import HistoryScreen from '@/components/screens/HistoryScreen';
-import USSDScreen from '@/components/screens/USSDScreen';
-import MarketplaceScreen from '@/components/screens/MarketplaceScreen';
-import MarketplaceDetailScreen from '@/components/screens/MarketplaceDetailScreen';
-import BarterScreen from '@/components/screens/BarterScreen';
-import BarterDetailScreen from '@/components/screens/BarterDetailScreen';
-import BarterCreateScreen from '@/components/screens/BarterCreateScreen';
-import NotificationsScreen from '@/components/screens/NotificationsScreen';
-import SettingsScreen from '@/components/screens/SettingsScreen';
-import ProfileScreen from '@/components/screens/ProfileScreen';
+const HomeScreen = lazy(() => import('@/components/screens/HomeScreen'));
+const SendScreen = lazy(() => import('@/components/screens/SendScreen'));
+const WithdrawScreen = lazy(() => import('@/components/screens/WithdrawScreen'));
+const DepositScreen = lazy(() => import('@/components/screens/DepositScreen'));
+const HistoryScreen = lazy(() => import('@/components/screens/HistoryScreen'));
+const USSDScreen = lazy(() => import('@/components/screens/USSDScreen'));
+const MarketplaceScreen = lazy(() => import('@/components/screens/MarketplaceScreen'));
+const MarketplaceDetailScreen = lazy(() => import('@/components/screens/MarketplaceDetailScreen'));
+const BarterScreen = lazy(() => import('@/components/screens/BarterScreen'));
+const BarterDetailScreen = lazy(() => import('@/components/screens/BarterDetailScreen'));
+const BarterCreateScreen = lazy(() => import('@/components/screens/BarterCreateScreen'));
+const NotificationsScreen = lazy(() => import('@/components/screens/NotificationsScreen'));
+const SettingsScreen = lazy(() => import('@/components/screens/SettingsScreen'));
+const ProfileScreen = lazy(() => import('@/components/screens/ProfileScreen'));
 
 // Agent screens
-import AgentDashboardScreen from '@/components/screens/AgentDashboardScreen';
-import AgentDepositScreen from '@/components/screens/AgentDepositScreen';
-import AgentWithdrawValidateScreen from '@/components/screens/AgentWithdrawValidateScreen';
-import AgentActivityScreen from '@/components/screens/AgentActivityScreen';
+const AgentDashboardScreen = lazy(() => import('@/components/screens/AgentDashboardScreen'));
+const AgentDepositScreen = lazy(() => import('@/components/screens/AgentDepositScreen'));
+const AgentWithdrawValidateScreen = lazy(() => import('@/components/screens/AgentWithdrawValidateScreen'));
+const AgentActivityScreen = lazy(() => import('@/components/screens/AgentActivityScreen'));
 
 // Admin screens
-import AdminLoginScreen from '@/components/admin/AdminLoginScreen';
-import AdminDashboard from '@/components/admin/AdminDashboard';
-import AdminUsersScreen from '@/components/admin/AdminUsersScreen';
-import AdminAgentsScreen from '@/components/admin/AdminAgentsScreen';
-import AdminTransactionsScreen from '@/components/admin/AdminTransactionsScreen';
-import AdminMarketScreen from '@/components/admin/AdminMarketScreen';
-import AdminBarterScreen from '@/components/admin/AdminBarterScreen';
-import AdminNotificationsScreen from '@/components/admin/AdminNotificationsScreen';
-import AdminActivityLogScreen from '@/components/admin/AdminActivityLogScreen';
-import AdminBonusScreen from '@/components/admin/AdminBonusScreen';
-import AdminBonusAdjustScreen from '@/components/admin/AdminBonusAdjustScreen';
-import AdminBonusHistoryScreen from '@/components/admin/AdminBonusHistoryScreen';
-import AdminBonusCampaignsScreen from '@/components/admin/AdminBonusCampaignsScreen';
-import AdminAgentValidationScreen from '@/components/admin/AdminAgentValidationScreen';
-import AdminMessagesScreen from '@/components/admin/AdminMessagesScreen';
-import AgentMessagesScreen from '@/components/screens/AgentMessagesScreen';
-import InternationalTransferScreen from '@/components/screens/InternationalTransferScreen';
-import DeveloperDashboardScreen from '@/components/screens/DeveloperDashboardScreen';
-import DeveloperRegisterScreen from '@/components/screens/DeveloperRegisterScreen';
-import AgentRegisterScreen from '@/components/screens/AgentRegisterScreen';
-import AgentPendingScreen from '@/components/screens/AgentPendingScreen';
-import SupportScreen from '@/components/screens/SupportScreen';
-import KYCVerificationScreen from '@/components/screens/KYCVerificationScreen';
-import CardRequestScreen from '@/components/screens/CardRequestScreen';
-import CardPaymentScreen from '@/components/screens/CardPaymentScreen';
-import CardScreen from '@/components/screens/CardScreen';
+const AdminLoginScreen = lazy(() => import('@/components/admin/AdminLoginScreen'));
+const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard'));
+const AdminUsersScreen = lazy(() => import('@/components/admin/AdminUsersScreen'));
+const AdminAgentsScreen = lazy(() => import('@/components/admin/AdminAgentsScreen'));
+const AdminTransactionsScreen = lazy(() => import('@/components/admin/AdminTransactionsScreen'));
+const AdminMarketScreen = lazy(() => import('@/components/admin/AdminMarketScreen'));
+const AdminBarterScreen = lazy(() => import('@/components/admin/AdminBarterScreen'));
+const AdminNotificationsScreen = lazy(() => import('@/components/admin/AdminNotificationsScreen'));
+const AdminActivityLogScreen = lazy(() => import('@/components/admin/AdminActivityLogScreen'));
+const AdminBonusScreen = lazy(() => import('@/components/admin/AdminBonusScreen'));
+const AdminBonusAdjustScreen = lazy(() => import('@/components/admin/AdminBonusAdjustScreen'));
+const AdminBonusHistoryScreen = lazy(() => import('@/components/admin/AdminBonusHistoryScreen'));
+const AdminBonusCampaignsScreen = lazy(() => import('@/components/admin/AdminBonusCampaignsScreen'));
+const AdminAgentValidationScreen = lazy(() => import('@/components/admin/AdminAgentValidationScreen'));
+const AdminMessagesScreen = lazy(() => import('@/components/admin/AdminMessagesScreen'));
+const AgentMessagesScreen = lazy(() => import('@/components/screens/AgentMessagesScreen'));
+const InternationalTransferScreen = lazy(() => import('@/components/screens/InternationalTransferScreen'));
+const DeveloperDashboardScreen = lazy(() => import('@/components/screens/DeveloperDashboardScreen'));
+const DeveloperRegisterScreen = lazy(() => import('@/components/screens/DeveloperRegisterScreen'));
+const AgentRegisterScreen = lazy(() => import('@/components/screens/AgentRegisterScreen'));
+const AgentPendingScreen = lazy(() => import('@/components/screens/AgentPendingScreen'));
+const SupportScreen = lazy(() => import('@/components/screens/SupportScreen'));
+const KYCVerificationScreen = lazy(() => import('@/components/screens/KYCVerificationScreen'));
+const CardRequestScreen = lazy(() => import('@/components/screens/CardRequestScreen'));
+const CardPaymentScreen = lazy(() => import('@/components/screens/CardPaymentScreen'));
+const CardScreen = lazy(() => import('@/components/screens/CardScreen'));
 
 // Seller screens
-import SellerRegisterScreen from '@/components/screens/SellerRegisterScreen';
-import SellerPendingScreen from '@/components/screens/SellerPendingScreen';
-import SellerDashboard from '@/components/screens/SellerDashboard';
-import SellerProductsScreen from '@/components/screens/SellerProductsScreen';
-import SellerQRScannerScreen from '@/components/screens/SellerQRScannerScreen';
+const SellerRegisterScreen = lazy(() => import('@/components/screens/SellerRegisterScreen'));
+const SellerPendingScreen = lazy(() => import('@/components/screens/SellerPendingScreen'));
+const SellerDashboard = lazy(() => import('@/components/screens/SellerDashboard'));
+const SellerProductsScreen = lazy(() => import('@/components/screens/SellerProductsScreen'));
+const SellerQRScannerScreen = lazy(() => import('@/components/screens/SellerQRScannerScreen'));
 
 // Admin screens continued
-import AdminDevelopersScreen from '@/components/admin/AdminDevelopersScreen';
-import AdminCardRequestsScreen from '@/components/admin/AdminCardRequestsScreen';
-import AdminCardsScreen from '@/components/admin/AdminCardsScreen';
-import AdminClientMessagesScreen from '@/components/admin/AdminClientMessagesScreen';
-import AdminSellerValidationScreen from '@/components/admin/AdminSellerValidationScreen';
-import AdminSellersScreen from '@/components/admin/AdminSellersScreen';
-import AdminChildrenScreen from '@/components/admin/AdminChildrenScreen';
-import ChildSponsorshipScreen from '@/components/screens/ChildSponsorshipScreen';
+const AdminDevelopersScreen = lazy(() => import('@/components/admin/AdminDevelopersScreen'));
+const AdminCardRequestsScreen = lazy(() => import('@/components/admin/AdminCardRequestsScreen'));
+const AdminCardsScreen = lazy(() => import('@/components/admin/AdminCardsScreen'));
+const AdminClientMessagesScreen = lazy(() => import('@/components/admin/AdminClientMessagesScreen'));
+const AdminSellerValidationScreen = lazy(() => import('@/components/admin/AdminSellerValidationScreen'));
+const AdminSellersScreen = lazy(() => import('@/components/admin/AdminSellersScreen'));
+const AdminChildrenScreen = lazy(() => import('@/components/admin/AdminChildrenScreen'));
+const ChildSponsorshipScreen = lazy(() => import('@/components/screens/ChildSponsorshipScreen'));
 
-import BottomNavigation from '@/components/layout/BottomNavigation';
-import { PWAInstallBanner } from '@/components/layout/PWAInstallBanner';
-import { UpdateNotice } from '@/components/layout/UpdateNotice';
+const BottomNavigation = lazy(() => import('@/components/layout/BottomNavigation'));
+const PWAInstallBanner = lazy(() => import('@/components/layout/PWAInstallBanner').then(m => ({ default: m.PWAInstallBanner })));
+const UpdateNotice = lazy(() => import('@/components/layout/UpdateNotice').then(m => ({ default: m.UpdateNotice })));
 
-const screenMap: Record<PageName, React.ComponentType> = {
+function ScreenLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="text-center">
+        <Skeleton className="h-12 w-12 rounded-full mx-auto mb-3" />
+        <Skeleton className="h-4 w-32 mx-auto" />
+      </div>
+    </div>
+  );
+}
+
+const screenMap: Record<PageName, React.LazyExoticComponent<React.ComponentType>> = {
   welcome: WelcomeScreen,
   'auth-role': AuthRoleScreen,
   'auth-phone': AuthPhoneScreen,
@@ -114,7 +126,6 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'agent-deposit': AgentDepositScreen,
   'agent-withdraw-validate': AgentWithdrawValidateScreen,
   'agent-activity': AgentActivityScreen,
-  // Admin pages
   'admin-dashboard': AdminDashboard,
   'admin-users': AdminUsersScreen,
   'admin-agents': AdminAgentsScreen,
@@ -136,13 +147,11 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'developer-register': DeveloperRegisterScreen,
   'agent-register': AgentRegisterScreen,
   'agent-pending': AgentPendingScreen,
-  'support': SupportScreen,
+  support: SupportScreen,
   'kyc-verification': KYCVerificationScreen,
-  // Card system pages
   'card-request': CardRequestScreen,
   'card-payment': CardPaymentScreen,
-  'card': CardScreen,
-  // Admin card & client messaging pages
+  card: CardScreen,
   'admin-card-requests': AdminCardRequestsScreen,
   'admin-cards': AdminCardsScreen,
   'admin-client-messages': AdminClientMessagesScreen,
@@ -150,7 +159,6 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'admin-sellers': AdminSellersScreen,
   'admin-children': AdminChildrenScreen,
   'child-sponsorship': ChildSponsorshipScreen,
-  // Seller pages
   'seller-register': SellerRegisterScreen,
   'seller-pending': SellerPendingScreen,
   'seller-dashboard': SellerDashboard,
@@ -158,24 +166,20 @@ const screenMap: Record<PageName, React.ComponentType> = {
   'seller-qr-scanner': SellerQRScannerScreen,
 };
 
-// Pages that show bottom navigation
 const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification', 'seller-dashboard', 'child-sponsorship'];
 
-// Admin pages that don't show bottom nav
 const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'admin-seller-validation', 'admin-sellers', 'admin-children', 'agent-register', 'agent-pending'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();
   const Screen = screenMap[currentPage];
 
-  // Auto-redirect: if user is logged in but on welcome, go to correct home
   useEffect(() => {
     if (user && currentPage === 'welcome') {
       if (user.role === 'agent') navigateTo('agent-dashboard');
       else if (user.role === 'seller') navigateTo('seller-dashboard');
       else navigateTo('home');
     }
-    // If admin is logged in and on admin-login, go to dashboard
     if (admin && currentPage === 'admin-login') {
       navigateTo('admin-dashboard');
     }
@@ -186,9 +190,7 @@ export default function TraitApp() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-2xl mb-2">🚧</p>
-          <p className="text-sm text-muted-foreground">
-            Page &quot;{currentPage}&quot; en construction
-          </p>
+          <p className="text-sm text-muted-foreground">Page &quot;{currentPage}&quot; en construction</p>
         </div>
       </div>
     );
@@ -200,11 +202,23 @@ export default function TraitApp() {
   return (
     <div className="relative min-h-screen bg-background flex flex-col">
       <div className={`flex-1 ${showNav ? 'pb-16' : ''}`}>
-        <Screen />
+        <Suspense fallback={<ScreenLoader />}>
+          <Screen />
+        </Suspense>
       </div>
-      {showNav && <BottomNavigation />}
-      {!isAdminPage && <PWAInstallBanner />}
-      <UpdateNotice />
+      {showNav && (
+        <Suspense fallback={null}>
+          <BottomNavigation />
+        </Suspense>
+      )}
+      {!isAdminPage && (
+        <Suspense fallback={null}>
+          <PWAInstallBanner />
+        </Suspense>
+      )}
+      <Suspense fallback={null}>
+        <UpdateNotice />
+      </Suspense>
     </div>
   );
 }

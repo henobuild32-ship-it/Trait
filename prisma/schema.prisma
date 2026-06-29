@@ -31,6 +31,8 @@ model User {
   validationRejectReason String?
   password               String?
   pin                    String?
+  twoFactorEnabled       Boolean                 @default(false)
+  twoFactorSecret        String?
   realBalance            Float                   @default(0)
   realBalanceFC          Float                   @default(0)
   bonusBalance           Float                   @default(10)
@@ -78,6 +80,7 @@ model User {
   agentWithdrawals       Withdrawal[]            @relation("AgentWithdrawals")
   withdrawals            Withdrawal[]
   supportTickets         SupportTicket[]
+  pushSubscriptions      PushSubscription[]
   parentId               String?
   parent                 User?                   @relation("ParentChild", fields: [parentId], references: [id])
   children               User[]                  @relation("ParentChild")
@@ -610,4 +613,17 @@ model SystemConfig {
   updatedAt DateTime @updatedAt
 
   @@index([key])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([endpoint])
 }

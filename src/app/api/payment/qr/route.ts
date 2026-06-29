@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyAndMigratePin, requireUser } from '@/lib/auth'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { QRPaymentSchema, validateRequest } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,16 +20,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { sellerId, qrCode, amount, currency, pin } = body
-
-    if (!sellerId || !qrCode || !amount) {
-      return NextResponse.json({ success: false, message: 'Champs requis manquants' }, { status: 400 })
+    const validation = validateRequest(QRPaymentSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ success: false, message: validation.error }, { status: 400 })
     }
 
-    const payAmount = parseFloat(amount)
-    if (isNaN(payAmount) || payAmount <= 0) {
-      return NextResponse.json({ success: false, message: 'Montant invalide' }, { status: 400 })
-    }
+    const { sellerId, qrCode, amount: payAmount, currency, pin } = validation.data
 
     // Verify Seller
     const seller = await db.user.findUnique({ where: { id: sellerId } })

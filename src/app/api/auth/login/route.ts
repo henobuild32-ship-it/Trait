@@ -3,10 +3,10 @@ import { db } from '@/lib/db'
 import { logSecurityEvent } from '@/lib/security'
 import { verifyAndMigratePassword, signToken, setTokenCookie, clearTokenCookie } from '@/lib/auth'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { LoginSchema, validateRequest } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit: 5 attempts per minute per IP
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const rateLimit = checkRateLimit({
       windowMs: 60 * 1000,
@@ -18,24 +18,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { phone, password } = body as {
-      phone?: string
-      password?: string
+    const validation = validateRequest(LoginSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ success: false, message: validation.error }, { status: 400 })
     }
 
-    if (!phone || typeof phone !== 'string' || phone.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'Numéro de téléphone requis' },
-        { status: 400 }
-      )
-    }
-
-    if (!password || typeof password !== 'string' || password.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'Mot de passe requis' },
-        { status: 400 }
-      )
-    }
+    const { phone, password } = validation.data
 
     const user = await db.user.findUnique({
       where: { phone: phone.trim() },

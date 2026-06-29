@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -71,13 +71,13 @@ function fmtCur(amount: number, currency: string) {
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('fr-FR', {
+  return new Intl.DateTimeFormat(undefined, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  });
+  }).format(date);
 }
 
 export default function HistoryScreen() {
@@ -86,34 +86,67 @@ export default function HistoryScreen() {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const observerRef = useRef<HTMLDivElement>(null);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (cursor?: string | null, reset = false) => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
     try {
-      const res = await fetch(`/api/transfer/history?userId=${user.id}`);
+      const params = new URLSearchParams({ userId: user.id });
+      if (cursor) params.set('cursor', cursor);
+
+      const res = await fetch(`/api/transfer/history?${params}`);
       const data = await res.json();
       if (data.success) {
-        setHistory(data.history ?? []);
+        if (reset) {
+          setHistory(data.history ?? []);
+        } else {
+          setHistory((prev) => [...prev, ...(data.history ?? [])]);
+        }
+        setHasMore(data.pagination?.hasMore ?? false);
+        setNextCursor(data.pagination?.nextCursor ?? null);
       }
     } catch (err) {
       console.error('Failed to fetch history:', err);
-      toast.error('Erreur lors du chargement de l\'historique');
+      if (!cursor) toast.error('Erreur lors du chargement de l\'historique');
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, [user?.id]);
 
   useEffect(() => {
-    fetchHistory();
+    fetchHistory(null, true);
   }, [fetchHistory]);
+
+  useEffect(() => {
+    if (!observerRef.current || !hasMore || loadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          setLoadingMore(true);
+          fetchHistory(nextCursor);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, nextCursor, fetchHistory]);
 
   function handleRefresh() {
     setRefreshing(true);
-    fetchHistory();
+    fetchHistory(null, true);
+  }
+
+  function handleExport() {
+    window.open(`/api/transfer/export?userId=${user?.id}&type=${activeTab}`, '_blank');
   }
 
   const filteredHistory =
@@ -123,39 +156,22 @@ export default function HistoryScreen() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full"
-          onClick={() => navigateTo('home')}
-        >
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigateTo('home')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold text-foreground">Historique</h1>
-        <div className="ml-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
-            />
+        <div className="ml-auto flex gap-1">
+          <Button variant="ghost" size="icon" className="rounded-full" onClick={handleExport}>
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="rounded-full" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="px-4 mb-4"
-      >
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="px-4 mb-4">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {filterTabs.map((tab) => (
             <button
@@ -173,15 +189,11 @@ export default function HistoryScreen() {
         </div>
       </motion.div>
 
-      {/* Transaction List */}
       <div className="px-4">
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border"
-              >
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
                 <Skeleton className="h-10 w-10 rounded-full shrink-0" />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-4 w-3/4" />
@@ -199,24 +211,10 @@ export default function HistoryScreen() {
             <CardContent className="flex flex-col items-center justify-center py-16">
               <span className="text-5xl mb-4">📭</span>
               <p className="text-base font-medium text-foreground mb-1">
-                {activeTab === 'all'
-                  ? 'Aucune transaction'
-                  : `Aucun${
-                      activeTab === 'receive'
-                        ? 'e'
-                        : activeTab === 'deposit'
-                        ? ''
-                        : ''
-                    } ${filterTabs.find((t) => t.id === activeTab)?.label.toLowerCase()}`}
+                {activeTab === 'all' ? 'Aucune transaction' : `Aucun ${filterTabs.find((t) => t.id === activeTab)?.label.toLowerCase()}`}
               </p>
-              <p className="text-sm text-muted-foreground">
-                Vos transactions apparaîtront ici
-              </p>
-              <Button
-                variant="outline"
-                className="mt-4 rounded-xl"
-                onClick={handleRefresh}
-              >
+              <p className="text-sm text-muted-foreground">Vos transactions apparaîtront ici</p>
+              <Button variant="outline" className="mt-4 rounded-xl" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Actualiser
               </Button>
@@ -237,54 +235,46 @@ export default function HistoryScreen() {
                   key={tx.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: index * 0.03 }}
+                  transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3) }}
                   className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border transition-colors"
                 >
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0 ${getTypeBg(tx.type)}`}
-                  >
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0 ${getTypeBg(tx.type)}`}>
                     {getTypeIcon(tx.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {tx.description}
-                    </p>
+                    <p className="text-sm font-medium text-foreground truncate">{tx.description}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(tx.createdAt)}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
                       {getStatusBadge(tx.status)}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p
-                      className={`text-sm font-semibold ${
-                        tx.type === 'receive' || tx.type === 'deposit'
-                          ? 'text-emerald-600'
-                          : tx.type === 'send'
-                          ? 'text-red-500'
-                          : 'text-orange-500'
-                      }`}
-                    >
-                      {tx.type === 'receive' || tx.type === 'deposit'
-                        ? '+'
-                        : '-'}
-                      {fmtCur(tx.amount, tx.currency)}
+                    <p className={`text-sm font-semibold ${
+                      tx.type === 'receive' || tx.type === 'deposit' ? 'text-emerald-600' : tx.type === 'send' ? 'text-red-500' : 'text-orange-500'
+                    }`}>
+                      {tx.type === 'receive' || tx.type === 'deposit' ? '+' : '-'}{fmtCur(tx.amount, tx.currency)}
                     </p>
                     {tx.fee > 0 && (
-                      <p className="text-[10px] text-muted-foreground">
-                        Frais: {fmtCur(tx.fee, tx.currency)}
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">Frais: {fmtCur(tx.fee, tx.currency)}</p>
                     )}
                   </div>
                 </motion.div>
               ))}
+
+              {hasMore && (
+                <div ref={observerRef} className="flex justify-center py-4">
+                  {loadingMore && <Skeleton className="h-8 w-8 rounded-full" />}
+                </div>
+              )}
+
+              {!hasMore && filteredHistory.length > 0 && (
+                <p className="text-center text-xs text-muted-foreground py-4">Toutes les transactions chargées</p>
+              )}
             </motion.div>
           </AnimatePresence>
         )}
       </div>
 
-      {/* Bottom Spacer */}
       <div className="h-8" />
     </div>
   );

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkChildBalanceLimit } from '@/lib/security'
 import { requireUser } from '@/lib/auth'
+import { SendMoneySchema, validateRequest } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,20 +10,13 @@ export async function POST(request: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const body = await request.json()
-    const { receiverPhone, amount, currency } = body as {
-      receiverPhone: string
-      amount: number
-      currency: string
+    const validation = validateRequest(SendMoneySchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ success: false, message: validation.error }, { status: 400 })
     }
 
+    const { receiverPhone, amount, currency } = validation.data
     const senderId = auth.userId
-
-    if (!receiverPhone || !amount || amount <= 0) {
-      return NextResponse.json(
-        { success: false, message: 'Tous les champs sont requis et le montant doit être positif' },
-        { status: 400 }
-      )
-    }
 
     const sender = await db.user.findUnique({
       where: { id: senderId },

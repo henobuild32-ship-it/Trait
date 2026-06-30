@@ -4,8 +4,8 @@
   "description": "Plateforme numérique innovante combinant transfert d'argent, troc digital et marketplace. Accessible avec ou sans internet via USSD.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1E40AF",
-  "theme_color": "#1E40AF",
+  "background_color": "#0D5C63",
+  "theme_color": "#0D5C63",
   "orientation": "portrait",
   "scope": "/",
   "categories": ["finance", "social", "shopping"],
@@ -29,7 +29,7 @@
       "src": "/icon-1024.png",
       "sizes": "1024x1024",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [

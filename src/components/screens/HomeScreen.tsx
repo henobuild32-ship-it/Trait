@@ -228,7 +228,7 @@ export default function HomeScreen() {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             {/* TRAIT Logo - WhatsApp style */}
-            <div className="relative h-9 w-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+            <div className="relative h-9 w-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#0D5C63] to-[#0A7B84] flex items-center justify-center shrink-0 shadow-md shadow-teal-500/20">
               <div className="rounded-[6px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden w-[30px] h-[30px]">
                 <Image
                   src="/trait-logo.png"

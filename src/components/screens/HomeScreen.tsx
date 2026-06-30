@@ -35,6 +35,7 @@ import { useAppStore } from '@/lib/store';
 import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
 import TraitCard from '@/components/trait/TraitCard';
+import { usePushSubscription } from '@/hooks/usePushSubscription';
 
 interface UserCard {
   id: string;
@@ -143,10 +144,17 @@ export default function HomeScreen() {
   const quickActions = isAgent ? agentQuickActions : clientQuickActions;
   const agentCode = user?.agentNumber || user?.agentCode;
 
+  const { subscribe } = usePushSubscription();
+
   useEffect(() => {
     fetchRecentTransactions();
     refreshUserBalance();
     fetchUserCards();
+    
+    // Auto-subscribe to push notifications
+    if ('serviceWorker' in navigator && 'PushManager' in window && Notification.permission === 'granted') {
+      subscribe().catch(() => {});
+    }
     
     // Real-time balance polling every 30 seconds
     const balanceInterval = setInterval(() => {

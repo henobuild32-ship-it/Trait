@@ -39,6 +39,7 @@ import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
 import TraitCard from '@/components/trait/TraitCard';
 import { usePushSubscription } from '@/hooks/usePushSubscription';
+import { NotificationBadge } from '@/components/layout/NotificationBadge';
 
 interface UserCard {
   id: string;
@@ -270,15 +271,7 @@ export default function HomeScreen() {
               </div>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full h-9 w-9"
-            onClick={() => navigateTo('notifications')}
-          >
-            <Bell className="h-[18px] w-[18px]" />
-            <span className="sr-only">{t('nav.notifications')}</span>
-          </Button>
+          <NotificationBadge onClick={() => navigateTo('notifications')} />
         </div>
       </header>
 

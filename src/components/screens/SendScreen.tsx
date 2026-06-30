@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft, Lock, Loader2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,13 +31,34 @@ function fmtCur(amount: number, currency: string) {
 }
 
 export default function SendScreen() {
-  const { user, navigateTo, setUser, setPendingPinAction } = useAppStore();
+  const { user, navigateTo, setUser, setPendingPinAction, pageParams } = useAppStore();
   const [receiverPhone, setReceiverPhone] = useState('');
+  const [receiverName, setReceiverName] = useState('');
+  const [lookingUp, setLookingUp] = useState(false);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Handle pay recipient from QR code scan
+  useEffect(() => {
+    const recipientId = pageParams?.payRecipientId
+    if (!recipientId || receiverPhone) return
+
+    setLookingUp(true)
+    fetch(`/api/users/public/${recipientId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.user) {
+          setReceiverPhone(data.user.phone.replace(/\*/g, '') || data.user.pseudo || '')
+          setReceiverName(data.user.name)
+          toast.success(`Paiement vers ${data.user.name}`)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLookingUp(false))
+  }, [pageParams?.payRecipientId])
 
   const isFC = currency === 'FC';
   const numericAmount = parseFloat(amount) || 0;
@@ -179,14 +200,27 @@ export default function SendScreen() {
               <Label htmlFor="receiver" className="text-sm font-medium">
                 Numéro du destinataire
               </Label>
-              <Input
-                id="receiver"
-                type="tel"
-                placeholder="+243 000 000 000"
-                value={receiverPhone}
-                onChange={(e) => setReceiverPhone(e.target.value)}
-                className="h-11"
-              />
+              {lookingUp ? (
+                <div className="h-11 flex items-center gap-2 bg-gray-50 rounded-lg px-3">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0D5C63]" />
+                  <span className="text-sm text-gray-500">Recherche du destinataire...</span>
+                </div>
+              ) : receiverName ? (
+                <div className="h-11 flex items-center gap-2 bg-gray-50 rounded-lg px-3 border border-gray-200">
+                  <User className="h-4 w-4 text-[#0D5C63]" />
+                  <span className="text-sm text-gray-700">{receiverName}</span>
+                  <span className="text-xs text-gray-400 ml-auto">{receiverPhone}</span>
+                </div>
+              ) : (
+                <Input
+                  id="receiver"
+                  type="tel"
+                  placeholder="+243 000 000 000"
+                  value={receiverPhone}
+                  onChange={(e) => setReceiverPhone(e.target.value)}
+                  className="h-11"
+                />
+              )}
             </div>
 
             {/* Amount */}

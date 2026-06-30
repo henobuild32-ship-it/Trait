@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
+import { createAdminMessageNotification } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,6 +59,8 @@ export async function POST(request: NextRequest) {
         details: `Message envoyé à l'agent: "${title}"`,
       },
     });
+
+    createAdminMessageNotification(recipientId, title, message, 'admin_message').catch(() => {})
 
     return NextResponse.json({ success: true, message: agentMessage });
   } catch (error) {

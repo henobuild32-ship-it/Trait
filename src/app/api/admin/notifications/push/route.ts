@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { sendPushToAll } from '@/lib/push'
-import { db } from '@/lib/db'
+import { broadcastNotification } from '@/lib/notifications'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,10 +8,11 @@ export async function POST(request: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const body = await request.json()
-    const { title, message, url } = body as {
+    const { title, message, url, roleFilter } = body as {
       title: string
       message: string
       url?: string
+      roleFilter?: string
     }
 
     if (!title || !message) {
@@ -22,34 +22,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send push to all subscribed devices
-    const pushResult = await sendPushToAll({
-      title,
-      body: message,
-      url: url || '/',
-      tag: 'admin-broadcast',
-    })
-
-    // Also create in-app notifications for all users
-    const users = await db.user.findMany({
-      select: { id: true },
-      where: { role: 'client' },
-    })
-
-    await db.notification.createMany({
-      data: users.map((u) => ({
-        userId: u.id,
-        title,
-        message,
-        type: 'announcement',
-      })),
-    })
+    const result = await broadcastNotification(title, message, 'announcement', true, roleFilter)
 
     return NextResponse.json({
       success: true,
       message: 'Notification envoyée',
-      push: pushResult,
-      inAppNotifications: users.length,
+      count: result.count,
     })
   } catch (error) {
     console.error('Broadcast push error:', error)

@@ -88,6 +88,12 @@ export async function POST(request: NextRequest) {
       data: { read: true },
     })
 
+    try {
+      const { getIO } = require('@/lib/realtime-server')
+      const io = getIO()
+      if (io) io.to(`user:${auth.userId}`).emit('notification_read', { id: notificationId })
+    } catch {}
+
     return NextResponse.json({
       success: true,
       notification: {

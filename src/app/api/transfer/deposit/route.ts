@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkChildBalanceLimit } from '@/lib/security'
 import { requireUser } from '@/lib/auth'
+import { updateBalanceAndNotify } from '@/lib/notifications'
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,6 +82,8 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       select: { realBalance: true, realBalanceFC: true, bonusBalance: true, bonusBalanceFC: true },
     })
+
+    updateBalanceAndNotify(userId, updatedUser?.realBalance, updatedUser?.realBalanceFC).catch(() => {})
 
     return NextResponse.json({
       success: true,

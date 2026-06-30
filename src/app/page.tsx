@@ -196,6 +196,18 @@ export default function TraitApp() {
     }
   }, [user, admin, currentPage, navigateTo]);
 
+  // Handle ?pay=userId from QR code scan
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const payUserId = params.get('pay')
+    if (payUserId && user && currentPage === 'home') {
+      // Clean URL
+      window.history.replaceState({}, '', '/')
+      navigateTo('send', { payRecipientId: payUserId })
+    }
+  }, [user, currentPage, navigateTo])
+
   if (!Screen) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">

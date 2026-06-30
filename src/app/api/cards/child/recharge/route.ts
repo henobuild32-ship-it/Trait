@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logSecurityEvent } from '@/lib/security';
 import { requireUser, verifyAndMigratePin, verifyAndMigratePassword } from '@/lib/auth';
+import { createNotification, updateBalanceAndNotify } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   try {
@@ -145,25 +146,13 @@ export async function POST(request: NextRequest) {
       riskLevel: 'low',
     });
 
-    // Notify parent
-    await db.notification.create({
-      data: {
-        userId: parentId,
-        title: 'Recharge Enfant effectuée',
-        message: `Vous avez rechargé la carte de ${child.name} de ${amount.toFixed(2)} ${currency}.`,
-        type: 'general',
-      },
-    });
+    await createNotification(parentId, 'Recharge Enfant effectuée', `Vous avez rechargé la carte de ${child.name} de ${amount.toFixed(2)} ${currency}.`, 'general', true)
 
-    // Notify child
-    await db.notification.create({
-      data: {
-        userId: childId,
-        title: 'Carte rechargée',
-        message: `Votre parent a rechargé votre carte TRAIT de ${amount.toFixed(2)} ${currency}.`,
-        type: 'general',
-      },
-    });
+    await createNotification(childId, 'Carte rechargée', `Votre parent a rechargé votre carte TRAIT de ${amount.toFixed(2)} ${currency}.`, 'general', true)
+
+    // Emit balance updates in real-time
+    await updateBalanceAndNotify(parentId, updatedParent.realBalance, updatedParent.realBalanceFC)
+    await updateBalanceAndNotify(childId, updatedChild.realBalance, updatedChild.realBalanceFC)
 
     return NextResponse.json({
       success: true,

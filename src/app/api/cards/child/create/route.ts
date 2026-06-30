@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { logSecurityEvent } from '@/lib/security';
 import { requireUser, hashPin } from '@/lib/auth';
 import { randomInt, randomBytes } from 'crypto';
+import { createNotification } from '@/lib/notifications';
 
 function maskCardNumber(num: string): string {
   return num.length >= 4 ? `****${num.slice(-4)}` : num;
@@ -183,24 +184,22 @@ export async function POST(request: NextRequest) {
     });
 
     // Notification for parent
-    await db.notification.create({
-      data: {
-        userId: parentId,
-        title: 'Compte Enfant créé',
-        message: `Le compte de votre enfant ${childName} a été créé avec succès avec la carte ${cardType} ****${cardNumber.slice(-4)}.`,
-        type: 'general',
-      },
-    });
+    await createNotification(
+      parentId,
+      'Compte Enfant créé',
+      `Le compte de votre enfant ${childName} a été créé avec succès avec la carte ${cardType} ****${cardNumber.slice(-4)}.`,
+      'general',
+      false
+    )
 
     // Message/Notification for child
-    await db.notification.create({
-      data: {
-        userId: child.id,
-        title: 'Bienvenue sur TRAIT',
-        message: `Ton compte enfant a été configuré par ton parent. Ta carte TRAIT ${cardType} est prête !`,
-        type: 'general',
-      },
-    });
+    await createNotification(
+      child.id,
+      'Bienvenue sur TRAIT',
+      `Ton compte enfant a été configuré par ton parent. Ta carte TRAIT ${cardType} est prête !`,
+      'general',
+      false
+    )
 
     return NextResponse.json({
       success: true,

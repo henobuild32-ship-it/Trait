@@ -69,7 +69,10 @@ export type PageName =
   | 'seller-products'
   | 'seller-qr-scanner'
   | 'child-sponsorship'
-  | 'two-factor-setup';
+  | 'two-factor-setup'
+  | 'change-pin'
+  | 'my-qr-code'
+  | 'admin-support';
 
 export type UserRole = 'client' | 'agent' | 'seller';
 

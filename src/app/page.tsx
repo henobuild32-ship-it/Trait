@@ -3,6 +3,7 @@
 import { useEffect, Suspense, lazy } from 'react';
 import { useAppStore, PageName } from '@/lib/store';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OfflineBanner } from '@/components/layout/OfflineBanner';
 
 // Auth screens
 const WelcomeScreen = lazy(() => import('@/components/screens/WelcomeScreen'));
@@ -83,6 +84,9 @@ const AdminChildrenScreen = lazy(() => import('@/components/admin/AdminChildrenS
 const AdminKycScreen = lazy(() => import('@/components/admin/AdminKycScreen'));
 const ChildSponsorshipScreen = lazy(() => import('@/components/screens/ChildSponsorshipScreen'));
 const TwoFactorScreen = lazy(() => import('@/components/screens/TwoFactorScreen'));
+const ChangePinScreen = lazy(() => import('@/components/screens/ChangePinScreen'));
+const MyQrCodeScreen = lazy(() => import('@/components/screens/MyQrCodeScreen'));
+const AdminSupportScreen = lazy(() => import('@/components/admin/AdminSupportScreen'));
 
 const BottomNavigation = lazy(() => import('@/components/layout/BottomNavigation'));
 const PWAInstallBanner = lazy(() => import('@/components/layout/PWAInstallBanner').then(m => ({ default: m.PWAInstallBanner })));
@@ -163,6 +167,9 @@ const screenMap: Record<PageName, React.LazyExoticComponent<React.ComponentType>
   'admin-kyc': AdminKycScreen,
   'child-sponsorship': ChildSponsorshipScreen,
   'two-factor-setup': TwoFactorScreen,
+  'change-pin': ChangePinScreen,
+  'my-qr-code': MyQrCodeScreen,
+  'admin-support': AdminSupportScreen,
   'seller-register': SellerRegisterScreen,
   'seller-pending': SellerPendingScreen,
   'seller-dashboard': SellerDashboard,
@@ -172,7 +179,7 @@ const screenMap: Record<PageName, React.LazyExoticComponent<React.ComponentType>
 
 const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification', 'seller-dashboard', 'child-sponsorship'];
 
-const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'admin-seller-validation', 'admin-sellers', 'admin-children', 'admin-kyc', 'agent-register', 'agent-pending'];
+const adminPages: PageName[] = ['admin-login', 'admin-dashboard', 'admin-users', 'admin-agents', 'admin-transactions', 'admin-market', 'admin-barter', 'admin-notifications', 'admin-activity-log', 'admin-bonus', 'admin-bonus-adjust', 'admin-bonus-history', 'admin-bonus-campaigns', 'admin-agent-validation', 'admin-messages', 'admin-developers', 'admin-card-requests', 'admin-cards', 'admin-client-messages', 'admin-seller-validation', 'admin-sellers', 'admin-children', 'admin-kyc', 'admin-support', 'agent-register', 'agent-pending'];
 
 export default function TraitApp() {
   const { currentPage, user, admin, navigateTo } = useAppStore();
@@ -223,6 +230,7 @@ export default function TraitApp() {
       <Suspense fallback={null}>
         <UpdateNotice />
       </Suspense>
+      <OfflineBanner />
     </div>
   );
 }

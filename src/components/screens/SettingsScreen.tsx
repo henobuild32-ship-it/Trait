@@ -264,7 +264,7 @@ export default function SettingsScreen() {
           icon: Lock,
           label: t('settings.change_pin'),
           value: null,
-          action: () => toast.info(t('common.coming_soon')),
+          action: () => navigateTo('change-pin'),
         },
         {
           icon: Shield,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Shield, ShieldCheck, ShieldOff, Copy, Check } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { useAppStore } from '@/lib/store'
 import { useTranslation } from '@/lib/i18n'
 
@@ -104,13 +105,10 @@ export default function TwoFactorScreen() {
 
             <div className="bg-gray-50 rounded-2xl p-4">
               <div className="bg-white rounded-xl p-4 text-center">
-                <div className="w-48 h-48 mx-auto bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(uri)}`}
-                    alt="QR Code 2FA"
-                    className="w-full h-full"
-                  />
+                <div className="w-48 h-48 mx-auto flex items-center justify-center">
+                  <QRCodeSVG value={uri} size={192} level="M" fgColor="#0D5C63" />
                 </div>
+                <p className="text-xs text-gray-400 mt-2">Scannez avec Google Authenticator</p>
               </div>
             </div>
 

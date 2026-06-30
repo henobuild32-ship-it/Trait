@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Ticket non trouvé' }, { status: 404 })
     }
 
-    if (ticket.userId !== auth.userId) {
+    const isAdmin = auth.role === 'admin'
+    if (!isAdmin && ticket.userId !== auth.userId) {
       return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 403 })
     }
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     await db.supportTicket.update({
       where: { id: ticketId },
-      data: { status: 'waiting_response' },
+      data: { status: isAdmin ? 'replied' : 'waiting_response' },
     })
 
     return NextResponse.json({ success: true, message: newMessage })

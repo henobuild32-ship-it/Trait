@@ -1,20 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { requireUser } from '@/lib/auth'
+import { requireUser, requireAdmin } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireUser(request)
     if (auth instanceof NextResponse) return auth
 
+    const { searchParams } = new URL(request.url)
+    const ticketId = searchParams.get('ticketId')
+    const isAdmin = auth.role === 'admin'
+
+    if (ticketId) {
+      const ticket = await db.supportTicket.findFirst({
+        where: isAdmin ? { id: ticketId } : { id: ticketId, userId: auth.userId },
+        include: {
+          messages: { orderBy: { createdAt: 'asc' } },
+          user: { select: { id: true, name: true, phone: true } },
+        },
+      })
+      if (!ticket) return NextResponse.json({ success: false, message: 'Ticket non trouvé' }, { status: 404 })
+      return NextResponse.json({ success: true, ticket })
+    }
+
     const tickets = await db.supportTicket.findMany({
-      where: { userId: auth.userId },
+      where: isAdmin ? {} : { userId: auth.userId },
       orderBy: { createdAt: 'desc' },
       include: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-          take: 1,
-        },
+        messages: { orderBy: { createdAt: 'asc' }, take: 1 },
+        user: isAdmin ? { select: { id: true, name: true, phone: true } } : false,
       },
     })
 

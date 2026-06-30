@@ -26,6 +26,9 @@ import {
   CreditCard,
   Clock,
   ChevronRight,
+  QrCode,
+  MessageCircle,
+  HelpCircle,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +75,8 @@ const clientQuickActions = [
   { labelKey: 'action.intl_transfer', icon: Globe, page: 'international-transfer' as const, color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
   { labelKey: 'action.history', icon: History, page: 'history' as const, color: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
   { labelKey: 'action.marketplace', icon: Store, page: 'marketplace' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
+  { labelKey: 'Mon QR Code', icon: QrCode, page: 'my-qr-code' as const, color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
+  { labelKey: 'Support', icon: MessageCircle, page: 'support' as const, color: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
   { labelKey: 'Espace Service', icon: Store, page: 'seller-dashboard' as const, color: 'bg-pink-50 text-pink-600 dark:bg-pink-950 dark:text-pink-400' },
 ];
 
@@ -82,6 +87,8 @@ const agentQuickActions = [
   { labelKey: 'action.ussd', icon: Phone, page: 'ussd' as const, color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
   { labelKey: 'action.marketplace', icon: Store, page: 'marketplace' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
   { labelKey: 'action.messages', icon: MessageSquare, page: 'agent-messages' as const, color: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400' },
+  { labelKey: 'Mon QR Code', icon: QrCode, page: 'my-qr-code' as const, color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
+  { labelKey: 'Support', icon: MessageCircle, page: 'support' as const, color: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
 ];
 
 function getTypeIcon(type: string) {

@@ -25,6 +25,7 @@ import {
   Mail,
   Store,
   FileCheck,
+  Headphones,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,7 @@ const quickActions: QuickAction[] = [
   { label: 'Développeurs', page: 'admin-developers', icon: Code, color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-100 dark:bg-violet-900/40' },
   { label: 'Gestion Parrainage', page: 'admin-children', icon: Users, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/40' },
   { label: 'Validation KYC', page: 'admin-kyc', icon: FileCheck, color: 'text-teal-600 dark:text-teal-400', bgColor: 'bg-teal-100 dark:bg-teal-900/40' },
+  { label: 'Support Client', page: 'admin-support', icon: Headphones, color: 'text-sky-600 dark:text-sky-400', bgColor: 'bg-sky-100 dark:bg-sky-900/40' },
 ];
 
 function formatStatValue(key: keyof DashboardStats, value: number): string {

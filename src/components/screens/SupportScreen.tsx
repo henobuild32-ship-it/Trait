@@ -1,484 +1,352 @@
-'use client';
+'use client'
 
-import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import {
-  ArrowLeft,
-  Headphones,
-  Mail,
-  User,
-  MessageSquare,
-  Send,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-  Shield,
-  CheckCircle,
-  Globe,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { useAppStore } from '@/lib/store';
-import { useTranslation } from '@/lib/i18n';
+  ArrowLeft, Headphones, Mail, User, MessageSquare, Send, Clock, ChevronDown, ChevronUp, Shield, CheckCircle, Globe, Plus, RefreshCw
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useAppStore } from '@/lib/store'
+import { useTranslation } from '@/lib/i18n'
 
-// ─── FAQ Data ──────────────────────────────────────────────────
-interface FAQItem {
-  questionKey: string;
-  answerKey: string;
+interface Ticket {
+  id: string
+  subject: string
+  category: string
+  message: string
+  priority: string
+  status: string
+  createdAt: string
+  messages?: TicketMessage[]
 }
 
-const faqItems: FAQItem[] = [
-  { questionKey: 'support.faq_q1', answerKey: 'support.faq_a1' },
-  { questionKey: 'support.faq_q2', answerKey: 'support.faq_a2' },
-  { questionKey: 'support.faq_q3', answerKey: 'support.faq_a3' },
-];
-
-// ─── Animation Variants ───────────────────────────────────────
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.05,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: 'spring', stiffness: 400, damping: 30 },
-  },
-};
-
-const faqContentVariants = {
-  collapsed: { height: 0, opacity: 0 },
-  expanded: {
-    height: 'auto',
-    opacity: 1,
-    transition: { duration: 0.25, ease: 'easeInOut' },
-  },
-};
-
-// ─── Form Errors Interface ────────────────────────────────────
-interface FormErrors {
-  name?: string;
-  email?: string;
-  subject?: string;
-  message?: string;
+interface TicketMessage {
+  id: string
+  message: string
+  senderId: string
+  createdAt: string
 }
 
-// ─── Component ────────────────────────────────────────────────
+const statusLabels: Record<string, { label: string; class: string }> = {
+  open: { label: 'Ouvert', class: 'bg-blue-100 text-blue-700' },
+  waiting_response: { label: 'En attente', class: 'bg-amber-100 text-amber-700' },
+  replied: { label: 'Répondu', class: 'bg-green-100 text-green-700' },
+  closed: { label: 'Fermé', class: 'bg-gray-100 text-gray-700' },
+}
+
 export default function SupportScreen() {
-  const { goBack, navigateTo } = useAppStore();
-  const { t } = useTranslation();
+  const { goBack, user, navigateTo } = useAppStore()
+  const { t } = useTranslation()
+  const [view, setView] = useState<'list' | 'new' | 'detail'>('list')
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
 
-  // Form state
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [sending, setSending] = useState(false);
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [subject, setSubject] = useState('')
+  const [category, setCategory] = useState('general')
+  const [message, setMessage] = useState('')
+  const [replyMessage, setReplyMessage] = useState('')
+  const [sending, setSending] = useState(false)
 
-  // FAQ state
-  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+  useEffect(() => {
+    if (view === 'list') fetchTickets()
+  }, [view])
 
-  // ── Validate a single field ────────────────────────────────
-  const validateField = useCallback(
-    (field: keyof FormErrors, value: string): string | undefined => {
-      if (!value.trim()) {
-        const errorMap: Record<keyof FormErrors, string> = {
-          name: t('support.name_required'),
-          email: t('support.email_required'),
-          subject: t('support.subject_required'),
-          message: t('support.message_required'),
-        };
-        return errorMap[field];
+  const fetchTickets = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/support')
+      const data = await res.json()
+      if (data.success) setTickets(data.tickets || [])
+    } catch { toast.error('Erreur de chargement') }
+    setLoading(false)
+  }
+
+  const handleCreateTicket = async () => {
+    if (!subject.trim() || !message.trim()) {
+      toast.error('Veuillez remplir tous les champs')
+      return
+    }
+    setSending(true)
+    try {
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: subject.trim(), category, message: message.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Message envoyé !')
+        setSubject('')
+        setMessage('')
+        setCategory('general')
+        setView('list')
+        fetchTickets()
+      } else {
+        toast.error(data.message || 'Erreur')
       }
-      if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        return t('support.email_required');
+    } catch { toast.error('Erreur de connexion') }
+    setSending(false)
+  }
+
+  const handleReply = async () => {
+    if (!replyMessage.trim() || !selectedTicket) return
+    setSending(true)
+    try {
+      const res = await fetch('/api/support/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: selectedTicket.id, message: replyMessage.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Réponse envoyée')
+        setReplyMessage('')
+        fetchTicketDetail(selectedTicket.id)
+      } else {
+        toast.error(data.message || 'Erreur')
       }
-      return undefined;
-    },
-    [t],
-  );
+    } catch { toast.error('Erreur de connexion') }
+    setSending(false)
+  }
 
-  // ── Validate all fields ────────────────────────────────────
-  const validateAll = useCallback((): boolean => {
-    const newErrors: FormErrors = {
-      name: validateField('name', name),
-      email: validateField('email', email),
-      subject: validateField('subject', subject),
-      message: validateField('message', message),
-    };
-    setErrors(newErrors);
-    setTouched({ name: true, email: true, subject: true, message: true });
-    return !Object.values(newErrors).some(Boolean);
-  }, [name, email, subject, message, validateField]);
+  const fetchTicketDetail = async (ticketId: string) => {
+    try {
+      const res = await fetch(`/api/support?ticketId=${ticketId}`)
+      const data = await res.json()
+      if (data.success && data.ticket) {
+        setSelectedTicket(data.ticket)
+      }
+    } catch {}
+  }
 
-  // ── Handle field blur ──────────────────────────────────────
-  const handleBlur = useCallback(
-    (field: keyof FormErrors, value: string) => {
-      setTouched((prev) => ({ ...prev, [field]: true }));
-      const error = validateField(field, value);
-      setErrors((prev) => ({ ...prev, [field]: error }));
-    },
-    [validateField],
-  );
+  const openTicket = async (ticket: Ticket) => {
+    setSelectedTicket(ticket)
+    setView('detail')
+    fetchTicketDetail(ticket.id)
+  }
 
-  // ── Handle send ────────────────────────────────────────────
-  const handleSend = useCallback(async () => {
-    if (!validateAll()) return;
-
-    setSending(true);
-
-    // Small delay for the loading animation
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const fullMessage = `Nom: ${name}\nEmail: ${email}\n\n${message}`;
-    const mailtoLink = `mailto:trait137@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fullMessage)}`;
-
-    window.open(mailtoLink, '_blank');
-
-    setSending(false);
-    toast.success(t('support.success'), {
-      description: t('support.available'),
-      icon: <CheckCircle className="w-5 h-5 text-green-500" />,
-    });
-
-    // Reset form
-    setName('');
-    setEmail('');
-    setSubject('');
-    setMessage('');
-    setErrors({});
-    setTouched({});
-  }, [validateAll, name, email, subject, message, t]);
-
-  // ── Toggle FAQ ─────────────────────────────────────────────
-  const toggleFAQ = useCallback((index: number) => {
-    setOpenFAQ((prev) => (prev === index ? null : index));
-  }, []);
-
-  // ── Direct email shortcut ──────────────────────────────────
-  const handleDirectEmail = useCallback(() => {
-    const mailtoLink = 'mailto:trait137@gmail.com';
-    window.open(mailtoLink, '_blank');
-  }, []);
-
-  // ── Inline error renderer ──────────────────────────────────
-  const renderError = (field: keyof FormErrors) => {
-    if (!touched[field] || !errors[field]) return null;
-    return (
-      <motion.p
-        initial={{ opacity: 0, y: -4 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-xs text-red-500 mt-1.5 pl-1"
-      >
-        {errors[field]}
-      </motion.p>
-    );
-  };
+  const goToList = () => {
+    setView('list')
+    setSelectedTicket(null)
+    fetchTickets()
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* ── Header ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b px-4 py-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={goBack} className="shrink-0">
+          <Button variant="ghost" size="icon" onClick={view === 'list' ? goBack : view === 'detail' ? goToList : () => setView('list')} className="shrink-0">
             <ArrowLeft className="size-5" />
           </Button>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-[#14888F] flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Headphones className="w-4.5 h-4.5 text-white" />
+          <div className="flex items-center gap-2.5 flex-1">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-[#14888F] flex items-center justify-center shadow-md">
+              <Headphones className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-lg font-semibold">{t('support.title')}</h1>
+            <h1 className="text-lg font-semibold">{view === 'new' ? 'Nouveau ticket' : view === 'detail' ? selectedTicket?.subject || 'Ticket' : 'Support'}</h1>
           </div>
+          {view === 'list' && (
+            <Button variant="ghost" size="sm" onClick={() => { fetchTickets(); toast.success('Actualisé') }}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </header>
 
-      {/* ── Content ────────────────────────────────────────── */}
-      <motion.div
-        className="flex-1 px-4 py-5 space-y-5 pb-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* ── Support Info Card ────────────────────────────── */}
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden">
-            <div className="bg-gradient-to-br from-[#0D5C63] to-[#14888F] px-6 py-5">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                    <Headphones className="w-6 h-6 text-white" />
+      <div className="flex-1 px-4 py-5 pb-8">
+        {view === 'list' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <Button
+              onClick={() => setView('new')}
+              className="w-full h-13 bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Plus className="w-5 h-5" />
+              Nouveau message
+            </Button>
+
+            {loading ? (
+              <div className="space-y-3 mt-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 rounded-xl bg-card border space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
-                  <div>
-                    <h2 className="text-white font-bold text-base">
-                      {t('support.title')}
-                    </h2>
-                    <p className="text-blue-100 text-xs mt-0.5">
-                      {t('support.subtitle')}
-                    </p>
-                  </div>
-                </div>
-                <Badge className="bg-emerald-500/20 text-emerald-100 border-emerald-400/30 hover:bg-emerald-500/30">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-                  </span>
-                  {t('support.available')}
-                </Badge>
+                ))}
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                <div className="flex items-center gap-2.5 bg-white/10 rounded-xl px-3.5 py-2.5">
-                  <Mail className="w-4 h-4 text-blue-200 shrink-0" />
-                  <span className="text-white text-sm font-medium truncate">
-                    {t('support.email_to')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2.5 bg-white/10 rounded-xl px-3.5 py-2.5">
-                  <Clock className="w-4 h-4 text-blue-200 shrink-0" />
-                  <span className="text-white text-sm font-medium">
-                    {t('support.response_time')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* ── Contact Form ─────────────────────────────────── */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-2 mb-1">
-                <MessageSquare className="w-5 h-5 text-[#0D5C63]" />
-                <h3 className="font-semibold text-base">{t('support.send')}</h3>
-              </div>
-
-              {/* Full Name */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-muted-foreground" />
-                  {t('support.name')}
-                </label>
-                <Input
-                  type="text"
-                  placeholder={t('support.name_placeholder')}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onBlur={() => handleBlur('name', name)}
-                  aria-invalid={!!(touched.name && errors.name)}
-                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors"
-                />
-                {renderError('name')}
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                  {t('support.email')}
-                </label>
-                <Input
-                  type="email"
-                  placeholder={t('support.email_placeholder')}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={() => handleBlur('email', email)}
-                  aria-invalid={!!(touched.email && errors.email)}
-                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors"
-                />
-                {renderError('email')}
-              </div>
-
-              {/* Subject */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                  {t('support.subject')}
-                </label>
-                <Input
-                  type="text"
-                  placeholder={t('support.subject_placeholder')}
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  onBlur={() => handleBlur('subject', subject)}
-                  aria-invalid={!!(touched.subject && errors.subject)}
-                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors"
-                />
-                {renderError('subject')}
-              </div>
-
-              {/* Message */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
-                  {t('support.message')}
-                </label>
-                <Textarea
-                  placeholder={t('support.message_placeholder')}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onBlur={() => handleBlur('message', message)}
-                  aria-invalid={!!(touched.message && errors.message)}
-                  rows={4}
-                  className="rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors resize-none min-h-[100px]"
-                />
-                {renderError('message')}
-              </div>
-
-              {/* Send Button */}
-              <Button
-                onClick={handleSend}
-                disabled={sending}
-                className="w-full h-12 bg-[#0D5C63] hover:bg-[#083A3E] text-white font-semibold rounded-xl cursor-pointer mt-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {sending ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-2.5"
-                  >
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
-                      className="w-5 h-5 border-2.5 border-white border-t-transparent rounded-full"
-                    />
-                    <span>{t('support.sending')}</span>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-2.5"
-                  >
-                    <Send className="w-4.5 h-4.5" />
-                    <span>{t('support.send')}</span>
-                  </motion.div>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* ── FAQ Section ───────────────────────────────────── */}
-        <motion.div variants={itemVariants}>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <Shield className="w-5 h-5 text-[#0D5C63]" />
-              <h3 className="font-semibold text-base">{t('support.faq')}</h3>
-            </div>
-
-            <Card>
-              <CardContent className="p-0">
-                {faqItems.map((faq, index) => {
-                  const isOpen = openFAQ === index;
+            ) : tickets.length === 0 ? (
+              <Card className="mt-4">
+                <CardContent className="flex flex-col items-center py-12">
+                  <span className="text-5xl mb-4">💬</span>
+                  <p className="font-medium text-foreground">Aucun ticket</p>
+                  <p className="text-sm text-muted-foreground mt-1">Créez un ticket pour contacter le support</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2 mt-4">
+                {tickets.map((ticket) => {
+                  const st = statusLabels[ticket.status] || statusLabels.open
                   return (
                     <div
-                      key={index}
-                      className={index > 0 ? 'border-t' : ''}
+                      key={ticket.id}
+                      className="p-4 rounded-xl bg-card border cursor-pointer hover:bg-accent/50 transition-all active:scale-[0.98]"
+                      onClick={() => openTicket(ticket)}
                     >
-                      <button
-                        type="button"
-                        onClick={() => toggleFAQ(index)}
-                        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left hover:bg-muted/40 transition-colors cursor-pointer"
-                        aria-expanded={isOpen}
-                      >
-                        <span className="text-sm font-medium text-foreground leading-snug">
-                          {t(faq.questionKey)}
-                        </span>
-                        <motion.div
-                          animate={{ rotate: isOpen ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="shrink-0"
-                        >
-                          <ChevronDown className="w-4.5 h-4.5 text-muted-foreground" />
-                        </motion.div>
-                      </button>
-
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            key="content"
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{
-                              height: 'auto',
-                              opacity: 1,
-                              transition: { duration: 0.25, ease: 'easeInOut' },
-                            }}
-                            exit={{
-                              height: 0,
-                              opacity: 0,
-                              transition: { duration: 0.2, ease: 'easeInOut' },
-                            }}
-                            className="overflow-hidden"
-                          >
-                            <div className="px-5 pb-4 pt-0">
-                              <p className="text-sm text-muted-foreground leading-relaxed pl-1 border-l-2 border-[#0D5C63]/20">
-                                {t(faq.answerKey)}
-                              </p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate">{ticket.subject}</p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{ticket.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1.5">
+                            {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ticket.createdAt))}
+                          </p>
+                        </div>
+                        <Badge className={`${st.class} border-0 text-[10px] shrink-0`}>{st.label}</Badge>
+                      </div>
                     </div>
-                  );
+                  )
                 })}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {view === 'new' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Catégorie</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full h-11 rounded-xl bg-muted/40 border border-muted-foreground/15 px-3 text-sm focus:border-[#0D5C63] outline-none"
+                  >
+                    <option value="general">Question générale</option>
+                    <option value="transaction">Problème de transaction</option>
+                    <option value="account">Problème de compte</option>
+                    <option value="card">Problème de carte</option>
+                    <option value="other">Autre</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Sujet</label>
+                  <Input
+                    placeholder="Objet de votre message"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Message</label>
+                  <Textarea
+                    placeholder="Décrivez votre problème..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={5}
+                    className="rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] resize-none"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleCreateTicket}
+                  disabled={sending || !subject.trim() || !message.trim()}
+                  className="w-full h-12 bg-[#0D5C63] hover:bg-[#083A3E] text-white font-semibold rounded-xl shadow-lg disabled:opacity-50"
+                >
+                  {sending ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Envoi...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Send className="w-4 h-4" />
+                      Envoyer
+                    </span>
+                  )}
+                </Button>
               </CardContent>
             </Card>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
 
-        {/* ── Quick Contact Buttons ────────────────────────── */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              {/* Direct Email */}
-              <Button
-                variant="outline"
-                onClick={handleDirectEmail}
-                className="w-full h-11 rounded-xl border-[#0D5C63]/20 text-[#0D5C63] hover:bg-[#0D5C63]/5 cursor-pointer font-medium transition-all"
-              >
-                <Mail className="w-4.5 h-4.5" />
-                <span className="flex-1 text-left">{t('support.email_to')}</span>
-                <ChevronUp className="w-3.5 h-3.5 -rotate-90 text-muted-foreground" />
-              </Button>
+        {view === 'detail' && selectedTicket && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            {(() => {
+              const st = statusLabels[selectedTicket.status] || statusLabels.open
+              return (
+                <Card>
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h2 className="font-bold text-lg">{selectedTicket.subject}</h2>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Intl.DateTimeFormat(undefined, { dateStyle: 'long', timeStyle: 'short' }).format(new Date(selectedTicket.createdAt))}
+                        </p>
+                      </div>
+                      <Badge className={`${st.class} border-0`}>{st.label}</Badge>
+                    </div>
 
-              {/* Back to Home */}
-              <Button
-                variant="outline"
-                onClick={() => navigateTo('home')}
-                className="w-full h-11 rounded-xl cursor-pointer font-medium transition-all"
-              >
-                <ArrowLeft className="w-4.5 h-4.5" />
-                <span className="flex-1 text-left">{t('common.cancel')}</span>
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
+                    <div className="space-y-4 mt-4">
+                      <div className="bg-muted/30 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User className="w-4 h-4 text-[#0D5C63]" />
+                          <span className="text-xs font-medium text-[#0D5C63]">Vous</span>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(selectedTicket.createdAt))}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">{selectedTicket.message}</p>
+                      </div>
 
-        {/* ── Footer ────────────────────────────────────────── */}
-        <motion.div
-          variants={itemVariants}
-          className="mt-auto pt-4"
-        >
-          <p className="text-center text-xs text-muted-foreground">
-            &copy; 2025 TRAIT &mdash; {t('support.available')}
-          </p>
-        </motion.div>
-      </motion.div>
+                      {(selectedTicket.messages || []).filter(m => m.id !== selectedTicket.id).map((msg) => (
+                        <div key={msg.id} className="bg-[#0D5C63]/5 rounded-xl p-4 border border-[#0D5C63]/10">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Headphones className="w-4 h-4 text-[#0D5C63]" />
+                            <span className="text-xs font-medium text-[#0D5C63]">
+                              {msg.senderId === user?.id ? 'Vous' : 'Support TRAIT'}
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-auto">
+                              {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(msg.createdAt))}
+                            </span>
+                          </div>
+                          <p className="text-sm text-foreground whitespace-pre-wrap">{msg.message}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {selectedTicket.status !== 'closed' && (
+                      <div className="mt-6 space-y-3">
+                        <Textarea
+                          placeholder="Votre réponse..."
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          rows={3}
+                          className="rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] resize-none"
+                        />
+                        <Button
+                          onClick={handleReply}
+                          disabled={sending || !replyMessage.trim()}
+                          className="w-full h-12 bg-[#0D5C63] hover:bg-[#083A3E] text-white font-semibold rounded-xl disabled:opacity-50"
+                        >
+                          {sending ? 'Envoi...' : 'Répondre'}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })()}
+          </motion.div>
+        )}
+      </div>
     </div>
-  );
+  )
 }

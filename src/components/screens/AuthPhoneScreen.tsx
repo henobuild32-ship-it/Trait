@@ -136,7 +136,7 @@ export default function AuthPhoneScreen() {
             variant="outline"
             className={selectedRole === 'agent'
               ? 'px-4 py-1.5 text-sm font-semibold border-amber-200 bg-amber-50 text-amber-700 cursor-pointer'
-              : 'px-4 py-1.5 text-sm font-semibold border-blue-200 bg-blue-50 text-[#1E40AF] cursor-pointer'
+              : 'px-4 py-1.5 text-sm font-semibold border-blue-200 bg-blue-50 text-[#0D5C63] cursor-pointer'
             }
             onClick={() => navigateTo('auth-role')}
           >
@@ -233,7 +233,7 @@ export default function AuthPhoneScreen() {
           <Button
             type="submit"
             disabled={loading || !phone.trim() || !password.trim() || !confirmPassword.trim()}
-            className="w-full h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-2"
+            className="w-full h-12 text-base font-semibold bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-2"
           >
             {loading ? (
               <>
@@ -252,7 +252,7 @@ export default function AuthPhoneScreen() {
             {t('auth.already_account')}{' '}
             <button
               onClick={() => navigateTo('auth-login')}
-              className="font-semibold text-[#1E40AF] hover:text-blue-900 underline underline-offset-2 cursor-pointer"
+              className="font-semibold text-[#0D5C63] hover:text-blue-900 underline underline-offset-2 cursor-pointer"
             >
               {t('auth.login_link')}
             </button>

@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
         isVerified: user.isVerified,
         parentId: user.parentId,
         hasCompletedOnboarding: user.hasCompletedOnboarding,
+        twoFactorEnabled: user.twoFactorEnabled,
       },
     })
 

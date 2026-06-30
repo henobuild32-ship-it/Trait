@@ -134,7 +134,7 @@ export default function CardPaymentScreen() {
   }
 
   const isUSD = selectedCurrency === 'USD';
-  const accentColor = isUSD ? '#3B82F6' : '#EF4444';
+  const accentColor = isUSD ? '#14888F' : '#EF4444';
   const currencySymbol = isUSD ? '$' : '';
 
   // Loading state

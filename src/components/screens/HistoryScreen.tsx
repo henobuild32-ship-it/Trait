@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RefreshCw, Download } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Download, X, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
+import { TransactionReceipt } from '@/components/receipt/TransactionReceipt';
 
 interface HistoryItem {
   id: string;
@@ -89,6 +90,7 @@ export default function HistoryScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [selectedTx, setSelectedTx] = useState<HistoryItem | null>(null);
   const observerRef = useRef<HTMLDivElement>(null);
 
   const fetchHistory = useCallback(async (cursor?: string | null, reset = false) => {
@@ -236,7 +238,8 @@ export default function HistoryScreen() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3) }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border transition-colors cursor-pointer hover:bg-accent/50 active:scale-[0.98]"
+                  onClick={() => setSelectedTx(tx)}
                 >
                   <div className={`flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0 ${getTypeBg(tx.type)}`}>
                     {getTypeIcon(tx.type)}
@@ -276,6 +279,94 @@ export default function HistoryScreen() {
       </div>
 
       <div className="h-8" />
+
+      <AnimatePresence>
+        {selectedTx && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
+            onClick={() => setSelectedTx(null)}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg bg-white rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900">Détails de la transaction</h3>
+                <button onClick={() => setSelectedTx(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="text-center mb-6">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 ${getTypeBg(selectedTx.type)}`}>
+                  {getTypeIcon(selectedTx.type)}
+                </div>
+                <p className={`text-3xl font-bold ${
+                  selectedTx.type === 'receive' || selectedTx.type === 'deposit' ? 'text-emerald-600' : selectedTx.type === 'send' ? 'text-red-500' : 'text-orange-500'
+                }`}>
+                  {selectedTx.type === 'receive' || selectedTx.type === 'deposit' ? '+' : '-'}{fmtCur(selectedTx.amount, selectedTx.currency)}
+                </p>
+                {selectedTx.fee > 0 && (
+                  <p className="text-sm text-muted-foreground mt-1">Frais: {fmtCur(selectedTx.fee, selectedTx.currency)}</p>
+                )}
+              </div>
+
+              <div className="space-y-0 bg-gray-50 rounded-2xl overflow-hidden mb-6">
+                {[
+                  { label: 'Type', value: selectedTx.type.charAt(0).toUpperCase() + selectedTx.type.slice(1) },
+                  { label: 'Montant', value: fmtCur(selectedTx.amount, selectedTx.currency) },
+                  ...(selectedTx.fee > 0 ? [{ label: 'Frais', value: fmtCur(selectedTx.fee, selectedTx.currency) }] : []),
+                  { label: 'Devise', value: selectedTx.currency },
+                  { label: 'Statut', value: getStatusBadge(selectedTx.status) },
+                  { label: 'Date', value: formatDate(selectedTx.createdAt) },
+                  { label: 'Description', value: selectedTx.description },
+                  { label: 'ID', value: selectedTx.id, mono: true },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-0">
+                    <span className="text-sm text-gray-500">{row.label}</span>
+                    {typeof row.value === 'string' ? (
+                      <span className={`text-sm font-medium text-gray-900 ${row.mono ? 'font-mono text-[10px] break-all max-w-[60%] text-right' : ''}`}>
+                        {row.value}
+                      </span>
+                    ) : row.value}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 h-12 rounded-xl"
+                  onClick={() => {
+                    const shareData = {
+                      title: 'Transaction TRAIT',
+                      text: `Transaction ${selectedTx.type}: ${fmtCur(selectedTx.amount, selectedTx.currency)} - ${selectedTx.description} (${selectedTx.status})`,
+                    };
+                    if (navigator.share) navigator.share(shareData).catch(() => {});
+                    else navigator.clipboard.writeText(shareData.text).then(() => toast.success('Copié !'));
+                  }}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Partager
+                </Button>
+                <div className="flex-1">
+                  <TransactionReceipt
+                    transaction={selectedTx}
+                    userName={user?.name}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -66,7 +66,7 @@ export function TransactionReceipt({ transaction, userName }: TransactionReceipt
     body { font-family: 'Inter', sans-serif; background: #f5f5f5; padding: 20px; }
     .receipt { max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
     .header { text-align: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
-    .logo { font-size: 28px; font-weight: 800; color: #1E40AF; letter-spacing: -1px; }
+    .logo { font-size: 28px; font-weight: 800; color: #0D5C63; letter-spacing: -1px; }
     .subtitle { font-size: 12px; color: #888; margin-top: 4px; }
     .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 12px; }
     .status.completed { background: #ECFDF5; color: #059669; }

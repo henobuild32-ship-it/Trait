@@ -172,7 +172,7 @@ export default function AuthProfileScreen() {
           }>
             {isAgent
               ? <Info className="w-5 h-5 text-amber-600" />
-              : <Gift className="w-5 h-5 text-[#1E40AF]" />
+              : <Gift className="w-5 h-5 text-[#0D5C63]" />
             }
           </div>
           {isAgent ? (
@@ -306,7 +306,7 @@ export default function AuthProfileScreen() {
           <Button
             type="submit"
             disabled={loading || !name.trim() || !pseudo.trim() || !country || (isAgent && (!email.trim() || !gender || !city.trim()))}
-            className="w-full h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-4"
+            className="w-full h-12 text-base font-semibold bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-4"
           >
             {loading ? (
               <>

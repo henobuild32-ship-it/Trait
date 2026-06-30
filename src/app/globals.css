@@ -41,9 +41,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-trait-blue: #1E40AF;
-  --color-trait-blue-light: #3B82F6;
-  --color-trait-blue-dark: #1E3A8A;
+  --color-trait-blue: #0D5C63;
+  --color-trait-blue-light: #14888F;
+  --color-trait-blue-dark: #083A3E;
   --color-trait-red: #DC2626;
   --color-trait-red-light: #EF4444;
   --color-trait-red-dark: #B91C1C;
@@ -292,7 +292,7 @@
 }
 
 .premium-gradient-text {
-  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 30%, #DC2626 70%, #F59E0B 100%);
+  background: linear-gradient(135deg, #0D5C63 0%, #14888F 30%, #DC2626 70%, #F59E0B 100%);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

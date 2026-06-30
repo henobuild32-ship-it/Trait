@@ -48,7 +48,7 @@ export default function AgentDashboardScreen() {
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-[#DC2626] flex items-center justify-center">
                 <span className="text-white font-bold text-sm">T</span>
               </div>
               <h1 className="text-lg font-semibold">{t('agent.dashboard')}</h1>
@@ -100,7 +100,7 @@ export default function AgentDashboardScreen() {
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-[#DC2626] flex items-center justify-center">
                 <span className="text-white font-bold text-sm">T</span>
               </div>
               <h1 className="text-lg font-semibold">{t('agent.dashboard')}</h1>
@@ -142,7 +142,7 @@ export default function AgentDashboardScreen() {
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-[#DC2626] flex items-center justify-center">
                 <span className="text-white font-bold text-sm">T</span>
               </div>
               <h1 className="text-lg font-semibold">{t('agent.dashboard')}</h1>
@@ -179,7 +179,7 @@ export default function AgentDashboardScreen() {
       label: t('agent.deposits_today'),
       value: '$0.00',
       icon: DollarSign,
-      color: 'text-[#1E40AF]',
+      color: 'text-[#0D5C63]',
       bg: 'bg-blue-50',
     },
     {
@@ -212,7 +212,7 @@ export default function AgentDashboardScreen() {
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft className="size-5" />
           </Button>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#DC2626] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-[#DC2626] flex items-center justify-center">
             <span className="text-white font-bold text-sm">T</span>
           </div>
           <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ export default function AgentDashboardScreen() {
             <CardContent className="p-4 pt-0 space-y-2">
               <Button
                 variant="outline"
-                className="w-full justify-start gap-3 text-[#1E40AF] border-blue-200 hover:bg-blue-50 cursor-pointer"
+                className="w-full justify-start gap-3 text-[#0D5C63] border-blue-200 hover:bg-blue-50 cursor-pointer"
                 onClick={() => navigateTo('agent-deposit')}
               >
                 <UserPlus className="size-4" />

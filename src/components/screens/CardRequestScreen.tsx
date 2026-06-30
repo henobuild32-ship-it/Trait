@@ -25,7 +25,7 @@ const cardOptions: CardOption[] = [
     currency: 'Dollar Américain',
     description: 'Carte numérique internationale pour vos paiements en dollars US partout dans le monde.',
     gradient: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 40%, #0D2847 100%)',
-    accent: '#3B82F6',
+    accent: '#14888F',
     icon: Globe,
     features: ['Paiements internationaux', 'Acceptée partout', 'Zéro frais de conversion'],
   },

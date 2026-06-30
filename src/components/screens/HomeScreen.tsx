@@ -256,7 +256,7 @@ export default function HomeScreen() {
                   {user?.name || user?.pseudo || 'Utilisateur'}
                 </h1>
                 {isAgent && (
-                  <Badge className="bg-[#1E40AF]/10 text-[#1E40AF] border-[#1E40AF]/20 text-[10px] font-semibold px-1.5 py-0 dark:bg-[#1E40AF]/20 dark:text-blue-300 dark:border-[#1E40AF]/30 shrink-0">
+                  <Badge className="bg-[#0D5C63]/10 text-[#0D5C63] border-[#0D5C63]/20 text-[10px] font-semibold px-1.5 py-0 dark:bg-[#0D5C63]/20 dark:text-blue-300 dark:border-[#0D5C63]/30 shrink-0">
                     Agent
                   </Badge>
                 )}
@@ -278,23 +278,23 @@ export default function HomeScreen() {
       <main className="px-4 pt-5 space-y-6">
         {/* ─── Agent Code Display ────────────────────────────── */}
         {isAgent && agentCode && (
-          <Card className="border-[#1E40AF]/20 bg-[#1E40AF]/5 dark:border-[#1E40AF]/30 dark:bg-[#1E40AF]/10 shadow-lg shadow-blue-900/5">
+          <Card className="border-[#0D5C63]/20 bg-[#0D5C63]/5 dark:border-[#0D5C63]/30 dark:bg-[#0D5C63]/10 shadow-lg shadow-blue-900/5">
             <CardContent className="p-3.5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#1E40AF]/10 flex items-center justify-center shrink-0">
-                <BadgeCheck className="size-5 text-[#1E40AF]" />
+              <div className="w-10 h-10 rounded-xl bg-[#0D5C63]/10 flex items-center justify-center shrink-0">
+                <BadgeCheck className="size-5 text-[#0D5C63]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
                   {t('home.agent_code')}
                 </p>
-                <p className="text-lg font-bold font-mono text-[#1E40AF] tracking-wider dark:text-blue-300">
+                <p className="text-lg font-bold font-mono text-[#0D5C63] tracking-wider dark:text-blue-300">
                   {agentCode}
                 </p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="ml-auto text-[#1E40AF] hover:text-[#1E40AF]/80 hover:bg-[#1E40AF]/10 text-xs font-medium dark:text-blue-300"
+                className="ml-auto text-[#0D5C63] hover:text-[#0D5C63]/80 hover:bg-[#0D5C63]/10 text-xs font-medium dark:text-blue-300"
                 onClick={handleCopyCode}
               >
                 {codeCopied ? (
@@ -311,7 +311,7 @@ export default function HomeScreen() {
         {/* ─── Balance Cards ─────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3">
           {/* USD Balance */}
-          <div className="rounded-2xl p-4 text-white shadow-lg shadow-blue-900/10 bg-gradient-to-br from-[#1E40AF] to-[#2563EB] relative overflow-hidden">
+          <div className="rounded-2xl p-4 text-white shadow-lg shadow-blue-900/10 bg-gradient-to-br from-[#0D5C63] to-[#14888F] relative overflow-hidden">
             {/* Decorative circles */}
             <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
             <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/5" />
@@ -373,10 +373,10 @@ export default function HomeScreen() {
           <section className="space-y-3">
             <h2 className="text-base font-bold text-foreground">Recommandé</h2>
             <Card
-              className="border-primary/20 bg-gradient-to-br from-[#1E40AF]/5 via-background to-background dark:from-blue-950/20 shadow-md cursor-pointer hover:border-[#1E40AF]/40 active:scale-[0.98] transition-all relative overflow-hidden"
+              className="border-primary/20 bg-gradient-to-br from-[#0D5C63]/5 via-background to-background dark:from-blue-950/20 shadow-md cursor-pointer hover:border-[#0D5C63]/40 active:scale-[0.98] transition-all relative overflow-hidden"
               onClick={() => navigateTo('child-sponsorship')}
             >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#1E40AF]/10 to-transparent rounded-full -mr-8 -mt-8" />
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#0D5C63]/10 to-transparent rounded-full -mr-8 -mt-8" />
               <CardContent className="p-4 flex items-start gap-3 relative z-10">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center shrink-0 mt-0.5 text-amber-500 font-bold text-lg shadow-sm">
                   ⭐
@@ -400,13 +400,13 @@ export default function HomeScreen() {
           <section>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                <CreditCard className="size-4 text-[#1E40AF]" />
+                <CreditCard className="size-4 text-[#0D5C63]" />
                 Mes Cartes TRAIT
               </h2>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[#1E40AF] hover:text-[#1E40AF]/80 hover:bg-[#1E40AF]/10 text-xs font-semibold dark:text-blue-400"
+                className="text-[#0D5C63] hover:text-[#0D5C63]/80 hover:bg-[#0D5C63]/10 text-xs font-semibold dark:text-blue-400"
                 onClick={() => navigateTo('card')}
               >
                 Voir tout
@@ -459,7 +459,7 @@ export default function HomeScreen() {
             {showCardButton && (
               <button
                 onClick={() => navigateTo('card-request')}
-                className="w-full rounded-2xl p-4 shadow-sm border border-[#1E40AF]/20 bg-gradient-to-r from-[#0A1628] via-[#1E3A5F] to-[#0D2847] hover:shadow-lg hover:border-[#1E40AF]/40 transition-all active:scale-[0.98] relative overflow-hidden"
+                className="w-full rounded-2xl p-4 shadow-sm border border-[#0D5C63]/20 bg-gradient-to-r from-[#0A1628] via-[#1E3A5F] to-[#0D2847] hover:shadow-lg hover:border-[#0D5C63]/40 transition-all active:scale-[0.98] relative overflow-hidden"
               >
                 <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-blue-500/10" />
                 <div className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-red-500/5" />
@@ -499,7 +499,7 @@ export default function HomeScreen() {
                       navigateTo(action.page);
                     }
                   }}
-                  className="flex flex-col items-center gap-2.5 rounded-2xl bg-card p-4 shadow-sm border border-border hover:shadow-md hover:border-[#1E40AF]/20 transition-all active:scale-[0.97] dark:hover:border-blue-500/30"
+                  className="flex flex-col items-center gap-2.5 rounded-2xl bg-card p-4 shadow-sm border border-border hover:shadow-md hover:border-[#0D5C63]/20 transition-all active:scale-[0.97] dark:hover:border-blue-500/30"
                 >
                   <div className={`w-11 h-11 rounded-xl ${action.color} flex items-center justify-center`}>
                     <Icon className="size-5" />
@@ -524,7 +524,7 @@ export default function HomeScreen() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-[#1E40AF] hover:text-[#1E40AF]/80 hover:bg-[#1E40AF]/10 text-xs font-semibold dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/10"
+              className="text-[#0D5C63] hover:text-[#0D5C63]/80 hover:bg-[#0D5C63]/10 text-xs font-semibold dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/10"
               onClick={() => navigateTo('history')}
             >
               {t('home.view_all')}
@@ -569,7 +569,7 @@ export default function HomeScreen() {
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:shadow-sm hover:border-[#1E40AF]/15 transition-all dark:hover:border-blue-500/20"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:shadow-sm hover:border-[#0D5C63]/15 transition-all dark:hover:border-blue-500/20"
                   >
                     <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeColor} shrink-0`}>
                       <TypeIcon className="size-[18px]" />

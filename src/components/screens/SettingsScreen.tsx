@@ -67,7 +67,7 @@ function LanguageModal({ onClose }: { onClose: () => void }) {
               }}
               className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all cursor-pointer ${
                 language === lang
-                  ? 'bg-[#1E40AF] text-white shadow-md'
+                  ? 'bg-[#0D5C63] text-white shadow-md'
                   : 'bg-muted/50 hover:bg-muted text-foreground'
               }`}
             >
@@ -98,7 +98,7 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#14888F] to-[#083A3E] flex items-center justify-center">
             <Smartphone className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -128,7 +128,7 @@ function AndroidGuideModal({ onClose }: { onClose: () => void }) {
 
         <Button
           onClick={onClose}
-          className="w-full h-11 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold rounded-xl cursor-pointer"
+          className="w-full h-11 bg-[#0D5C63] hover:bg-[#083A3E] text-white font-semibold rounded-xl cursor-pointer"
         >
           {t('install.understood')}
         </Button>
@@ -154,7 +154,7 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#14888F] to-[#083A3E] flex items-center justify-center">
             <Apple className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -184,7 +184,7 @@ function IOSGuideModal({ onClose }: { onClose: () => void }) {
 
         <Button
           onClick={onClose}
-          className="w-full h-11 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold rounded-xl cursor-pointer"
+          className="w-full h-11 bg-[#0D5C63] hover:bg-[#083A3E] text-white font-semibold rounded-xl cursor-pointer"
         >
           {t('install.understood')}
         </Button>
@@ -269,8 +269,8 @@ export default function SettingsScreen() {
         {
           icon: Shield,
           label: t('settings.enable_2fa'),
-          value: 'toggle',
-          action: () => toast.info(t('common.coming_soon')),
+          value: user?.twoFactorEnabled ? 'active' : null,
+          action: () => navigateTo('two-factor-setup'),
         },
       ],
     },
@@ -382,7 +382,7 @@ export default function SettingsScreen() {
               <div className="mt-3 flex flex-col gap-2">
                 <Button
                   variant="outline"
-                  className="w-full text-[#1E40AF] border-blue-200 hover:bg-blue-50"
+                  className="w-full text-[#0D5C63] border-blue-200 hover:bg-blue-50"
                   onClick={() => navigateTo('profile')}
                 >
                   {t('settings.edit_profile')}
@@ -434,7 +434,7 @@ export default function SettingsScreen() {
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                           item.badge ? 'bg-blue-100' : 'bg-muted'
                         }`}>
-                          <Icon className={`size-4 ${item.badge ? 'text-[#1E40AF]' : 'text-muted-foreground'}`} />
+                          <Icon className={`size-4 ${item.badge ? 'text-[#0D5C63]' : 'text-muted-foreground'}`} />
                         </div>
                         <span className="flex-1 text-sm">{item.label}</span>
 
@@ -455,7 +455,7 @@ export default function SettingsScreen() {
                           item.value !== 'toggle' &&
                           item.value !== 'darkMode' && (
                             <span className={`text-sm mr-1 ${
-                              item.value === t('settings.installed') ? 'text-[#1E40AF] font-semibold' : 'text-muted-foreground'
+                              item.value === t('settings.installed') ? 'text-[#0D5C63] font-semibold' : 'text-muted-foreground'
                             }`}>
                               {item.value}
                             </span>
@@ -482,7 +482,7 @@ export default function SettingsScreen() {
             <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-background overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#1E40AF] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#0D5C63] flex items-center justify-center">
                     <Download className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -494,7 +494,7 @@ export default function SettingsScreen() {
                   <button
                     onClick={handleInstall}
                     disabled={installing}
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#1E40AF] text-white rounded-xl py-2.5 px-3 hover:bg-[#1E3A8A] active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#0D5C63] text-white rounded-xl py-2.5 px-3 hover:bg-[#083A3E] active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
                   >
                     {installing ? (
                       <motion.div

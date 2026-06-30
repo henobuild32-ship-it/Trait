@@ -62,12 +62,14 @@ export type PageName =
   | 'admin-cards'
   | 'admin-client-messages'
   | 'admin-children'
+  | 'admin-kyc'
   | 'seller-register'
   | 'seller-pending'
   | 'seller-dashboard'
   | 'seller-products'
   | 'seller-qr-scanner'
-  | 'child-sponsorship';
+  | 'child-sponsorship'
+  | 'two-factor-setup';
 
 export type UserRole = 'client' | 'agent' | 'seller';
 
@@ -97,6 +99,7 @@ export interface User {
   isVerified: boolean;
   suspended: boolean;
   hasCompletedOnboarding: boolean;
+  twoFactorEnabled?: boolean;
   createdAt?: string;
 }
 

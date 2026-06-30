@@ -198,7 +198,7 @@ export default function SupportScreen() {
             <ArrowLeft className="size-5" />
           </Button>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#3B82F6] flex items-center justify-center shadow-md shadow-blue-500/20">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-[#14888F] flex items-center justify-center shadow-md shadow-blue-500/20">
               <Headphones className="w-4.5 h-4.5 text-white" />
             </div>
             <h1 className="text-lg font-semibold">{t('support.title')}</h1>
@@ -216,7 +216,7 @@ export default function SupportScreen() {
         {/* ── Support Info Card ────────────────────────────── */}
         <motion.div variants={itemVariants}>
           <Card className="overflow-hidden">
-            <div className="bg-gradient-to-br from-[#1E40AF] to-[#2563EB] px-6 py-5">
+            <div className="bg-gradient-to-br from-[#0D5C63] to-[#14888F] px-6 py-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
@@ -263,7 +263,7 @@ export default function SupportScreen() {
           <Card>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-2 mb-1">
-                <MessageSquare className="w-5 h-5 text-[#1E40AF]" />
+                <MessageSquare className="w-5 h-5 text-[#0D5C63]" />
                 <h3 className="font-semibold text-base">{t('support.send')}</h3>
               </div>
 
@@ -280,7 +280,7 @@ export default function SupportScreen() {
                   onChange={(e) => setName(e.target.value)}
                   onBlur={() => handleBlur('name', name)}
                   aria-invalid={!!(touched.name && errors.name)}
-                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#1E40AF] focus-visible:ring-[#1E40AF]/20 transition-colors"
+                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors"
                 />
                 {renderError('name')}
               </div>
@@ -298,7 +298,7 @@ export default function SupportScreen() {
                   onChange={(e) => setEmail(e.target.value)}
                   onBlur={() => handleBlur('email', email)}
                   aria-invalid={!!(touched.email && errors.email)}
-                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#1E40AF] focus-visible:ring-[#1E40AF]/20 transition-colors"
+                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors"
                 />
                 {renderError('email')}
               </div>
@@ -316,7 +316,7 @@ export default function SupportScreen() {
                   onChange={(e) => setSubject(e.target.value)}
                   onBlur={() => handleBlur('subject', subject)}
                   aria-invalid={!!(touched.subject && errors.subject)}
-                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#1E40AF] focus-visible:ring-[#1E40AF]/20 transition-colors"
+                  className="h-11 rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors"
                 />
                 {renderError('subject')}
               </div>
@@ -334,7 +334,7 @@ export default function SupportScreen() {
                   onBlur={() => handleBlur('message', message)}
                   aria-invalid={!!(touched.message && errors.message)}
                   rows={4}
-                  className="rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#1E40AF] focus-visible:ring-[#1E40AF]/20 transition-colors resize-none min-h-[100px]"
+                  className="rounded-xl bg-muted/40 border-muted-foreground/15 focus-visible:border-[#0D5C63] focus-visible:ring-[#0D5C63]/20 transition-colors resize-none min-h-[100px]"
                 />
                 {renderError('message')}
               </div>
@@ -343,7 +343,7 @@ export default function SupportScreen() {
               <Button
                 onClick={handleSend}
                 disabled={sending}
-                className="w-full h-12 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-semibold rounded-xl cursor-pointer mt-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-12 bg-[#0D5C63] hover:bg-[#083A3E] text-white font-semibold rounded-xl cursor-pointer mt-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {sending ? (
                   <motion.div
@@ -377,7 +377,7 @@ export default function SupportScreen() {
         <motion.div variants={itemVariants}>
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1">
-              <Shield className="w-5 h-5 text-[#1E40AF]" />
+              <Shield className="w-5 h-5 text-[#0D5C63]" />
               <h3 className="font-semibold text-base">{t('support.faq')}</h3>
             </div>
 
@@ -426,7 +426,7 @@ export default function SupportScreen() {
                             className="overflow-hidden"
                           >
                             <div className="px-5 pb-4 pt-0">
-                              <p className="text-sm text-muted-foreground leading-relaxed pl-1 border-l-2 border-[#1E40AF]/20">
+                              <p className="text-sm text-muted-foreground leading-relaxed pl-1 border-l-2 border-[#0D5C63]/20">
                                 {t(faq.answerKey)}
                               </p>
                             </div>
@@ -449,7 +449,7 @@ export default function SupportScreen() {
               <Button
                 variant="outline"
                 onClick={handleDirectEmail}
-                className="w-full h-11 rounded-xl border-[#1E40AF]/20 text-[#1E40AF] hover:bg-[#1E40AF]/5 cursor-pointer font-medium transition-all"
+                className="w-full h-11 rounded-xl border-[#0D5C63]/20 text-[#0D5C63] hover:bg-[#0D5C63]/5 cursor-pointer font-medium transition-all"
               >
                 <Mail className="w-4.5 h-4.5" />
                 <span className="flex-1 text-left">{t('support.email_to')}</span>

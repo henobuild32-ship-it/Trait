@@ -44,8 +44,8 @@ export default function AuthRoleScreen() {
             transition={{ type: 'spring', stiffness: 200, damping: 18, duration: 0.4 }}
           >
             <div className="relative">
-              <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[#1E40AF]/20 via-blue-400/10 to-[#2563EB]/15 blur-lg pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
-              <div className="relative rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-xl shadow-blue-500/25 dark:shadow-blue-900/40">
+              <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[#0D5C63]/20 via-blue-400/10 to-[#14888F]/15 blur-lg pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
+              <div className="relative rounded-xl bg-gradient-to-br from-[#0D5C63] to-[#14888F] p-1 shadow-xl shadow-blue-500/25 dark:shadow-blue-900/40">
                 <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1.5">
                   <Image
                     src="/trait-logo.png"
@@ -80,8 +80,8 @@ export default function AuthRoleScreen() {
               <CardContent className="p-6 flex flex-col items-center gap-3">
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
                   selectedRole === 'client'
-                    ? 'bg-[#1E40AF] text-white'
-                    : 'bg-blue-100 text-[#1E40AF]'
+                    ? 'bg-[#0D5C63] text-white'
+                    : 'bg-blue-100 text-[#0D5C63]'
                 }`}>
                   <User className="w-8 h-8" />
                 </div>
@@ -95,7 +95,7 @@ export default function AuthRoleScreen() {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="w-6 h-6 rounded-full bg-[#1E40AF] flex items-center justify-center"
+                    className="w-6 h-6 rounded-full bg-[#0D5C63] flex items-center justify-center"
                   >
                     <span className="text-white text-xs font-bold">✓</span>
                   </motion.div>
@@ -155,7 +155,7 @@ export default function AuthRoleScreen() {
         >
           <Button
             onClick={() => navigateTo('auth-phone')}
-            className="w-full h-13 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 cursor-pointer"
+            className="w-full h-13 text-base font-semibold bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl shadow-lg shadow-blue-900/10 cursor-pointer"
             size="lg"
           >
             {t('auth.continue')}
@@ -168,7 +168,7 @@ export default function AuthRoleScreen() {
             {t('auth.already_account')}{' '}
             <button
               onClick={() => navigateTo('auth-login')}
-              className="font-semibold text-[#1E40AF] hover:text-blue-900 underline underline-offset-2 cursor-pointer"
+              className="font-semibold text-[#0D5C63] hover:text-blue-900 underline underline-offset-2 cursor-pointer"
             >
               {t('auth.login_link')}
             </button>

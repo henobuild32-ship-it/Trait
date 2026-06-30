@@ -228,7 +228,7 @@ export default function CardScreen() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1E40AF] mx-auto mb-3" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#0D5C63] mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Chargement de vos cartes...</p>
         </div>
       </div>
@@ -260,7 +260,7 @@ export default function CardScreen() {
             onClick={() => setActiveSubTab('my')}
             className={`flex-1 py-3 text-xs font-bold border-b-2 text-center transition-all ${
               activeSubTab === 'my'
-                ? 'border-[#1E40AF] text-[#1E40AF]'
+                ? 'border-[#0D5C63] text-[#0D5C63]'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -270,7 +270,7 @@ export default function CardScreen() {
             onClick={() => setActiveSubTab('children')}
             className={`flex-1 py-3 text-xs font-bold border-b-2 text-center transition-all ${
               activeSubTab === 'children'
-                ? 'border-[#1E40AF] text-[#1E40AF]'
+                ? 'border-[#0D5C63] text-[#0D5C63]'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -280,7 +280,7 @@ export default function CardScreen() {
             onClick={() => setActiveSubTab('recharge')}
             className={`flex-1 py-3 text-xs font-bold border-b-2 text-center transition-all ${
               activeSubTab === 'recharge'
-                ? 'border-[#1E40AF] text-[#1E40AF]'
+                ? 'border-[#0D5C63] text-[#0D5C63]'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -328,7 +328,7 @@ export default function CardScreen() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs text-[#1E40AF] hover:text-[#1E40AF]/80 h-7 px-2"
+                        className="text-xs text-[#0D5C63] hover:text-[#0D5C63]/80 h-7 px-2"
                         onClick={() => navigateTo('card-request')}
                       >
                         <Plus className="w-3.5 h-3.5 mr-1" />
@@ -340,7 +340,7 @@ export default function CardScreen() {
                       {cards.map((card, index) => {
                         const balance = getCardBalance(card.cardType);
                         const isUSD = card.cardType === 'USD';
-                        const accentColor = isUSD ? '#3B82F6' : '#EF4444';
+                        const accentColor = isUSD ? '#14888F' : '#EF4444';
 
                         return (
                           <div key={card.id}>
@@ -389,7 +389,7 @@ export default function CardScreen() {
                         const config = statusConfig[request.status] || statusConfig.pending;
                         const StatusIcon = config.icon;
                         const isUSD = request.cardType === 'USD';
-                        const accentColor = isUSD ? '#3B82F6' : '#EF4444';
+                        const accentColor = isUSD ? '#14888F' : '#EF4444';
 
                         return (
                           <Card key={request.id} className="border-border shadow-sm">
@@ -526,7 +526,7 @@ export default function CardScreen() {
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-foreground">Enfant à recharger</label>
                     <select
-                      className="w-full h-11 rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+                      className="w-full h-11 rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
                       value={selectedChildId}
                       onChange={(e) => setSelectedChildId(e.target.value)}
                     >
@@ -569,7 +569,7 @@ export default function CardScreen() {
                           onClick={() => setRechargeCurrency('USD')}
                           className={`px-2.5 rounded-lg text-xs font-bold transition-all ${
                             rechargeCurrency === 'USD'
-                              ? 'bg-[#1E40AF] text-white'
+                              ? 'bg-[#0D5C63] text-white'
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >
@@ -612,7 +612,7 @@ export default function CardScreen() {
                   <Button
                     type="submit"
                     disabled={processing}
-                    className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white font-semibold h-11 rounded-xl mt-4"
+                    className="w-full bg-[#0D5C63] hover:bg-[#0D5C63]/90 text-white font-semibold h-11 rounded-xl mt-4"
                   >
                     {processing ? (
                       <>
@@ -630,7 +630,7 @@ export default function CardScreen() {
             {/* History */}
             <div className="space-y-3">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                <History className="size-4 text-[#1E40AF]" />
+                <History className="size-4 text-[#0D5C63]" />
                 Historique des Recharges
               </h3>
 

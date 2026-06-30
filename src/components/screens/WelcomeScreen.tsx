@@ -154,7 +154,7 @@ function PremiumFeatureCard({
 
         <div className="relative z-10">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 dark:from-blue-400/15 dark:to-blue-500/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 border border-blue-200/30 dark:border-blue-700/20">
-            <Icon className="w-5.5 h-5.5 text-[#1E40AF] dark:text-blue-400" />
+            <Icon className="w-5.5 h-5.5 text-[#0D5C63] dark:text-blue-400" />
           </div>
           <h3 className="text-sm font-bold text-foreground mb-1.5">{title}</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
@@ -302,7 +302,7 @@ export default function WelcomeScreen() {
                 className={`
                   px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all duration-300 cursor-pointer
                   ${language === lang
-                    ? 'bg-[#1E40AF] text-white shadow-lg shadow-blue-500/25 scale-105'
+                    ? 'bg-[#0D5C63] text-white shadow-lg shadow-blue-500/25 scale-105'
                     : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
                   }
                 `}
@@ -329,7 +329,7 @@ export default function WelcomeScreen() {
             >
               <div className="relative">
                 {/* Outer glow pulse - WhatsApp style */}
-                <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-[#1E40AF]/25 via-blue-400/15 to-[#2563EB]/20 blur-2xl pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
+                <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-[#0D5C63]/25 via-blue-400/15 to-[#14888F]/20 blur-2xl pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
                 {/* Animated ring pulse */}
                 <motion.div
                   animate={{ scale: [1, 1.04, 1], opacity: [0.4, 0.7, 0.4] }}
@@ -337,7 +337,7 @@ export default function WelcomeScreen() {
                   className="absolute -inset-3 rounded-[32px] border-2 border-blue-300/25 dark:border-blue-500/20 pointer-events-none"
                 />
                 {/* Logo container */}
-                <div className="relative rounded-2xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-2xl shadow-blue-600/30 dark:shadow-blue-900/50">
+                <div className="relative rounded-2xl bg-gradient-to-br from-[#0D5C63] to-[#14888F] p-1 shadow-2xl shadow-blue-600/30 dark:shadow-blue-900/50">
                   <div className="rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-2">
                     <Image
                       src="/trait-logo.png"
@@ -403,7 +403,7 @@ export default function WelcomeScreen() {
                   setSelectedRole('client');
                   navigateTo('auth-phone');
                 }}
-                className="w-full sm:w-auto px-8 h-12 text-sm font-bold bg-gradient-to-r from-[#1E40AF] to-[#2563EB] hover:from-[#1E3A8A] hover:to-[#1E40AF] text-white rounded-xl shadow-xl shadow-blue-500/25 hover:shadow-blue-500/35 transition-all duration-300 cursor-pointer active:scale-[0.97] group"
+                className="w-full sm:w-auto px-8 h-12 text-sm font-bold bg-gradient-to-r from-[#0D5C63] to-[#14888F] hover:from-[#083A3E] hover:to-[#0D5C63] text-white rounded-xl shadow-xl shadow-blue-500/25 hover:shadow-blue-500/35 transition-all duration-300 cursor-pointer active:scale-[0.97] group"
               >
                 <Users className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
                 {t('welcome.signup')}
@@ -412,7 +412,7 @@ export default function WelcomeScreen() {
               <Button
                 onClick={() => navigateTo('auth-login')}
                 variant="outline"
-                className="w-full sm:w-auto px-8 h-12 text-sm font-bold border-2 border-[#1E40AF]/20 text-[#1E40AF] dark:text-blue-400 dark:border-blue-700/30 hover:bg-[#1E40AF]/5 dark:hover:bg-blue-950/30 rounded-xl transition-all duration-300 cursor-pointer active:scale-[0.97]"
+                className="w-full sm:w-auto px-8 h-12 text-sm font-bold border-2 border-[#0D5C63]/20 text-[#0D5C63] dark:text-blue-400 dark:border-blue-700/30 hover:bg-[#0D5C63]/5 dark:hover:bg-blue-950/30 rounded-xl transition-all duration-300 cursor-pointer active:scale-[0.97]"
               >
                 {t('welcome.login')}
               </Button>
@@ -456,7 +456,7 @@ export default function WelcomeScreen() {
                     {/* Top accent line */}
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent" />
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/20 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                      <Icon className="w-4.5 h-4.5 text-[#1E40AF] dark:text-blue-400" />
+                      <Icon className="w-4.5 h-4.5 text-[#0D5C63] dark:text-blue-400" />
                     </div>
                     <p className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
                       <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix || ''} duration={2.5} />
@@ -475,8 +475,8 @@ export default function WelcomeScreen() {
           ═══════════════════════════════════════════════════════════ */}
           <AnimatedSection delay={0.1}>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF]/10 to-[#1E40AF]/5 flex items-center justify-center">
-                <ShoppingBag className="w-4 h-4 text-[#1E40AF] dark:text-blue-400" />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63]/10 to-[#0D5C63]/5 flex items-center justify-center">
+                <ShoppingBag className="w-4 h-4 text-[#0D5C63] dark:text-blue-400" />
               </div>
               <h2 className="text-base sm:text-lg font-bold text-foreground">{t('welcome.feature_cards_title')}</h2>
             </div>
@@ -495,7 +495,7 @@ export default function WelcomeScreen() {
                   >
                     <div className="min-w-[160px] max-w-[180px] rounded-2xl bg-card/80 backdrop-blur-sm border border-border/40 p-4 hover:border-blue-200/50 dark:hover:border-blue-700/30 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 group">
                       <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 dark:from-blue-400/15 dark:to-blue-500/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 border border-blue-200/20 dark:border-blue-700/15">
-                        <Icon className="w-5 h-5 text-[#1E40AF] dark:text-blue-400" />
+                        <Icon className="w-5 h-5 text-[#0D5C63] dark:text-blue-400" />
                       </div>
                       <p className="text-xs font-bold text-foreground leading-snug mb-1">{t(service.titleKey)}</p>
                       <p className="text-[10px] text-muted-foreground leading-snug">{t(service.descKey)}</p>
@@ -511,8 +511,8 @@ export default function WelcomeScreen() {
           ═══════════════════════════════════════════════════════════ */}
           <AnimatedSection delay={0.1}>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF]/10 to-[#1E40AF]/5 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-[#1E40AF] dark:text-blue-400" />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63]/10 to-[#0D5C63]/5 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-[#0D5C63] dark:text-blue-400" />
               </div>
               <h2 className="text-base sm:text-lg font-bold text-foreground">{t('welcome.features')}</h2>
             </div>
@@ -626,7 +626,7 @@ export default function WelcomeScreen() {
                 <Button
                   onClick={() => navigateTo('support')}
                   variant="ghost"
-                  className="w-full h-11 text-sm font-semibold text-[#1E40AF] dark:text-blue-400 hover:text-[#1E3A8A] dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30 border border-[#1E40AF]/15 dark:border-blue-800/20 rounded-xl transition-all duration-300 cursor-pointer group"
+                  className="w-full h-11 text-sm font-semibold text-[#0D5C63] dark:text-blue-400 hover:text-[#083A3E] dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30 border border-[#0D5C63]/15 dark:border-blue-800/20 rounded-xl transition-all duration-300 cursor-pointer group"
                 >
                   <MessageCircle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
                   {t('welcome.contact')}
@@ -677,8 +677,8 @@ export default function WelcomeScreen() {
           {!isStandalone && !isInstalled && (
             <AnimatedSection>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E40AF]/10 to-[#1E40AF]/5 flex items-center justify-center">
-                  <Smartphone className="w-4 h-4 text-[#1E40AF] dark:text-blue-400" />
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D5C63]/10 to-[#0D5C63]/5 flex items-center justify-center">
+                  <Smartphone className="w-4 h-4 text-[#0D5C63] dark:text-blue-400" />
                 </div>
                 <h2 className="text-base sm:text-lg font-bold text-foreground">{t('welcome.download_title')}</h2>
               </div>
@@ -693,7 +693,7 @@ export default function WelcomeScreen() {
                   className="relative rounded-2xl bg-card/80 backdrop-blur-sm border border-border/40 p-4 sm:p-5 text-center overflow-hidden group hover:border-blue-200/50 dark:hover:border-blue-700/30 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0D5C63] to-[#14888F] flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-300">
                     {installing ? (
                       <Loader2 className="w-6 h-6 text-white animate-spin" />
                     ) : (
@@ -725,7 +725,7 @@ export default function WelcomeScreen() {
                 <motion.p
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-3 text-xs text-[#1E40AF] dark:text-blue-400 font-medium flex items-center justify-center gap-1.5"
+                  className="mt-3 text-xs text-[#0D5C63] dark:text-blue-400 font-medium flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-3.5 h-3.5" />
                   {t('welcome.install_ready')}
@@ -743,10 +743,10 @@ export default function WelcomeScreen() {
           <AnimatedSection>
             <div className="flex items-start gap-3 rounded-2xl bg-gradient-to-br from-blue-50/80 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/15 border border-blue-100/60 dark:border-blue-900/40 p-4 backdrop-blur-sm">
               <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0 mt-0.5">
-                <Bell className="w-4 h-4 text-[#1E40AF] dark:text-blue-400" />
+                <Bell className="w-4 h-4 text-[#0D5C63] dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs font-bold text-[#1E40AF] dark:text-blue-300 mb-1">{t('welcome.good_to_know')}</p>
+                <p className="text-xs font-bold text-[#0D5C63] dark:text-blue-300 mb-1">{t('welcome.good_to_know')}</p>
                 <p className="text-[11px] text-blue-700/80 dark:text-blue-400/70 leading-relaxed">{t('welcome.good_to_know_text')}</p>
               </div>
             </div>
@@ -758,7 +758,7 @@ export default function WelcomeScreen() {
           <AnimatedSection>
             <div className="relative rounded-2xl overflow-hidden">
               {/* Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF] via-[#2563EB] to-[#DC2626]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0D5C63] via-[#14888F] to-[#DC2626]" />
               {/* Decorative elements */}
               <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-white/8" style={{ animation: 'gradientOrb 10s ease-in-out infinite' }} />
               <div className="absolute -bottom-12 -left-12 w-36 h-36 rounded-full bg-white/5" style={{ animation: 'gradientOrb 14s 4s ease-in-out infinite' }} />
@@ -777,7 +777,7 @@ export default function WelcomeScreen() {
                       setSelectedRole('client');
                       navigateTo('auth-phone');
                     }}
-                    className="bg-white hover:bg-white/90 text-[#1E40AF] font-bold rounded-xl shadow-xl shadow-black/10 px-8 h-12 transition-all duration-300 cursor-pointer group"
+                    className="bg-white hover:bg-white/90 text-[#0D5C63] font-bold rounded-xl shadow-xl shadow-black/10 px-8 h-12 transition-all duration-300 cursor-pointer group"
                   >
                     {t('welcome.cta_button')}
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -812,7 +812,7 @@ export default function WelcomeScreen() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${installPlatform === 'android' ? 'bg-gradient-to-br from-[#1E40AF] to-[#2563EB]' : 'bg-gradient-to-br from-slate-700 to-slate-900'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${installPlatform === 'android' ? 'bg-gradient-to-br from-[#0D5C63] to-[#14888F]' : 'bg-gradient-to-br from-slate-700 to-slate-900'}`}>
                       {installPlatform === 'android' ? <Smartphone className="w-5 h-5 text-white" /> : <Apple className="w-5 h-5 text-white" />}
                     </div>
                     <div>
@@ -891,7 +891,7 @@ export default function WelcomeScreen() {
 
                 {/* App badge preview */}
                 <div className="mt-5 p-3 rounded-xl bg-muted/30 border border-border/30 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center p-0.5 shadow-lg shadow-blue-500/20">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0D5C63] to-[#14888F] flex items-center justify-center p-0.5 shadow-lg shadow-blue-500/20">
                     <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1">
                       <img src="/trait-logo.png" alt="TRAIT" className="w-full h-full object-contain" />
                     </div>
@@ -900,12 +900,12 @@ export default function WelcomeScreen() {
                     <p className="text-sm font-bold text-foreground">TRAIT</p>
                     <p className="text-[10px] text-muted-foreground">{t('welcome.app_desc_short')}</p>
                   </div>
-                  <Download className="w-4 h-4 text-[#1E40AF]" />
+                  <Download className="w-4 h-4 text-[#0D5C63]" />
                 </div>
 
                 <Button
                   onClick={() => setShowInstallModal(false)}
-                  className="w-full h-11 mt-5 bg-gradient-to-r from-[#1E40AF] to-[#2563EB] hover:from-[#1E3A8A] hover:to-[#1E40AF] text-white font-bold rounded-xl cursor-pointer shadow-lg shadow-blue-500/20"
+                  className="w-full h-11 mt-5 bg-gradient-to-r from-[#0D5C63] to-[#14888F] hover:from-[#083A3E] hover:to-[#0D5C63] text-white font-bold rounded-xl cursor-pointer shadow-lg shadow-blue-500/20"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   {t('welcome.install_modal_got_it')}

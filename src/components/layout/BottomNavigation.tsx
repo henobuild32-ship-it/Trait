@@ -53,7 +53,7 @@ export default function BottomNavigation() {
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 transition-all duration-200 min-w-[52px]',
                 isActive
-                  ? 'text-[#1E40AF]'
+                  ? 'text-[#0D5C63]'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -69,7 +69,7 @@ export default function BottomNavigation() {
                 {t(item.labelKey)}
               </span>
               {isActive && (
-                <div className="absolute -bottom-0 h-0.5 w-8 rounded-full bg-[#1E40AF]" />
+                <div className="absolute -bottom-0 h-0.5 w-8 rounded-full bg-[#0D5C63]" />
               )}
             </button>
           );

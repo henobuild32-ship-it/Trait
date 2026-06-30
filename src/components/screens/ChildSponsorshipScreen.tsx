@@ -247,7 +247,7 @@ export default function ChildSponsorshipScreen() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center pt-24">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1E40AF]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#0D5C63]" />
           <p className="text-xs text-muted-foreground mt-2">Chargement du module de parrainage...</p>
         </div>
       ) : (
@@ -258,7 +258,7 @@ export default function ChildSponsorshipScreen() {
               onClick={() => setActiveTab('create')}
               className={`flex-1 py-3 text-sm font-semibold border-b-2 text-center transition-all ${
                 activeTab === 'create'
-                  ? 'border-[#1E40AF] text-[#1E40AF]'
+                  ? 'border-[#0D5C63] text-[#0D5C63]'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -271,7 +271,7 @@ export default function ChildSponsorshipScreen() {
               onClick={() => setActiveTab('list')}
               className={`flex-1 py-3 text-sm font-semibold border-b-2 text-center transition-all ${
                 activeTab === 'list'
-                  ? 'border-[#1E40AF] text-[#1E40AF]'
+                  ? 'border-[#0D5C63] text-[#0D5C63]'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -285,7 +285,7 @@ export default function ChildSponsorshipScreen() {
                 onClick={() => setActiveTab('recharge')}
                 className={`flex-1 py-3 text-sm font-semibold border-b-2 text-center transition-all ${
                   activeTab === 'recharge'
-                    ? 'border-[#1E40AF] text-[#1E40AF]'
+                    ? 'border-[#0D5C63] text-[#0D5C63]'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -357,7 +357,7 @@ export default function ChildSponsorshipScreen() {
                               onClick={() => setCreateCardType('USD')}
                               className={`py-3.5 rounded-xl border text-center font-semibold text-sm transition-all flex flex-col items-center justify-center gap-1 ${
                                 createCardType === 'USD'
-                                  ? 'border-[#1E40AF] bg-[#1E40AF]/5 text-[#1E40AF] dark:bg-blue-950/20'
+                                  ? 'border-[#0D5C63] bg-[#0D5C63]/5 text-[#0D5C63] dark:bg-blue-950/20'
                                   : 'border-border text-muted-foreground hover:bg-muted/50'
                               }`}
                             >
@@ -397,7 +397,7 @@ export default function ChildSponsorshipScreen() {
                         <Button
                           type="submit"
                           disabled={processing}
-                          className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white font-semibold h-11 rounded-xl mt-4"
+                          className="w-full bg-[#0D5C63] hover:bg-[#0D5C63]/90 text-white font-semibold h-11 rounded-xl mt-4"
                         >
                           {processing ? (
                             <>
@@ -519,7 +519,7 @@ export default function ChildSponsorshipScreen() {
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-foreground">Sélectionner l&apos;enfant</label>
                         <select
-                          className="w-full h-11 rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2"
+                          className="w-full h-11 rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] focus-visible:ring-offset-2"
                           value={selectedChildId}
                           onChange={(e) => setSelectedChildId(e.target.value)}
                         >
@@ -562,7 +562,7 @@ export default function ChildSponsorshipScreen() {
                               onClick={() => setRechargeCurrency('USD')}
                               className={`px-2.5 rounded-lg text-xs font-bold transition-all ${
                                 rechargeCurrency === 'USD'
-                                  ? 'bg-[#1E40AF] text-white'
+                                  ? 'bg-[#0D5C63] text-white'
                                   : 'bg-muted text-muted-foreground'
                               }`}
                             >
@@ -605,7 +605,7 @@ export default function ChildSponsorshipScreen() {
                       <Button
                         type="submit"
                         disabled={processing}
-                        className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white font-semibold h-11 rounded-xl mt-4"
+                        className="w-full bg-[#0D5C63] hover:bg-[#0D5C63]/90 text-white font-semibold h-11 rounded-xl mt-4"
                       >
                         {processing ? (
                           <>
@@ -623,7 +623,7 @@ export default function ChildSponsorshipScreen() {
               {/* === HISTORIQUE RECHARGES === */}
               <div className="space-y-3">
                 <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                  <History className="size-4 text-[#1E40AF]" />
+                  <History className="size-4 text-[#0D5C63]" />
                   Historique des Recharges parentales
                 </h3>
 

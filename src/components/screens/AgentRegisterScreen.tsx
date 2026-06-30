@@ -288,8 +288,8 @@ export default function AgentRegisterScreen() {
             </p>
           </div>
           <div className="flex items-center gap-1">
-            <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${step >= 1 ? 'bg-[#1E40AF]' : 'bg-muted'}`} />
-            <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${step >= 2 ? 'bg-[#1E40AF]' : 'bg-muted'}`} />
+            <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${step >= 1 ? 'bg-[#0D5C63]' : 'bg-muted'}`} />
+            <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${step >= 2 ? 'bg-[#0D5C63]' : 'bg-muted'}`} />
           </div>
         </div>
       </motion.header>
@@ -340,7 +340,7 @@ export default function AgentRegisterScreen() {
                   className="hidden"
                 />
                 {photoPreview ? (
-                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-[#1E40AF]/30 mx-auto">
+                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-[#0D5C63]/30 mx-auto">
                     <Image
                       src={photoPreview}
                       alt="Photo"
@@ -360,10 +360,10 @@ export default function AgentRegisterScreen() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-28 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 hover:bg-muted/50 hover:border-[#1E40AF]/40 transition-all duration-200 flex flex-col items-center justify-center gap-2 cursor-pointer group"
+                    className="w-full h-28 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 hover:bg-muted/50 hover:border-[#0D5C63]/40 transition-all duration-200 flex flex-col items-center justify-center gap-2 cursor-pointer group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-[#1E40AF]/10 flex items-center justify-center transition-colors">
-                      <Camera className="w-5 h-5 text-muted-foreground group-hover:text-[#1E40AF] transition-colors" />
+                    <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-[#0D5C63]/10 flex items-center justify-center transition-colors">
+                      <Camera className="w-5 h-5 text-muted-foreground group-hover:text-[#0D5C63] transition-colors" />
                     </div>
                     <div className="text-center">
                       <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
@@ -458,8 +458,8 @@ export default function AgentRegisterScreen() {
                       disabled={loading}
                       className={`h-11 rounded-lg border text-sm font-medium transition-all duration-200 cursor-pointer ${
                         gender === g.value
-                          ? 'border-[#1E40AF] bg-[#1E40AF]/10 text-[#1E40AF] dark:bg-[#1E40AF]/20 dark:text-blue-300 shadow-sm'
-                          : 'border-border bg-card text-muted-foreground hover:border-[#1E40AF]/30 hover:text-foreground'
+                          ? 'border-[#0D5C63] bg-[#0D5C63]/10 text-[#0D5C63] dark:bg-[#0D5C63]/20 dark:text-blue-300 shadow-sm'
+                          : 'border-border bg-card text-muted-foreground hover:border-[#0D5C63]/30 hover:text-foreground'
                       }`}
                     >
                       {g.emoji} {g.label}
@@ -567,7 +567,7 @@ export default function AgentRegisterScreen() {
                     setStep(2);
                   }}
                   disabled={loading}
-                  className="w-full h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 cursor-pointer"
+                  className="w-full h-12 text-base font-semibold bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl shadow-lg shadow-blue-900/10 cursor-pointer"
                 >
                   Suivant
                 </Button>
@@ -674,7 +674,7 @@ export default function AgentRegisterScreen() {
               <motion.div variants={itemVariants}>
                 <Card className="border-blue-100 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20">
                   <CardContent className="p-3 flex items-start gap-2.5">
-                    <Info className="w-4 h-4 text-[#1E40AF] dark:text-blue-400 shrink-0 mt-0.5" />
+                    <Info className="w-4 h-4 text-[#0D5C63] dark:text-blue-400 shrink-0 mt-0.5" />
                     <div className="text-[11px] text-blue-800 dark:text-blue-300 leading-relaxed">
                       <p className="font-semibold mb-0.5">Sécurité de votre compte</p>
                       <ul className="space-y-0.5">
@@ -732,7 +732,7 @@ export default function AgentRegisterScreen() {
                 <Button
                   type="submit"
                   disabled={loading || !isStep2Valid()}
-                  className="flex-[2] h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer"
+                  className="flex-[2] h-12 text-base font-semibold bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     <>

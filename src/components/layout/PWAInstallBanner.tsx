@@ -35,7 +35,7 @@ export function PWAInstallBanner() {
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
             <div className="bg-card rounded-2xl shadow-xl border border-border p-4 flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center p-0.5 shadow-lg shadow-blue-500/20">
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#0D5C63] to-[#14888F] flex items-center justify-center p-0.5 shadow-lg shadow-blue-500/20">
                 <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1">
                   <img src="/trait-logo.png" alt="TRAIT" className="w-full h-full object-contain" />
                 </div>
@@ -82,7 +82,7 @@ export function PWAInstallBanner() {
             className="fixed bottom-20 left-3 right-3 z-50 mx-auto max-w-md"
           >
             <div className="bg-card rounded-2xl shadow-xl border border-border p-4 flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#1E40AF] to-[#2563EB] flex items-center justify-center p-0.5 shadow-lg shadow-blue-500/20">
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#0D5C63] to-[#14888F] flex items-center justify-center p-0.5 shadow-lg shadow-blue-500/20">
                 <div className="w-full h-full rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1">
                   <img src="/trait-logo.png" alt="TRAIT" className="w-full h-full object-contain" />
                 </div>

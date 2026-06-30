@@ -204,7 +204,7 @@ export default function AdminChildrenScreen() {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#1E40AF]" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#0D5C63]" />
           </div>
         ) : children.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
@@ -269,7 +269,7 @@ export default function AdminChildrenScreen() {
                     return (
                       <div key={card.id} className="p-3 border rounded-xl bg-card space-y-3 shadow-sm relative">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-[#1E40AF] dark:text-blue-400 flex items-center gap-1">
+                          <span className="font-bold text-[#0D5C63] dark:text-blue-400 flex items-center gap-1">
                             <CreditCard className="size-3.5" />
                             Carte {card.cardType}
                           </span>
@@ -342,7 +342,7 @@ export default function AdminChildrenScreen() {
         <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <History className="h-5 w-5 text-[#1E40AF]" />
+              <History className="h-5 w-5 text-[#0D5C63]" />
               Historique : {historyTarget?.name}
             </DialogTitle>
             <DialogDescription>
@@ -353,7 +353,7 @@ export default function AdminChildrenScreen() {
           <div className="flex-1 overflow-y-auto py-4 space-y-3 min-h-[300px]">
             {loadingHistory ? (
               <div className="flex justify-center pt-12">
-                <Loader2 className="h-6 w-6 animate-spin text-[#1E40AF]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#0D5C63]" />
               </div>
             ) : historyList.length === 0 ? (
               <p className="text-xs text-muted-foreground italic text-center py-10">

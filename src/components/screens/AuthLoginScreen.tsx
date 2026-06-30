@@ -166,8 +166,8 @@ export default function AuthLoginScreen() {
             transition={{ type: 'spring', stiffness: 200, damping: 18, duration: 0.4 }}
           >
             <div className="relative">
-              <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[#1E40AF]/20 via-blue-400/10 to-[#2563EB]/15 blur-lg pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
-              <div className="relative rounded-xl bg-gradient-to-br from-[#1E40AF] to-[#2563EB] p-1 shadow-xl shadow-blue-500/25 dark:shadow-blue-900/40">
+              <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[#0D5C63]/20 via-blue-400/10 to-[#14888F]/15 blur-lg pointer-events-none" style={{ animation: 'traitGlow 3s ease-in-out infinite' }} />
+              <div className="relative rounded-xl bg-gradient-to-br from-[#0D5C63] to-[#14888F] p-1 shadow-xl shadow-blue-500/25 dark:shadow-blue-900/40">
                 <div className="rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden p-1.5">
                   <Image
                     src="/trait-logo.png"
@@ -194,7 +194,7 @@ export default function AuthLoginScreen() {
             onClick={() => setSelectedRole('client')}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
               selectedRole === 'client'
-                ? 'bg-[#1E40AF] text-white shadow-sm'
+                ? 'bg-[#0D5C63] text-white shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -293,7 +293,7 @@ export default function AuthLoginScreen() {
           <Button
             type="submit"
             disabled={loading || !phone.trim() || !password.trim()}
-            className="w-full h-12 text-base font-semibold bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-2"
+            className="w-full h-12 text-base font-semibold bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl shadow-lg shadow-blue-900/10 disabled:opacity-50 cursor-pointer mt-2"
           >
             {loading ? (
               <>
@@ -312,7 +312,7 @@ export default function AuthLoginScreen() {
             {t('auth.no_account')}{' '}
             <button
               onClick={() => navigateTo('auth-role')}
-              className="font-semibold text-[#1E40AF] hover:text-blue-900 underline underline-offset-2 cursor-pointer"
+              className="font-semibold text-[#0D5C63] hover:text-blue-900 underline underline-offset-2 cursor-pointer"
             >
               {t('auth.create_account')}
             </button>

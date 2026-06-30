@@ -1,6 +1,6 @@
 {
-  "name": "Trait - Transfert d'argent, Troc & Marketplace",
-  "short_name": "Trait",
+  "name": "TRAIT v2.0 - Transfert, Paiement QR & Troc",
+  "short_name": "TRAIT v2",
   "description": "Plateforme numérique innovante combinant transfert d'argent, troc digital et marketplace. Accessible avec ou sans internet via USSD.",
   "start_url": "/",
   "display": "standalone",

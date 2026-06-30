@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TRAIT - Transfert d'argent, Troc & Marketplace",
-  description: "Plateforme numérique innovante combinant transfert d'argent, troc digital et marketplace. Accessible avec ou sans internet via USSD.",
-  keywords: ["Trait", "transfert", "argent", "troc", "marketplace", "USSD", "fintech", "mobile money", "RDC", "Congo"],
+  title: "TRAIT v2.0 - Transfert, Paiement QR, Marketplace & Troc",
+  description: "Plateforme numérique innovante combinant transfert d'argent, paiement par QR, troc digital et marketplace. Version 2.0 — Accessible avec ou sans internet via USSD.",
+  keywords: ["Trait", "transfert", "argent", "troc", "marketplace", "USSD", "fintech", "mobile money", "RDC", "Congo", "QR payment"],
   authors: [{ name: "Trait Team" }],
   icons: {
     icon: [
@@ -32,11 +32,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "TRAIT",
+    title: "TRAIT v2.0",
   },
   openGraph: {
-    title: "TRAIT - Transfert d'argent, Troc & Marketplace",
-    description: "Plateforme numérique innovante combinant transfert d'argent, troc digital et marketplace.",
+    title: "TRAIT v2.0 - Transfert, Paiement QR, Marketplace & Troc",
+    description: "Plateforme numérique innovante combinant transfert d'argent, paiement par QR, troc digital et marketplace. Version 2.0.",
     type: "website",
     images: ["/icon-512.png?v=2"],
   },

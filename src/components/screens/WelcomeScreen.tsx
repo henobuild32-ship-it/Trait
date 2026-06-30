@@ -927,7 +927,7 @@ export default function WelcomeScreen() {
           <p className="text-xs text-muted-foreground">
             {t('welcome.footer')}
           </p>
-          <p className="text-[10px] text-muted-foreground/50 mt-1">v1.0.0</p>
+          <p className="text-[10px] text-muted-foreground/50 mt-1">Version 2.0</p>
         </motion.footer>
       </motion.div>
     </div>

@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
 
-const CURRENT_VERSION = '0.3.0';
-const RELEASE_DATE = '2026-06-11';
+const CURRENT_VERSION = '2.0.0';
+const RELEASE_DATE = '2026-06-30';
 const CHANGELOG = [
-  '🔒 Sécurité renforcée : mots de passe et PIN chiffrés',
-  '🔐 Authentification JWT pour toutes les API',
-  '🛡️ Routes administrateur protégées',
-  '💳 CVV des cartes masqué dans les réponses',
-  '⚡ Transactions financières atomiques (plus sécurisées)',
-  '📱 Système de mise à jour automatique',
-  '🔑 Vérification OTP sécurisée',
-  '🚫 Blocage après 5 tentatives PIN échouées',
+  '🎯 Version 2.0 — Nouvelle identité visuelle',
+  '📱 QR Code personnel noir & blanc avec lien unique',
+  '🔗 Paiement par scan : /pay/[userId]',
+  '⚡ Temps réel : WebSocket Socket.IO',
+  '🔔 Notifications centralisées (DB + WebSocket + Push)',
+  '📴 Mode hors ligne : files d\'attente IndexedDB',
+  '🔐 Authentification à deux facteurs (2FA/TOTP)',
+  '💳 Dépôt 4 méthodes : Mobile Money, Banque, Visa, Agent',
+  '🎫 Système de support client avec historique',
+  '✅ Admin KYC : validation documents + selfie',
+  '🏧 Changement de PIN sécurisé',
 ];
 
 export async function GET() {

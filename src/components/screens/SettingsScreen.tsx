@@ -229,7 +229,7 @@ export default function SettingsScreen() {
   const checkForUpdates = async () => {
     setUpdateLoading(true);
     try {
-      const res = await fetch('/api/app/version?currentVersion=1.0.0');
+      const res = await fetch('/api/app/version?currentVersion=2.0.0');
       if (res.ok) {
         const data = await res.json();
         if (data.hasUpdate) {
@@ -305,9 +305,9 @@ export default function SettingsScreen() {
         {
           icon: Info,
           label: t('settings.about'),
-          value: 'v1.0',
+          value: 'v2.0',
           action: () =>
-            toast.info('Trait v1.0 — Votre partenaire financier digital'),
+            toast.info('TRAIT Version 2.0 — Paiement par scan, temps réel, hors ligne'),
         },
         {
           icon: RefreshCw,

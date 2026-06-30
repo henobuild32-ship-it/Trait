@@ -1,5 +1,5 @@
-const CACHE_NAME = 'trait-pwa-v5';
-const API_CACHE = 'trait-api-v5';
+const CACHE_NAME = 'trait-pwa-v7';
+const API_CACHE = 'trait-api-v7';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

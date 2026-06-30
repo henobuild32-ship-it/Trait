@@ -22,11 +22,11 @@ export const metadata: Metadata = {
   authors: [{ name: "Trait Team" }],
   icons: {
     icon: [
-      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon-16.png?v=2", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png?v=2", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png?v=2", sizes: "192x192", type: "image/png" },
     ],
-    apple: "/apple-touch-icon.png",
+    apple: "/apple-touch-icon.png?v=2",
   },
   manifest: "/manifest.json",
   appleWebApp: {
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     title: "TRAIT - Transfert d'argent, Troc & Marketplace",
     description: "Plateforme numérique innovante combinant transfert d'argent, troc digital et marketplace.",
     type: "website",
-    images: ["/icon-512.png"],
+    images: ["/icon-512.png?v=2"],
   },
   other: {
     "mobile-web-app-capable": "yes",
@@ -65,8 +65,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="TRAIT" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="apple-touch-startup-image" href="/icon-512.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
+        <link rel="apple-touch-startup-image" href="/icon-512.png?v=2" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground font-sans`}

@@ -1,9 +1,13 @@
-const CACHE_NAME = 'trait-pwa-v3';
+const CACHE_NAME = 'trait-pwa-v4';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
+  '/icon-1024.png',
+  '/apple-touch-icon.png',
+  '/favicon-16.png',
+  '/favicon-32.png',
   '/trait-logo.png',
 ];
 

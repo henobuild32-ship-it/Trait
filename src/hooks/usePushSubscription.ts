@@ -41,8 +41,7 @@ export function usePushSubscription() {
 
     try {
       const reg = await navigator.serviceWorker.ready
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidKey) return false
+      const vapidKey = 'BBPKKvtLLzdznu4tmoOPFje1JlSGyg_Sue2SSbkRYaP9Q5XtMT1R3YESSpO7M29dnqHWWogWau_Mnf2XgejcETs'
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,

@@ -183,6 +183,7 @@ export default function AdminDevelopersScreen() {
     webhookUrl: string;
   } | null>(null);
   const [keysLoading, setKeysLoading] = useState(false);
+  const [sendEmailLoading, setSendEmailLoading] = useState(false);
 
   // Copy state
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -479,6 +480,39 @@ export default function AdminDevelopersScreen() {
       toast.error('Erreur lors de la génération des clés');
     } finally {
       setKeysLoading(false);
+    }
+  }
+
+  // ─── Send keys by email ──────────────────────────────────────────
+
+  async function handleSendKeysByEmail() {
+    if (!keysDev || !admin?.id) { toast.error('Données manquantes'); return }
+    setSendEmailLoading(true)
+    try {
+      const res = await fetch('/api/developers/send-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId: admin.id,
+          developerId: keysDev.id,
+          publicKey: generatedKeys?.publicKey || keysDev.publicKey,
+          secretKey: generatedKeys?.secretKey || keysDev.secretKey,
+          webhookUrl: generatedKeys?.webhookUrl || keysDev.webhookUrl,
+          email: keysDev.email,
+          name: keysDev.fullName,
+          appName: keysDev.appName,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`Clés envoyées à ${keysDev.email}`)
+      } else {
+        toast.error(data.error || "Échec de l'envoi")
+      }
+    } catch {
+      toast.error("Erreur lors de l'envoi")
+    } finally {
+      setSendEmailLoading(false)
     }
   }
 
@@ -1482,6 +1516,18 @@ export default function AdminDevelopersScreen() {
                       Fermer
                     </Button>
                     <Button
+                      variant="outline"
+                      className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/30 font-medium"
+                      onClick={handleSendKeysByEmail}
+                      disabled={sendEmailLoading}
+                    >
+                      {sendEmailLoading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Envoi...</>
+                      ) : (
+                        <><Mail className="h-4 w-4 mr-2" /> Envoyer par email</>
+                      )}
+                    </Button>
+                    <Button
                       className="bg-slate-700 hover:bg-slate-800 text-white font-medium"
                       onClick={handleGenerateKeys}
                       disabled={keysLoading}
@@ -1584,6 +1630,18 @@ export default function AdminDevelopersScreen() {
                   </div>
 
                   <DialogFooter className="gap-2 sm:gap-0">
+                    <Button
+                      variant="outline"
+                      className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/30 font-medium gap-2"
+                      onClick={handleSendKeysByEmail}
+                      disabled={sendEmailLoading}
+                    >
+                      {sendEmailLoading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" /> Envoi...</>
+                      ) : (
+                        <><Mail className="h-4 w-4" /> Envoyer par email</>
+                      )}
+                    </Button>
                     <Button
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
                       onClick={() => setKeysDialogOpen(false)}

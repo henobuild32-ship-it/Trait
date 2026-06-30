@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Terminal, Loader2, Code2 } from 'lucide-react';
+import { ArrowLeft, Terminal, Loader2, Code2, BookOpen, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -230,6 +230,23 @@ export default function DeveloperRegisterScreen() {
               <li>• URL de webhook pour les notifications en temps réel</li>
             </ul>
           </div>
+        </motion.div>
+
+        {/* Guide d'intégration button */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+        >
+          <Button
+            onClick={() => navigateTo('integration-guide')}
+            variant="outline"
+            className="w-full h-12 border-2 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400 font-semibold rounded-xl gap-2.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
+          >
+            <BookOpen className="h-5 w-5" />
+            Guide d&apos;intégration complet
+            <ExternalLink className="h-4 w-4 ml-auto opacity-50" />
+          </Button>
         </motion.div>
 
         {/* Form */}

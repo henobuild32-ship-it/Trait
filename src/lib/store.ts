@@ -72,6 +72,7 @@ export type PageName =
   | 'two-factor-setup'
   | 'change-pin'
   | 'my-qr-code'
+  | 'integration-guide'
   | 'admin-support';
 
 export type UserRole = 'client' | 'agent' | 'seller';

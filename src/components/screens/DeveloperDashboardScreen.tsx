@@ -287,6 +287,15 @@ export default function DeveloperDashboardScreen() {
             <Terminal className="size-5 text-emerald-600 dark:text-emerald-400" />
             <h1 className="text-lg font-semibold text-foreground">Espace Développeur</h1>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1.5 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+            onClick={() => navigateTo('integration-guide')}
+          >
+            <BookOpen className="size-3.5" />
+            Guide
+          </Button>
         </div>
 
         {/* ─── Tabs ─── */}

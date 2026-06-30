@@ -86,6 +86,7 @@ const ChildSponsorshipScreen = lazy(() => import('@/components/screens/ChildSpon
 const TwoFactorScreen = lazy(() => import('@/components/screens/TwoFactorScreen'));
 const ChangePinScreen = lazy(() => import('@/components/screens/ChangePinScreen'));
 const MyQrCodeScreen = lazy(() => import('@/components/screens/MyQrCodeScreen'));
+const IntegrationGuideScreen = lazy(() => import('@/components/screens/IntegrationGuideScreen'));
 const AdminSupportScreen = lazy(() => import('@/components/admin/AdminSupportScreen'));
 
 const BottomNavigation = lazy(() => import('@/components/layout/BottomNavigation'));
@@ -169,6 +170,7 @@ const screenMap: Record<PageName, React.LazyExoticComponent<React.ComponentType>
   'two-factor-setup': TwoFactorScreen,
   'change-pin': ChangePinScreen,
   'my-qr-code': MyQrCodeScreen,
+  'integration-guide': IntegrationGuideScreen,
   'admin-support': AdminSupportScreen,
   'seller-register': SellerRegisterScreen,
   'seller-pending': SellerPendingScreen,

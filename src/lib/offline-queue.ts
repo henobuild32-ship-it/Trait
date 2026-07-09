@@ -1,6 +1,6 @@
-const DB_NAME = 'trait-offline'
+const DB_NAME = 'trait-offline-sw'
 const DB_VERSION = 1
-const STORE_NAME = 'pending-transactions'
+const STORE_NAME = 'pending'
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -8,8 +8,7 @@ function openDB(): Promise<IDBDatabase> {
     req.onupgradeneeded = () => {
       const db = req.result
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true })
-        store.createIndex('createdAt', 'createdAt', { unique: false })
+        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true })
       }
     }
     req.onsuccess = () => resolve(req.result)
@@ -22,7 +21,7 @@ export interface PendingTransaction {
   url: string
   method: string
   body: string
-  headers: Record<string, string>
+  headers: string
   createdAt: number
   retries: number
 }
@@ -64,18 +63,26 @@ export async function removePendingTransaction(id: number) {
 }
 
 export async function syncPendingTransactions(): Promise<{ synced: number; failed: number }> {
+  // Ask the service worker to sync
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'SYNC_NOW' })
+    return { synced: 0, failed: 0 }
+  }
+
+  // Fallback: sync from the main thread
   const pending = await getPendingTransactions()
   let synced = 0
   let failed = 0
 
   for (const ptx of pending) {
     try {
+      const headers = ptx.headers ? JSON.parse(ptx.headers) : {}
       const res = await fetch(ptx.url, {
         method: ptx.method,
-        headers: { 'Content-Type': 'application/json', ...ptx.headers },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: ptx.body,
       })
-      if (res.ok) {
+      if (res.ok || res.status === 409) {
         await removePendingTransaction(ptx.id!)
         synced++
       } else {

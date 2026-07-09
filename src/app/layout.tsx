@@ -81,8 +81,39 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function() {});
+                window.addEventListener('load', async function() {
+                  try {
+                    const reg = await navigator.serviceWorker.register('/sw.js');
+                    console.log('SW registered:', reg.scope);
+
+                    // Auto-update: check for new SW every hour
+                    setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+
+                    // Listen for new SW
+                    reg.addEventListener('updatefound', () => {
+                      const newSW = reg.installing;
+                      newSW.addEventListener('statechange', () => {
+                        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                          // New version available — reload to activate
+                          if (confirm('Nouvelle version disponible. Recharger ?')) {
+                            window.location.reload();
+                          }
+                        }
+                      });
+                    });
+
+                    // Auto-sync pending transactions every 30s
+                    setInterval(() => {
+                      if (navigator.onLine && reg.active) {
+                        reg.active.postMessage({ type: 'SYNC_NOW' });
+                      }
+                    }, 30000);
+
+                    // Sync immediately when coming online
+                    window.addEventListener('online', () => {
+                      if (reg.active) reg.active.postMessage({ type: 'SYNC_NOW' });
+                    });
+                  } catch(e) { console.warn('SW registration failed:', e); }
                 });
               }
             `,

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       photoId?: string
     }
 
-    if (!phone || !name || !pseudo || !country || !role || !password) {
+    if (!phone || !name || !pseudo || !role || !password) {
       return NextResponse.json(
         { success: false, message: 'Tous les champs requis doivent être remplis' },
         { status: 400 }
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         phone,
         name,
         pseudo,
-        country,
+        country: country || 'CD',
         role,
         pin: hashedPin,
         password: hashedPassword,

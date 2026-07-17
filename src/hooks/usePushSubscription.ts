@@ -22,11 +22,13 @@ export function usePushSubscription() {
   useEffect(() => {
     if (!user || !('serviceWorker' in navigator) || !('PushManager' in window)) return
 
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.pushManager.getSubscription().then((sub) => {
-        setIsSubscribed(!!sub)
+    navigator.serviceWorker.register('/sw.js').then(() => {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.pushManager.getSubscription().then((sub) => {
+          setIsSubscribed(!!sub)
+        })
       })
-    })
+    }).catch(() => {})
 
     setPermission(Notification.permission)
   }, [user])
@@ -41,7 +43,7 @@ export function usePushSubscription() {
 
     try {
       const reg = await navigator.serviceWorker.ready
-      const vapidKey = 'BBPKKvtLLzdznu4tmoOPFje1JlSGyg_Sue2SSbkRYaP9Q5XtMT1R3YESSpO7M29dnqHWWogWau_Mnf2XgejcETs'
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -53,7 +55,7 @@ export function usePushSubscription() {
       await fetch('/api/notifications/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+        body: JSON.stringify({ userId: user.id, endpoint, p256dh: keys.p256dh, auth: keys.auth }),
       })
 
       setIsSubscribed(true)

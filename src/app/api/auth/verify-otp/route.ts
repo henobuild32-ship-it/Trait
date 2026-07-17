@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { db } from '@/lib/db';
 import { otpStore } from '@/lib/otp-store';
 import { signToken, setTokenCookie } from '@/lib/auth';
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     const expected = Buffer.from(stored.code);
     const actual = Buffer.from(code);
-    if (expected.length !== actual.length || !require('crypto').timingSafeEqual(expected, actual)) {
+    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
       return NextResponse.json(
         { success: false, message: 'Code OTP incorrect' },
         { status: 401 }

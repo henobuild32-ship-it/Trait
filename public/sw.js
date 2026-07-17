@@ -14,7 +14,6 @@ const PRECACHE_URLS = [
   '/favicon-32.png',
 ];
 
-// ─── INSTALL: cache le strict minimum ──────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
@@ -22,7 +21,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// ─── ACTIVATE: nettoie les anciens caches ──────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -36,7 +34,6 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ─── API cacheable paths ───────────────────────────────────────
 function isCacheableApi(url) {
   const paths = [
     '/api/transfer/history',
@@ -52,43 +49,34 @@ function isCacheableApi(url) {
   return paths.some((p) => url.pathname.startsWith(p));
 }
 
-// ─── FETCH ──────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Ignore non-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // ─── API GET (network-first, cache fallback) ──────────────
   if (request.method === 'GET' && isCacheableApi(url)) {
     event.respondWith(apiNetworkFirst(request));
     return;
   }
 
-  // ─── Navigations (app shell strategy) ─────────────────────
   if (request.mode === 'navigate') {
     event.respondWith(navigationHandler(request));
     return;
   }
 
-  // ─── Static assets (JS, CSS, fonts, images) ───────────────
   if (request.method === 'GET' && isStaticAsset(url)) {
     event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
-  // ─── POST / PUT / DELETE (offline queue) ─────────────────
   if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
     event.respondWith(mutationHandler(request));
     return;
   }
 
-  // Default: network-only for everything else
   event.respondWith(fetch(request).catch(() => caches.match(request)));
 });
-
-// ─── Handlers ──────────────────────────────────────────────────
 
 async function apiNetworkFirst(request) {
   try {
@@ -141,7 +129,6 @@ async function mutationHandler(request) {
     const response = await fetch(request);
     return response;
   } catch {
-    // Store clone of request body for later sync
     try {
       const clonedRequest = request.clone();
       const body = await clonedRequest.text();
@@ -159,7 +146,6 @@ async function mutationHandler(request) {
         retries: 0,
       });
 
-      // Notify clients to show pending status
       self.clients.matchAll().then((clients) => {
         clients.forEach((c) => c.postMessage({ type: 'TRANSACTION_QUEUED' }));
       });
@@ -175,8 +161,6 @@ async function mutationHandler(request) {
     });
   }
 }
-
-// ─── Helpers ───────────────────────────────────────────────────
 
 function isStaticAsset(url) {
   const { pathname } = url;
@@ -221,7 +205,6 @@ function openIndexedDB() {
   });
 }
 
-// ─── SYNC: répond aux messages du client pour synchroniser ─────
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SYNC_NOW') {
     syncAllPending();
@@ -270,34 +253,42 @@ async function syncAllPending() {
   } catch {}
 }
 
-// ─── PUSH NOTIFICATIONS ────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  let data = { title: 'TRAIT', body: 'Nouvelle notification' };
-  try { if (event.data) data = event.data.json(); } catch {}
+  let data = { title: 'TRAIT', body: 'Nouvelle notification', icon: '/icon-192.png', badge: '/icon-192.png' };
+
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() }
+    } catch {
+      data.body = event.data.text()
+    }
+  }
 
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: data.icon || '/icon-192.png',
+      badge: data.badge || '/icon-192.png',
       vibrate: [200, 100, 200],
-      tag: data.tag || 'trait-notification',
-      data: { url: data.url || '/' },
+      requireInteraction: true,
+      data: data.data || {},
     })
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || '/';
+
+  const urlToOpen = event.notification.data?.url || '/';
+
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clients) => {
-      for (const client of clients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus()
         }
       }
-      return self.clients.openWindow(url);
+      return clients.openWindow(urlToOpen)
     })
   );
 });

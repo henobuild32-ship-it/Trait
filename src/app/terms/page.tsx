@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { ArrowLeft, Download, Check, FileText } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ArrowLeft, Download, Check, FileText, ArrowUp } from 'lucide-react'
 
 const sections = [
   {
@@ -245,6 +245,19 @@ Dernière mise à jour : 17 juillet 2026`
 
 export default function TermsPage() {
   const [accepted, setAccepted] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handlePrint = () => {
     window.print()
@@ -315,6 +328,28 @@ export default function TermsPage() {
             </div>
           </div>
         </div>
+
+        {/* Back to top */}
+        <div className="flex justify-center mt-10 print:hidden">
+          <button
+            onClick={scrollToTop}
+            className="flex items-center gap-2 px-6 py-3 bg-[#0D5C63]/10 hover:bg-[#0D5C63]/20 text-[#0D5C63] rounded-xl transition-colors text-sm font-medium"
+          >
+            <ArrowUp className="w-4 h-4" />
+            Retour au début
+          </button>
+        </div>
+
+        {/* Floating back to top */}
+        {showBackToTop && (
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 z-20 w-12 h-12 bg-[#0D5C63] text-white rounded-full shadow-lg hover:bg-[#083A3E] transition-all flex items-center justify-center print:hidden"
+            aria-label="Retour au début"
+          >
+            <ArrowUp className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Footer */}
         <div className="mt-8 pt-6 border-t text-center">

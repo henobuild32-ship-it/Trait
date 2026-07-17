@@ -222,6 +222,10 @@ export default function TraitApp() {
 
   useEffect(() => {
     if (user && currentPage === 'welcome') {
+      if (!user.isVerified && user.role !== 'agent') {
+        navigateTo('auth-otp');
+        return;
+      }
       if (user.role === 'agent') navigateTo('agent-dashboard');
       else if (user.role === 'seller') navigateTo('seller-dashboard');
       else navigateTo('home');

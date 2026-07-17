@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, signToken, setTokenCookie } from '@/lib/auth'
+import { hashPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,36 +93,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Sign JWT and set auth cookie
-    const token = await signToken({ userId: user.id, role: user.role })
     const response = NextResponse.json({
       success: true,
-      token,
-      user: {
-        id: user.id,
-        phone: user.phone,
-        name: user.name,
-        pseudo: user.pseudo,
-        email: user.email,
-        gender: user.gender,
-        city: user.city,
-        country: user.country,
-        role: user.role,
-        agentCode: user.agentCode,
-        agentNumber: user.agentNumber,
-        validationStatus: user.validationStatus,
-        validationRejectReason: user.validationRejectReason,
-        realBalance: user.realBalance,
-        realBalanceFC: user.realBalanceFC,
-        bonusBalance: user.bonusBalance,
-        bonusBalanceFC: user.bonusBalanceFC,
-        isVerified: user.isVerified,
-        hasCompletedOnboarding: user.hasCompletedOnboarding,
-        address: user.address,
-        photoId: user.photoId,
-      },
+      message: 'Compte créé. Vérifiez votre code OTP.',
     })
-    setTokenCookie(response, token)
     return response
   } catch (error) {
     console.error('Register error:', error)

@@ -227,9 +227,6 @@ export default function AuthScreen() {
       }
       setPhoneNumber(fullPhone);
       setRegistrationPassword(regPassword.trim());
-      if (data.user) {
-        setUser(data.user as User);
-      }
       if (selectedRole === 'agent') {
         toast.success('Compte Agent créé avec succès ! En attente de validation par l\'administrateur.');
         navigateTo('agent-pending');

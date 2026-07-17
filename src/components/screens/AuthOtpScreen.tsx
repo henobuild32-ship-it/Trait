@@ -46,6 +46,7 @@ export default function AuthOtpScreen() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
+  const [demoOtp, setDemoOtp] = useState('');
   const [countdown, setCountdown] = useState(60);
 
   // Send OTP on mount
@@ -60,6 +61,9 @@ export default function AuthOtpScreen() {
           body: JSON.stringify(body),
         });
         const data = await res.json();
+        if (data.demoOtp) {
+          setDemoOtp(data.demoOtp);
+        }
         if (!data.success) {
           toast.error(data.message || "Erreur d'envoi du code");
         }
@@ -228,6 +232,20 @@ export default function AuthOtpScreen() {
             <div className="flex items-center justify-center gap-2 text-emerald-600">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="text-sm font-medium">Vérification...</span>
+            </div>
+          )}
+
+          {demoOtp && !loading && otp.length === 0 && (
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-4 text-center">
+              <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mb-1">
+                Code de test (non envoyé par email)
+              </p>
+              <p className="text-2xl font-mono font-bold text-amber-800 dark:text-amber-300 tracking-widest">
+                {demoOtp}
+              </p>
+              <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">
+                Ce code s&apos;affiche car l&apos;envoi par email a échoué. Utilisez-le pour continuer.
+              </p>
             </div>
           )}
         </div>

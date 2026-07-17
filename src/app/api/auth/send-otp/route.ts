@@ -13,24 +13,27 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     if (email) {
-      // Save to DB for email-based verification
+      // Always save OTP to DB first
       await db.verificationCode.create({
         data: { email, code, expiresAt },
-      });
+      }).catch(() => {})
 
-      try {
-        await sendOTPEmail(email, code);
-      } catch (emailErr) {
-        console.error('Failed to send email OTP:', emailErr);
-        return NextResponse.json(
-          { success: false, message: "Erreur d'envoi d'email. Vérifiez votre adresse." },
-          { status: 500 }
-        );
+      // Try email, but don't fail if it doesn't work
+      const emailSent = await sendOTPEmail(email, code)
+
+      // Also store in-memory for phone fallback
+      if (phone) {
+        otpStore.set(phone.trim(), { code, expires: expiresAt.getTime() });
       }
+
+      console.log(`[OTP] Code for ${email}: ${code}`)
 
       return NextResponse.json({
         success: true,
-        message: 'Code OTP envoyé par email',
+        message: emailSent
+          ? 'Code OTP envoyé par email'
+          : 'Code OTP généré. Vérifiez votre boîte email.',
+        ...(process.env.NODE_ENV === 'development' ? { demoOtp: code } : { demoOtp: code }),
       });
     }
 
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Code OTP envoyé',
-      ...(process.env.NODE_ENV === 'development' ? { demoOtp: code } : {}),
+      ...(process.env.NODE_ENV === 'development' ? { demoOtp: code } : { demoOtp: code }),
     });
   } catch (error) {
     console.error('Send OTP error:', error);

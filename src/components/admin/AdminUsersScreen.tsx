@@ -19,6 +19,9 @@ import {
   AlertTriangle,
   Check,
   ShoppingBag,
+  Key,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -109,6 +112,13 @@ export default function AdminUsersScreen() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserCard | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Reset password
+  const [resetPwdOpen, setResetPwdOpen] = useState(false);
+  const [resetPwdTarget, setResetPwdTarget] = useState<UserCard | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [resetPwdLoading, setResetPwdLoading] = useState(false);
 
   const fetchUsers = useCallback(async (page: number, append: boolean) => {
     if (!append) {
@@ -371,8 +381,22 @@ export default function AdminUsersScreen() {
                 >
                   <X className="h-4 w-4" />
                 </button>
-              )}
-            </div>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-md text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                            onClick={() => {
+                              setResetPwdTarget(user);
+                              setNewPassword('');
+                              setResetPwdOpen(true);
+                            }}
+                            title="Réinitialiser le mot de passe"
+                          >
+                            <Key className="h-4 w-4" />
+                            <span className="sr-only">Réinitialiser mot de passe</span>
+                          </Button>
+                        </div>
           </form>
         </motion.div>
 
@@ -728,6 +752,87 @@ export default function AdminUsersScreen() {
                 'Réactiver'
               ) : (
                 'Suspendre'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Reset Password Dialog ──────────────────────────────── */}
+      <Dialog open={resetPwdOpen} onOpenChange={setResetPwdOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+              <Key className="h-5 w-5" />
+              Réinitialiser le mot de passe
+            </DialogTitle>
+            <DialogDescription>
+              Définissez un nouveau mot de passe pour <strong>{resetPwdTarget?.name}</strong>.
+              Le nouveau mot de passe sera envoyé par email à l'utilisateur.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nouveau mot de passe</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPwd ? 'text' : 'password'}
+                  placeholder="Minimum 4 caractères"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="pr-12"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPwd(!showNewPwd)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showNewPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            {newPassword.length > 0 && newPassword.length < 4 && (
+              <p className="text-xs text-red-500">Minimum 4 caractères</p>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setResetPwdOpen(false)} disabled={resetPwdLoading}>
+              Annuler
+            </Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              onClick={async () => {
+                if (!resetPwdTarget || newPassword.length < 4) return;
+                setResetPwdLoading(true);
+                try {
+                  const res = await fetch('/api/admin/users/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: resetPwdTarget.id, newPassword }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    toast.success(data.message);
+                    setResetPwdOpen(false);
+                  } else {
+                    toast.error(data.message || 'Erreur');
+                  }
+                } catch {
+                  toast.error('Erreur de connexion');
+                } finally {
+                  setResetPwdLoading(false);
+                }
+              }}
+              disabled={resetPwdLoading || newPassword.length < 4}
+            >
+              {resetPwdLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Traitement...</>
+              ) : (
+                'Réinitialiser'
               )}
             </Button>
           </DialogFooter>

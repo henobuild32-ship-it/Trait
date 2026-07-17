@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   InputOTP,
@@ -13,17 +13,64 @@ import {
 import { useAppStore, type User } from '@/lib/store';
 import { toast } from 'sonner';
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return email;
+  const visible = local.slice(0, 2);
+  return `${visible}***@${domain}`;
+}
+
+function maskPhone(phone: string): string {
+  const cleaned = phone.replace(/\s/g, '');
+  if (cleaned.length < 5) return cleaned;
+  const prefix = cleaned.slice(0, cleaned.length - 2);
+  const suffix = cleaned.slice(-2);
+  const maskedBody = prefix.slice(3).replace(/\d/g, '*');
+  return cleaned.slice(0, 3) + maskedBody + suffix;
+}
+
 export default function AuthOtpScreen() {
   const goBack = useAppStore((s) => s.goBack);
   const navigateTo = useAppStore((s) => s.navigateTo);
   const setUser = useAppStore((s) => s.setUser);
-  const phoneNumber = useAppStore((s) => s.phoneNumber);
   const setOtpCode = useAppStore((s) => s.setOtpCode);
   const setOtpVerified = useAppStore((s) => s.setOtpVerified);
+  const phoneNumber = useAppStore((s) => s.phoneNumber);
+  const user = useAppStore((s) => s.user);
+  const pageParams = useAppStore((s) => s.pageParams) as { email?: string; mode?: 'verify' | 'forgot' };
+
+  const email = pageParams?.email || user?.email || '';
+  const mode = pageParams?.mode || 'verify';
+  const hasEmail = !!email;
 
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
+
+  // Send OTP on mount
+  useEffect(() => {
+    const sendOtp = async () => {
+      setSendLoading(true);
+      try {
+        const body = hasEmail ? { email } : { phone: phoneNumber };
+        const res = await fetch('/api/auth/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          toast.error(data.message || "Erreur d'envoi du code");
+        }
+      } catch {
+        toast.error('Erreur de connexion');
+      } finally {
+        setSendLoading(false);
+      }
+    };
+    sendOtp();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Countdown timer for resend
   useEffect(() => {
@@ -32,19 +79,15 @@ export default function AuthOtpScreen() {
     return () => clearTimeout(timer);
   }, [countdown]);
 
-  const maskedPhone = phoneNumber
-    ? phoneNumber.replace(/(\d{2})\d+(\d{2})$/, '$1****$2')
-    : '*** ******';
-
   const handleResend = useCallback(async () => {
     if (countdown > 0) return;
     setCountdown(60);
-
     try {
+      const body = hasEmail ? { email } : { phone: phoneNumber };
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneNumber }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.success) {
@@ -55,50 +98,44 @@ export default function AuthOtpScreen() {
     } catch {
       toast.error('Erreur de connexion');
     }
-  }, [countdown, phoneNumber]);
+  }, [countdown, email, hasEmail, phoneNumber]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (otp.length < 4) {
-      toast.error('Veuillez entrer le code complet');
-      return;
-    }
-
+  const handleVerify = useCallback(async (code: string) => {
+    if (code.length < 6) return;
     setLoading(true);
-
     try {
+      const body = hasEmail
+        ? { email, code }
+        : { phone: phoneNumber, code };
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneNumber, code: otp }),
+        body: JSON.stringify(body),
       });
-
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         toast.error(data.message || 'Code invalide');
         return;
       }
+      setOtpCode(code);
 
-      if (!data.user) {
-        toast.error('Erreur: données utilisateur manquantes');
+      if (mode === 'forgot') {
+        setOtpVerified(true);
+        navigateTo('reset-password', { email, code });
         return;
       }
-      const user = data.user as User;
-      setUser(user);
-      setOtpCode(otp);
+
       setOtpVerified(true);
 
-      // Routing logic after OTP verification
-      if (!user.name || user.name.trim() === '') {
-        // New user — go to profile setup
+      if (!data.user) {
         navigateTo('auth-profile');
-      } else if (!user.hasCompletedOnboarding) {
-        // Existing user but hasn't completed onboarding
-        navigateTo('onboarding');
+        return;
+      }
+      const loggedInUser = data.user as User;
+      setUser(loggedInUser);
+      if (!loggedInUser.name || loggedInUser.name.trim() === '') {
+        navigateTo('auth-profile');
       } else {
-        // Returning user — go home
         navigateTo('home');
       }
     } catch {
@@ -106,11 +143,21 @@ export default function AuthOtpScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [email, hasEmail, mode, navigateTo, phoneNumber, setOtpCode, setOtpVerified, setUser]);
+
+  // Auto-submit when all 6 digits filled
+  useEffect(() => {
+    if (otp.length === 6 && !loading) {
+      handleVerify(otp);
+    }
+  }, [otp, loading, handleVerify]);
+
+  const displayInfo = hasEmail
+    ? maskEmail(email)
+    : maskPhone(phoneNumber || '*** ******');
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -127,7 +174,6 @@ export default function AuthOtpScreen() {
         </Button>
       </motion.header>
 
-      {/* Content */}
       <motion.main
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -135,62 +181,55 @@ export default function AuthOtpScreen() {
         className="flex-1 flex flex-col px-6 pt-4 pb-8"
       >
         <div className="flex flex-col gap-2 mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Vérification</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+              {hasEmail ? <Mail className="w-5 h-5 text-emerald-600" /> : <Phone className="w-5 h-5 text-emerald-600" />}
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">Vérification</h1>
+          </div>
           <p className="text-muted-foreground">
-            Entrez le code envoyé au{' '}
-            <span className="font-medium text-foreground">{maskedPhone}</span>
+            {sendLoading ? (
+              "Envoi du code en cours..."
+            ) : (
+              <>
+                Entrez le code envoyé à{' '}
+                <span className="font-medium text-foreground">{displayInfo}</span>
+              </>
+            )}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-          {/* OTP Input */}
+        <div className="flex flex-col gap-8">
           <div className="flex flex-col items-center gap-6">
             <InputOTP
               maxLength={6}
               value={otp}
               onChange={(value) => setOtp(value)}
-              disabled={loading}
+              disabled={loading || sendLoading}
               className="justify-center"
             >
               <InputOTPGroup>
-                <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-lg data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-lg data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-lg data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
               </InputOTPGroup>
               <InputOTPSeparator className="mx-2 text-muted-foreground" />
               <InputOTPGroup>
-                <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={4} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
-                <InputOTPSlot index={5} className="h-14 w-12 text-xl rounded-lg  data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-lg data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={4} className="h-14 w-12 text-xl rounded-lg data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
+                <InputOTPSlot index={5} className="h-14 w-12 text-xl rounded-lg data-[active=true]:border-emerald-500 data-[active=true]:ring-emerald-500/20" />
               </InputOTPGroup>
             </InputOTP>
-
-            {/* Demo hint */}
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-2.5 text-center">
-              <p className="text-sm text-emerald-700 font-medium">
-                Code demo : <span className="font-mono font-bold">1234</span>
-              </p>
-            </div>
           </div>
 
-          {/* Submit button */}
-          <Button
-            type="submit"
-            disabled={loading || otp.length < 4}
-            className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-200 disabled:opacity-50 cursor-pointer"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Vérification...
-              </>
-            ) : (
-              'Vérifier'
-            )}
-          </Button>
-        </form>
+          {loading && (
+            <div className="flex items-center justify-center gap-2 text-emerald-600">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm font-medium">Vérification...</span>
+            </div>
+          )}
+        </div>
 
-        {/* Resend */}
         <div className="mt-8 flex items-center justify-center">
           {countdown > 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -200,7 +239,8 @@ export default function AuthOtpScreen() {
           ) : (
             <button
               onClick={handleResend}
-              className="text-sm font-medium text-emerald-600 hover:text-emerald-700 underline underline-offset-2 cursor-pointer"
+              disabled={loading}
+              className="text-sm font-medium text-emerald-600 hover:text-emerald-700 underline underline-offset-2 cursor-pointer disabled:opacity-50"
             >
               Renvoyer le code
             </button>

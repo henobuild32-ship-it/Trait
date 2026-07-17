@@ -85,7 +85,10 @@ export type PageName =
   | 'analytics'
   | 'receipt'
   | 'contact-pay'
-  | 'biometric-setup';
+  | 'biometric-setup'
+  | 'forgot-password'
+  | 'auth'
+  | 'reset-password';
 
 export type UserRole = 'client' | 'agent' | 'seller';
 

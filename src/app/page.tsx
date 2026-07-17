@@ -87,6 +87,8 @@ const TwoFactorScreen = lazy(() => import('@/components/screens/TwoFactorScreen'
 const ChangePinScreen = lazy(() => import('@/components/screens/ChangePinScreen'));
 const MyQrCodeScreen = lazy(() => import('@/components/screens/MyQrCodeScreen'));
 const IntegrationGuideScreen = lazy(() => import('@/components/screens/IntegrationGuideScreen'));
+const AuthScreen = lazy(() => import('@/components/screens/AuthScreen'));
+const ForgotPasswordScreen = lazy(() => import('@/components/screens/ForgotPasswordScreen'));
 const AdminSupportScreen = lazy(() => import('@/components/admin/AdminSupportScreen'));
 
 // New fintech screens
@@ -205,6 +207,9 @@ const screenMap: Record<PageName, React.LazyExoticComponent<React.ComponentType>
   'receipt': ReceiptScreen,
   'contact-pay': ContactPayScreen,
   'biometric-setup': BiometricSetupScreen,
+  'auth': AuthScreen,
+  'forgot-password': ForgotPasswordScreen,
+  'reset-password': ForgotPasswordScreen,
 };
 
 const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification', 'seller-dashboard', 'child-sponsorship'];

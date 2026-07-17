@@ -206,7 +206,7 @@ export default function WelcomeScreen() {
               className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4"
             >
               <Button
-                onClick={() => { setSelectedRole('client'); navigateTo('auth-phone') }}
+                onClick={() => navigateTo('auth', { mode: 'register' })}
                 className="w-full sm:w-auto px-8 h-12 text-sm font-bold bg-[#0D5C63] hover:bg-[#083A3E] text-white rounded-xl shadow-lg shadow-[#0D5C63]/25 transition-all active:scale-[0.98] group"
               >
                 <Users className="w-4 h-4 mr-2" />
@@ -214,7 +214,7 @@ export default function WelcomeScreen() {
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
               </Button>
               <Button
-                onClick={() => navigateTo('auth-login')}
+                onClick={() => navigateTo('auth', { mode: 'login' })}
                 variant="outline"
                 className="w-full sm:w-auto px-8 h-12 text-sm font-bold border-2 border-[#0D5C63]/20 text-[#0D5C63] rounded-xl hover:bg-[#0D5C63]/5 active:scale-[0.98]"
               >
@@ -416,7 +416,7 @@ export default function WelcomeScreen() {
                 <h2 className="text-xl sm:text-2xl font-black text-white mb-2">{t('welcome.cta_title')}</h2>
                 <p className="text-sm text-white/80 max-w-sm mx-auto mb-6">{t('welcome.cta_desc')}</p>
                 <Button
-                  onClick={() => { setSelectedRole('client'); navigateTo('auth-phone') }}
+                  onClick={() => navigateTo('auth', { mode: 'register' })}
                   className="bg-white hover:bg-white/90 text-[#0D5C63] font-bold rounded-xl shadow-xl h-12 px-8 transition-all active:scale-[0.98] group"
                 >
                   {t('welcome.cta_button')}

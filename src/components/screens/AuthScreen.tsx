@@ -687,7 +687,7 @@ export default function AuthScreen() {
                 </div>
 
                 {/* Terms Checkbox */}
-                <div className="flex items-start gap-3 mt-1">
+                <div className="flex items-start gap-3 mt-1 p-3 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/30 rounded-lg">
                   <button
                     type="button"
                     onClick={() => setAcceptTerms(!acceptTerms)}
@@ -696,12 +696,28 @@ export default function AuthScreen() {
                         ? 'bg-[#0D5C63] border-[#0D5C63]'
                         : 'border-gray-300 hover:border-[#0D5C63]/50'
                     }`}
+                    aria-label="Accepter les conditions d'utilisation"
                   >
                     {acceptTerms && <Check className="w-3 h-3 text-white" />}
                   </button>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {t('auth.terms')}
-                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-foreground font-medium">
+                      J&apos;accepte les{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          window.open('/terms', '_blank')
+                        }}
+                        className="text-[#0D5C63] hover:underline font-semibold cursor-pointer"
+                      >
+                        Conditions Générales d&apos;Utilisation
+                      </button>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      En cochant cette case, vous reconnaissez avoir lu et accepté nos conditions.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Register Button */}

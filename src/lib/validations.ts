@@ -1,4 +1,4 @@
-import { z } from 'zod/v4'
+import { z } from 'zod'
 
 export const SendMoneySchema = z.object({
   receiverPhone: z.string().min(8).max(20),

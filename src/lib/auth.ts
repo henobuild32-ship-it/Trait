@@ -4,27 +4,31 @@ import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 
 const secret = process.env.JWT_SECRET
-if (!secret) {
-  throw new Error('JWT_SECRET environment variable is required')
-}
-const SECRET = new TextEncoder().encode(secret)
+const SECRET = secret ? new TextEncoder().encode(secret) : null
 
 const TOKEN_COOKIE = 'trait_token';
 const ADMIN_TOKEN_COOKIE = 'trait_admin_token';
 
-// ─── JWT ────────────────────────────────────────────────────────────
+function getSecret() {
+  if (!SECRET) {
+    throw new Error('JWT_SECRET environment variable is required')
+  }
+  return SECRET
+}
 
 export async function signToken(payload: { userId: string; role: string }) {
+  const enc = getSecret()
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
     .setIssuedAt()
-    .sign(SECRET);
+    .sign(enc);
 }
 
 export async function verifyToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const enc = getSecret()
+    const { payload } = await jwtVerify(token, enc);
     return payload as { userId: string; role: string };
   } catch {
     return null;
@@ -51,7 +55,9 @@ export function clearTokenCookie(response: NextResponse, isAdmin = false) {
   });
 }
 
-// ─── Password helpers (with lazy migration from plain text) ──────────
+function isBcryptHash(str: string): boolean {
+  return str.startsWith('$2')
+}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -62,12 +68,9 @@ export async function verifyAndMigratePassword(
   inputPassword: string,
   storedPassword: string
 ): Promise<boolean> {
-  // Already hashed with bcrypt
-  if (storedPassword.startsWith('$2')) {
+  if (isBcryptHash(storedPassword)) {
     return bcrypt.compare(inputPassword, storedPassword);
   }
-
-  // Plain text (legacy) — migrate on successful login
   if (storedPassword === inputPassword) {
     const hashed = await hashPassword(inputPassword);
     await db.user.update({
@@ -76,11 +79,8 @@ export async function verifyAndMigratePassword(
     }).catch(() => {});
     return true;
   }
-
   return false;
 }
-
-// ─── PIN helpers (with lazy migration from plain text) ──────────────
 
 export async function hashPin(pin: string): Promise<string> {
   return bcrypt.hash(pin, 10);
@@ -92,13 +92,9 @@ export async function verifyAndMigratePin(
   storedPin: string | null
 ): Promise<boolean> {
   if (!storedPin) return false;
-
-  // Already hashed with bcrypt
-  if (storedPin.startsWith('$2')) {
+  if (isBcryptHash(storedPin)) {
     return bcrypt.compare(inputPin, storedPin);
   }
-
-  // Plain text (legacy) — migrate on successful verify
   if (storedPin === inputPin) {
     const hashed = await hashPin(inputPin);
     await db.user.update({
@@ -107,48 +103,50 @@ export async function verifyAndMigratePin(
     }).catch(() => {});
     return true;
   }
-
   return false;
 }
 
-// ─── Auth middleware ────────────────────────────────────────────────
-
 export async function requireUser(request: NextRequest) {
-  const token = request.cookies.get(TOKEN_COOKIE)?.value;
-  if (!token) {
-    return NextResponse.json({ success: false, message: 'Non authentifié' }, { status: 401 });
+  try {
+    const token = request.cookies.get(TOKEN_COOKIE)?.value;
+    if (!token) {
+      return NextResponse.json({ success: false, message: 'Non authentifié' }, { status: 401 });
+    }
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ success: false, message: 'Session invalide' }, { status: 401 });
+    }
+    return payload;
+  } catch (error) {
+    console.error('requireUser error:', error);
+    return NextResponse.json({ success: false, message: 'Erreur d\'authentification' }, { status: 500 });
   }
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ success: false, message: 'Session invalide' }, { status: 401 });
-  }
-  return payload;
 }
 
 export async function requireAdmin(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_TOKEN_COOKIE)?.value;
-  if (!token) {
-    return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 401 });
+  try {
+    const token = request.cookies.get(ADMIN_TOKEN_COOKIE)?.value;
+    if (!token) {
+      return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 401 });
+    }
+    const payload = await verifyToken(token);
+    if (!payload || payload.role === 'user') {
+      return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 401 });
+    }
+    return payload;
+  } catch (error) {
+    console.error('requireAdmin error:', error);
+    return NextResponse.json({ success: false, message: 'Erreur d\'authentification' }, { status: 500 });
   }
-  const payload = await verifyToken(token);
-  if (!payload || payload.role === 'user') {
-    return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 401 });
-  }
-  return payload;
 }
 
 export async function getAuthUser(request: NextRequest) {
-  const token = request.cookies.get(TOKEN_COOKIE)?.value
-    || request.headers.get('Authorization')?.replace('Bearer ', '')
-  if (!token) return null
-  const payload = await verifyToken(token)
-  if (!payload) return null
-  const user = await db.user.findUnique({
-    where: { id: payload.userId },
-    select: { id: true, phone: true, role: true },
-  })
-  if (!user) return null
-  return { id: user.id, phone: user.phone, role: user.role }
+  try {
+    const token = request.cookies.get(TOKEN_COOKIE)?.value || request.headers.get('Authorization')?.replace('Bearer ', '')
+    if (!token) return null
+    const payload = await verifyToken(token)
+    return payload || null
+  } catch {
+    return null
+  }
 }
-
-export const AUTH_ERROR = { success: false, message: 'Non authentifié' };

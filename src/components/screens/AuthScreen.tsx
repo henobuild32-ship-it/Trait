@@ -197,6 +197,14 @@ export default function AuthScreen() {
       toast.error('Veuillez accepter les conditions d\'utilisation');
       return;
     }
+
+    // Seller → redirect to dedicated form
+    if (selectedRole === 'seller') {
+      toast.success('Complétez le formulaire fournisseur ci-dessous.');
+      navigateTo('seller-register');
+      return;
+    }
+
     const fullPhone = `${regCountryCode}${cleanedPhone}`;
     setRegisterLoading(true);
     try {
@@ -225,9 +233,6 @@ export default function AuthScreen() {
       if (selectedRole === 'agent') {
         toast.success('Compte Agent créé avec succès ! En attente de validation par l\'administrateur.');
         navigateTo('agent-pending');
-      } else if (selectedRole === 'seller') {
-        toast.success('Compte Service créé avec succès ! En attente de validation par l\'administrateur.');
-        navigateTo('seller-pending');
       } else {
         toast.success('Compte créé avec succès ! Vérifiez votre code OTP.');
         navigateTo('auth-otp');

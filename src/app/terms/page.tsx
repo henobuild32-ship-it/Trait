@@ -269,7 +269,16 @@ export default function TermsPage() {
       <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm border-b print:hidden">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-[#0D5C63]" />
+            <button
+              onClick={() => { if (window.history.length > 1) window.history.back(); else window.close() }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+              title="Retour à l'application"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Retour</span>
+            </button>
+            <div className="w-px h-5 bg-border hidden sm:block" />
+            <FileText className="w-5 h-5 text-[#0D5C63] hidden sm:block" />
             <h1 className="text-lg font-bold text-foreground">Conditions d&apos;Utilisation</h1>
           </div>
           <button
@@ -277,7 +286,8 @@ export default function TermsPage() {
             className="flex items-center gap-2 px-4 py-2 bg-[#0D5C63] text-white rounded-lg hover:bg-[#083A3E] transition-colors text-sm font-medium"
           >
             <Download className="w-4 h-4" />
-            Télécharger PDF
+            <span className="hidden sm:inline">Télécharger PDF</span>
+            <span className="sm:hidden">PDF</span>
           </button>
         </div>
       </div>

@@ -5,9 +5,12 @@ import { hashPassword } from '@/lib/auth'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { phone, name, businessName, businessType, location, password } = body as {
+    const { phone, name, email, city, address, businessName, businessType, location, password } = body as {
       phone: string
       name: string
+      email?: string
+      city?: string
+      address?: string
       businessName: string
       businessType: string
       location: string
@@ -32,12 +35,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (email) {
+      const existingEmail = await db.user.findFirst({
+        where: { email: email.trim().toLowerCase() },
+      })
+      if (existingEmail) {
+        return NextResponse.json(
+          { success: false, message: 'Cette adresse email est déjà utilisée' },
+          { status: 409 }
+        )
+      }
+    }
+
     const hashedPassword = await hashPassword(password)
 
     const user = await db.user.create({
       data: {
         phone,
         name,
+        email: email?.trim().toLowerCase() || null,
+        city: city?.trim() || null,
+        address: address?.trim() || null,
+        country: 'CD',
         businessName,
         businessType,
         location,
@@ -57,9 +76,12 @@ export async function POST(request: NextRequest) {
         id: user.id,
         phone: user.phone,
         name: user.name,
+        email: user.email,
         role: user.role,
         validationStatus: user.validationStatus,
         businessName: user.businessName,
+        city: user.city,
+        location: user.location,
       },
     })
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { otpStore } from '@/lib/otp-store';
+import { signToken, setTokenCookie } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +16,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (email) {
-      // Email-based verification via DB
       const record = await db.verificationCode.findFirst({
         where: {
           email,
@@ -40,24 +40,38 @@ export async function POST(request: NextRequest) {
 
       const user = await db.user.findFirst({ where: { email } });
 
-      return NextResponse.json({
+      if (!user) {
+        return NextResponse.json({
+          success: true,
+          message: 'Code vérifié',
+          user: null,
+        });
+      }
+
+      const token = await signToken({ userId: user.id, role: user.role });
+      const response = NextResponse.json({
         success: true,
         message: 'Code vérifié',
-        user: user ? {
+        token,
+        user: {
           id: user.id,
           phone: user.phone,
           name: user.name,
           email: user.email,
           country: user.country,
           realBalance: user.realBalance,
+          realBalanceFC: user.realBalanceFC,
           bonusBalance: user.bonusBalance,
+          bonusBalanceFC: user.bonusBalanceFC,
           isVerified: true,
           role: user.role,
-        } : null,
+          hasCompletedOnboarding: user.hasCompletedOnboarding,
+        },
       });
+      setTokenCookie(response, token);
+      return response;
     }
 
-    // Phone-based verification (in-memory)
     if (!phone) {
       return NextResponse.json(
         { success: false, message: 'Email ou téléphone requis' },
@@ -109,8 +123,10 @@ export async function POST(request: NextRequest) {
       data: { isVerified: true },
     });
 
-    return NextResponse.json({
+    const token = await signToken({ userId: updatedUser.id, role: updatedUser.role });
+    const response = NextResponse.json({
       success: true,
+      token,
       user: {
         id: updatedUser.id,
         phone: updatedUser.phone,
@@ -119,11 +135,16 @@ export async function POST(request: NextRequest) {
         country: updatedUser.country,
         email: updatedUser.email,
         realBalance: updatedUser.realBalance,
+        realBalanceFC: updatedUser.realBalanceFC,
         bonusBalance: updatedUser.bonusBalance,
+        bonusBalanceFC: updatedUser.bonusBalanceFC,
         isVerified: updatedUser.isVerified,
         role: updatedUser.role,
+        hasCompletedOnboarding: updatedUser.hasCompletedOnboarding,
       },
     });
+    setTokenCookie(response, token);
+    return response;
   } catch (error) {
     console.error('Verify OTP error:', error);
     return NextResponse.json(

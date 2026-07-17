@@ -133,8 +133,10 @@ export default function AuthOtpScreen() {
       }
       const loggedInUser = data.user as User;
       setUser(loggedInUser);
-      if (!loggedInUser.name || loggedInUser.name.trim() === '') {
-        navigateTo('auth-profile');
+
+      // New users go through pin-setup → onboarding → home
+      if (!loggedInUser.hasCompletedOnboarding) {
+        navigateTo('pin-setup');
       } else {
         navigateTo('home');
       }

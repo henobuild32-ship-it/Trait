@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, signToken, setTokenCookie } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,8 +93,11 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({
+    // Sign JWT and set auth cookie
+    const token = await signToken({ userId: user.id, role: user.role })
+    const response = NextResponse.json({
       success: true,
+      token,
       user: {
         id: user.id,
         phone: user.phone,
@@ -119,6 +122,8 @@ export async function POST(request: NextRequest) {
         photoId: user.photoId,
       },
     })
+    setTokenCookie(response, token)
+    return response
   } catch (error) {
     console.error('Register error:', error)
     return NextResponse.json(

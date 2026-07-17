@@ -149,13 +149,12 @@ export default function PayPage() {
             <p className="text-xs text-gray-400 text-center mb-3">Vous n&apos;avez pas TRAIT ?</p>
             <div className="flex gap-3">
               <a
-                href="https://play.google.com/store/apps/details?id=com.trait.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 h-12 border-2 border-gray-200 rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-gray-700 hover:border-gray-300 transition-colors"
+                href="/downloads/trait.apk"
+                download="TRAIT-v2.0.0.apk"
+                className="flex-1 h-12 bg-[#0D5C63] rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-white hover:bg-[#0a4a50] transition-colors"
               >
                 <Download className="h-4 w-4" />
-                Android
+                APK Android
               </a>
               <a
                 href="https://apps.apple.com/app/trait/id000000000"

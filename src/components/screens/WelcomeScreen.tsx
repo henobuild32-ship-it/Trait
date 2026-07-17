@@ -734,6 +734,14 @@ export default function WelcomeScreen() {
               <p className="mt-2 text-center text-[10px] text-muted-foreground/60">
                 {t('welcome.pwa_note')}
               </p>
+              <a
+                href="/downloads/trait.apk"
+                download="TRAIT-v2.0.0.apk"
+                className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#0D5C63] hover:text-[#0a4a50] font-medium transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Télécharger l'APK directement (Android)
+              </a>
             </AnimatedSection>
           )}
 

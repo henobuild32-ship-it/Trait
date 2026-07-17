@@ -59,6 +59,7 @@ server.log
 /android/local.properties
 /android/app/trait-release.keystore
 *.apk
+!/public/downloads/*.apk
 # Skills directory
 /skills/
 .vercel

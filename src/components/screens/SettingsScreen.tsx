@@ -490,32 +490,42 @@ export default function SettingsScreen() {
                     <p className="text-xs text-muted-foreground">{t('settings.download_desc')}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleInstall}
-                    disabled={installing}
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#0D5C63] text-white rounded-xl py-2.5 px-3 hover:bg-[#083A3E] active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleInstall}
+                      disabled={installing}
+                      className="flex-1 flex items-center justify-center gap-2 bg-[#0D5C63] text-white rounded-xl py-2.5 px-3 hover:bg-[#083A3E] active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+                    >
+                      {installing ? (
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                          className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                        />
+                      ) : (
+                        <Smartphone className="w-4 h-4" />
+                      )}
+                      <span className="text-xs font-semibold">
+                        {installing ? t('welcome.installing') : 'PWA Android'}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setShowIOSGuide(true)}
+                      className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white rounded-xl py-2.5 px-3 hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 cursor-pointer"
+                    >
+                      <Apple className="w-4 h-4" />
+                      <span className="text-xs font-semibold">iOS</span>
+                    </button>
+                  </div>
+                  <a
+                    href="/downloads/trait.apk"
+                    download="TRAIT-v2.0.0.apk"
+                    className="flex items-center justify-center gap-2 text-xs text-[#0D5C63] hover:text-[#0a4a50] font-medium transition-colors"
                   >
-                    {installing ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      />
-                    ) : (
-                      <Smartphone className="w-4 h-4" />
-                    )}
-                    <span className="text-xs font-semibold">
-                      {installing ? t('welcome.installing') : 'Android'}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setShowIOSGuide(true)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white rounded-xl py-2.5 px-3 hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 cursor-pointer"
-                  >
-                    <Apple className="w-4 h-4" />
-                    <span className="text-xs font-semibold">iOS</span>
-                  </button>
+                    <Download className="w-3.5 h-3.5" />
+                    Télécharger l'APK directement
+                  </a>
                 </div>
               </CardContent>
             </Card>

@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-import { getAuthUser } from '@/lib/auth'
+import { db } from '@/lib/db'
 
 export async function GET() {
   try {
-    const categories = await prisma.bundleCategory.findMany({
+    const categories = await db.bundleCategory.findMany({
       include: { products: { where: { active: true } } },
       orderBy: { name: 'asc' },
     })
@@ -68,7 +67,7 @@ export async function GET() {
       ]
 
       for (const cat of seedData) {
-        await prisma.bundleCategory.create({
+        await db.bundleCategory.create({
           data: {
             name: cat.name,
             slug: cat.slug,
@@ -79,7 +78,7 @@ export async function GET() {
         })
       }
 
-      const seeded = await prisma.bundleCategory.findMany({
+      const seeded = await db.bundleCategory.findMany({
         include: { products: { where: { active: true } } },
         orderBy: { name: 'asc' },
       })

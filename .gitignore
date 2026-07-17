@@ -50,6 +50,15 @@ test
 prompt
 
 server.log
+
+# Android / Capacitor
+/android/app/build/
+/android/.gradle/
+/android/build/
+/android/captures/
+/android/local.properties
+/android/app/trait-release.keystore
+*.apk
 # Skills directory
 /skills/
 .vercel

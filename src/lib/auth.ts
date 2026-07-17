@@ -137,4 +137,18 @@ export async function requireAdmin(request: NextRequest) {
   return payload;
 }
 
+export async function getAuthUser(request: NextRequest) {
+  const token = request.cookies.get(TOKEN_COOKIE)?.value
+    || request.headers.get('Authorization')?.replace('Bearer ', '')
+  if (!token) return null
+  const payload = await verifyToken(token)
+  if (!payload) return null
+  const user = await db.user.findUnique({
+    where: { id: payload.userId },
+    select: { id: true, phone: true, role: true },
+  })
+  if (!user) return null
+  return { id: user.id, phone: user.phone, role: user.role }
+}
+
 export const AUTH_ERROR = { success: false, message: 'Non authentifié' };

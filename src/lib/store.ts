@@ -73,7 +73,19 @@ export type PageName =
   | 'change-pin'
   | 'my-qr-code'
   | 'integration-guide'
-  | 'admin-support';
+  | 'admin-support'
+  | 'payment-links'
+  | 'payment-requests'
+  | 'recurring-payments'
+  | 'bundle-catalog'
+  | 'bills'
+  | 'micro-credit'
+  | 'savings-goals'
+  | 'referral'
+  | 'analytics'
+  | 'receipt'
+  | 'contact-pay'
+  | 'biometric-setup';
 
 export type UserRole = 'client' | 'agent' | 'seller';
 

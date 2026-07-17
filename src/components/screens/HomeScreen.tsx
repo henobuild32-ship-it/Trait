@@ -29,6 +29,17 @@ import {
   QrCode,
   MessageCircle,
   HelpCircle,
+  Link,
+  Handshake,
+  Repeat,
+  Radio,
+  FileText,
+  PiggyBank,
+  Target,
+  BarChart3,
+  Contact,
+  Fingerprint,
+  Gift,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -79,6 +90,17 @@ const clientQuickActions = [
   { labelKey: 'Mon QR Code', icon: QrCode, page: 'my-qr-code' as const, color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
   { labelKey: 'Support', icon: MessageCircle, page: 'support' as const, color: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
   { labelKey: 'Espace Service', icon: Store, page: 'seller-dashboard' as const, color: 'bg-pink-50 text-pink-600 dark:bg-pink-950 dark:text-pink-400' },
+  { labelKey: 'Liens de paie.', icon: Link, page: 'payment-links' as const, color: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
+  { labelKey: 'Demander', icon: Handshake, page: 'payment-requests' as const, color: 'bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400' },
+  { labelKey: 'Récurrent', icon: Repeat, page: 'recurring-payments' as const, color: 'bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400' },
+  { labelKey: 'Recharge', icon: Radio, page: 'bundle-catalog' as const, color: 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400' },
+  { labelKey: 'Factures', icon: FileText, page: 'bills' as const, color: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-400' },
+  { labelKey: 'Micro-crédit', icon: PiggyBank, page: 'micro-credit' as const, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' },
+  { labelKey: 'Épargne', icon: Target, page: 'savings-goals' as const, color: 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-400' },
+  { labelKey: 'Parrainage', icon: Gift, page: 'referral' as const, color: 'bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-950 dark:text-fuchsia-400' },
+  { labelKey: 'Analytics', icon: BarChart3, page: 'analytics' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
+  { labelKey: 'Contacts', icon: Contact, page: 'contact-pay' as const, color: 'bg-lime-50 text-lime-600 dark:bg-lime-950 dark:text-lime-400' },
+  { labelKey: 'Biométrie', icon: Fingerprint, page: 'biometric-setup' as const, color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
 ];
 
 const agentQuickActions = [

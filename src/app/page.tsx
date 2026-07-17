@@ -89,6 +89,20 @@ const MyQrCodeScreen = lazy(() => import('@/components/screens/MyQrCodeScreen'))
 const IntegrationGuideScreen = lazy(() => import('@/components/screens/IntegrationGuideScreen'));
 const AdminSupportScreen = lazy(() => import('@/components/admin/AdminSupportScreen'));
 
+// New fintech screens
+const PaymentLinksScreen = lazy(() => import('@/components/screens/PaymentLinksScreen'));
+const PaymentRequestScreen = lazy(() => import('@/components/screens/PaymentRequestScreen'));
+const RecurringPaymentsScreen = lazy(() => import('@/components/screens/RecurringPaymentsScreen'));
+const BundleCatalogScreen = lazy(() => import('@/components/screens/BundleCatalogScreen'));
+const BillsScreen = lazy(() => import('@/components/screens/BillsScreen'));
+const MicroCreditScreen = lazy(() => import('@/components/screens/MicroCreditScreen'));
+const SavingsGoalsScreen = lazy(() => import('@/components/screens/SavingsGoalsScreen'));
+const ReferralScreen = lazy(() => import('@/components/screens/ReferralScreen'));
+const AnalyticsScreen = lazy(() => import('@/components/screens/AnalyticsScreen'));
+const ReceiptScreen = lazy(() => import('@/components/screens/ReceiptScreen'));
+const ContactPayScreen = lazy(() => import('@/components/screens/ContactPayScreen'));
+const BiometricSetupScreen = lazy(() => import('@/components/screens/BiometricSetupScreen'));
+
 const BottomNavigation = lazy(() => import('@/components/layout/BottomNavigation'));
 const PWAInstallBanner = lazy(() => import('@/components/layout/PWAInstallBanner').then(m => ({ default: m.PWAInstallBanner })));
 const UpdateNotice = lazy(() => import('@/components/layout/UpdateNotice').then(m => ({ default: m.UpdateNotice })));
@@ -177,6 +191,20 @@ const screenMap: Record<PageName, React.LazyExoticComponent<React.ComponentType>
   'seller-dashboard': SellerDashboard,
   'seller-products': SellerProductsScreen,
   'seller-qr-scanner': SellerQRScannerScreen,
+
+  // New fintech screens
+  'payment-links': PaymentLinksScreen,
+  'payment-requests': PaymentRequestScreen,
+  'recurring-payments': RecurringPaymentsScreen,
+  'bundle-catalog': BundleCatalogScreen,
+  'bills': BillsScreen,
+  'micro-credit': MicroCreditScreen,
+  'savings-goals': SavingsGoalsScreen,
+  'referral': ReferralScreen,
+  'analytics': AnalyticsScreen,
+  'receipt': ReceiptScreen,
+  'contact-pay': ContactPayScreen,
+  'biometric-setup': BiometricSetupScreen,
 };
 
 const pagesWithNav: PageName[] = ['home', 'send', 'withdraw', 'deposit', 'history', 'ussd', 'marketplace', 'marketplace-detail', 'barter', 'barter-detail', 'barter-create', 'notifications', 'settings', 'profile', 'agent-dashboard', 'agent-deposit', 'agent-withdraw-validate', 'agent-activity', 'agent-messages', 'card-request', 'card-payment', 'card', 'kyc-verification', 'seller-dashboard', 'child-sponsorship'];

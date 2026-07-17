@@ -8,6 +8,7 @@ import {
   DollarSign, Percent, ExternalLink, Star, Clock, Zap, Lock, RefreshCw,
   Terminal, Repeat, Filter, Sliders, Ban, Play, Layers, Download,
   Link2, Eye, EyeOff, ArrowRight, HelpCircle, Search, Upload, Share2,
+  QrCode,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -237,7 +238,7 @@ export default function IntegrationGuideScreen() {
                 {[
                   { icon: Wallet, label: 'Paiements', value: 'Mobile Money, Carte, QR' },
                   { icon: Repeat, label: 'Transferts', value: 'National & International' },
-                  { icon: QrIcon, label: 'QR Code', value: 'Scan & Pay' },
+                  { icon: QrCode, label: 'QR Code', value: 'Scan & Pay' },
                   { icon: Percent, label: 'Commission', value: '1,5% / transaction' },
                 ].map((f, i) => (
                   <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-border/50 text-center">

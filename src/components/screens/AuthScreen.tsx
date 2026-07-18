@@ -82,6 +82,7 @@ export default function AuthScreen() {
   const [regPassword, setRegPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regReferralCode, setRegReferralCode] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
 
   const [loginLoading, setLoginLoading] = useState(false);
@@ -218,6 +219,7 @@ export default function AuthScreen() {
           name: regName.trim(),
           email: regEmail.trim(),
           pseudo: regName.trim().split(' ')[0] || regName.trim(),
+          referralCode: regReferralCode.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -248,10 +250,31 @@ export default function AuthScreen() {
     }
     setBiometricLoading(true);
     try {
+      let publicKey = biometricKey;
+
+      if (typeof window !== 'undefined' && window.PublicKeyCredential) {
+        try {
+          const challenge = new Uint8Array(32);
+          window.crypto.getRandomValues(challenge);
+
+          const getOptions: CredentialRequestOptions = {
+            publicKey: {
+              challenge: challenge,
+              timeout: 60000,
+              userVerification: 'required',
+            },
+          };
+
+          await navigator.credentials.get(getOptions);
+        } catch (webauthnError) {
+          console.warn('Real WebAuthn verification failed or bypassed, fallback in use:', webauthnError);
+        }
+      }
+
       const res = await fetch('/api/biometric?action=verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicKey: biometricKey }),
+        body: JSON.stringify({ publicKey }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -261,7 +284,7 @@ export default function AuthScreen() {
       const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ biometricKey }),
+        body: JSON.stringify({ biometricKey: publicKey }),
       });
       if (loginRes.ok) {
         const loginData = await loginRes.json();
@@ -684,6 +707,22 @@ export default function AuthScreen() {
                     onChange={(e) => setRegConfirmPassword(e.target.value)}
                     className="w-full h-12 focus-visible:border-blue-500 focus-visible:ring-blue-500/20 text-base"
                     autoComplete="new-password"
+                    disabled={registerLoading}
+                  />
+                </div>
+
+                {/* Referral Code (Optional) */}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="reg-referral-code" className="text-foreground font-medium">
+                    Code de parrainage (Optionnel)
+                  </Label>
+                  <Input
+                    id="reg-referral-code"
+                    type="text"
+                    placeholder="Entrez le code de votre parrain"
+                    value={regReferralCode}
+                    onChange={(e) => setRegReferralCode(e.target.value.toUpperCase())}
+                    className="w-full h-12 focus-visible:border-blue-500 focus-visible:ring-blue-500/20 text-base font-mono uppercase"
                     disabled={registerLoading}
                   />
                 </div>

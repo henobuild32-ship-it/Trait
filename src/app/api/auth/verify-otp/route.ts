@@ -119,10 +119,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const wasVerified = user.isVerified;
+
     const updatedUser = await db.user.update({
       where: { id: user.id },
       data: { isVerified: true },
     });
+
+    if (!wasVerified && user.referredBy) {
+      const referrer = await db.user.findFirst({
+        where: { referralCode: user.referredBy },
+      });
+      if (referrer) {
+        // Increment referrer's real balance by $0.1
+        await db.user.update({
+          where: { id: referrer.id },
+          data: { realBalance: { increment: 0.1 } },
+        });
+
+        // Create ReferralReward record
+        await db.referralReward.create({
+          data: {
+            userId: referrer.id,
+            referredId: user.id,
+            amount: 0.1,
+            currency: 'USD',
+            type: 'signup',
+            status: 'completed',
+          },
+        });
+
+        // Create notification for referrer
+        await db.notification.create({
+          data: {
+            userId: referrer.id,
+            title: 'Récompense de parrainage',
+            message: `Félicitations ! Vous avez reçu 0.10 USD car ${user.name || user.pseudo} a activé son compte.`,
+            type: 'bonus',
+          },
+        });
+
+        // Trigger push notification for referrer
+        try {
+          const { sendPushToUser } = await import('@/lib/push');
+          await sendPushToUser(referrer.id, {
+            title: 'Récompense de parrainage',
+            body: `Félicitations ! Vous avez reçu 0.10 USD car ${user.name || user.pseudo} a activé son compte.`,
+            url: '/referrals',
+          });
+        } catch (err) {
+          console.error('Error sending push for referral reward:', err);
+        }
+      }
+    }
 
     const token = await signToken({ userId: updatedUser.id, role: updatedUser.role });
     const response = NextResponse.json({

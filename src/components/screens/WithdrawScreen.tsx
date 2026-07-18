@@ -199,17 +199,12 @@ export default function WithdrawScreen() {
               <p className="text-xs text-muted-foreground">Entrez le code ou le numéro agent complet (ex: AGT-2026-00001)</p>
             </div>
 
-            {/* Withdrawal Method */}
+            {/* Withdrawal Method - Enforced Agent-Only */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Méthode de retrait</Label>
-              <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="agent">Via Agent</SelectItem>
-                  <SelectItem value="mobile_money">Mobile Money</SelectItem>
-                  <SelectItem value="bank_transfer">Virement bancaire</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="h-11 flex items-center px-3 border border-border rounded-lg bg-muted text-sm font-medium text-foreground">
+                Via Agent unique
+              </div>
             </div>
 
             {/* Fee & Total */}

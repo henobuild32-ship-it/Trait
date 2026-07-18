@@ -247,6 +247,70 @@ export default function TraitApp() {
     }
   }, [user, currentPage, navigateTo])
 
+  // Synchronize Push Notifications subscription
+  useEffect(() => {
+    if (!user) return
+
+    const subscribeToPush = async () => {
+      try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+          console.warn('Push notifications are not supported on this browser.')
+          return
+        }
+
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') return
+
+        const reg = await navigator.serviceWorker.ready
+        let sub = await reg.pushManager.getSubscription()
+
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        if (!vapidPublicKey) return
+
+        // Convert base64 url-safe key to Uint8Array
+        const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4)
+        const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/')
+        const rawData = window.atob(base64)
+        const outputArray = new Uint8Array(rawData.length)
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i)
+        }
+
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: outputArray,
+          })
+        }
+
+        const p256dhKey = sub.getKey('p256dh')
+        const authKey = sub.getKey('auth')
+        if (!p256dhKey || !authKey) return
+
+        const keys = {
+          p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dhKey))),
+          auth: btoa(String.fromCharCode(...new Uint8Array(authKey))),
+        }
+
+        await fetch('/api/notifications/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: sub.endpoint,
+            p256dh: keys.p256dh,
+            auth: keys.auth,
+          }),
+        })
+      } catch (err) {
+        console.warn('Could not register push subscription:', err)
+      }
+    }
+
+    // Delay slightly to prioritize core rendering
+    const timer = setTimeout(subscribeToPush, 2000)
+    return () => clearTimeout(timer)
+  }, [user])
+
   if (!Screen) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">

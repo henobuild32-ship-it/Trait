@@ -83,6 +83,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Referral limit check: Referred users can withdraw up to $20 only
+    if (user.referredBy) {
+      let exchangeRate = 2500;
+      try {
+        const rateConfig = await db.systemConfig.findUnique({
+          where: { key: 'exchange_rate_usd_fc' },
+        });
+        if (rateConfig && rateConfig.value) {
+          const val = parseFloat(rateConfig.value);
+          if (!isNaN(val) && val > 0) exchangeRate = val;
+        }
+      } catch (e) {
+        console.error('Error fetching exchange rate:', e);
+      }
+
+      const userWithdrawals = await db.withdrawal.findMany({
+        where: {
+          userId,
+          status: { in: ['completed', 'pending'] },
+        },
+      });
+
+      let totalWithdrawnUSD = 0;
+      for (const w of userWithdrawals) {
+        if (w.currency === 'USD') {
+          totalWithdrawnUSD += w.amount;
+        } else {
+          totalWithdrawnUSD += w.amount / exchangeRate;
+        }
+      }
+
+      const currentWithdrawalUSD = currency === 'USD' ? amount : amount / exchangeRate;
+      if (totalWithdrawnUSD + currentWithdrawalUSD > 20) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Limite de retrait dépassée. Les utilisateurs parrainés peuvent retirer un maximum de 20.00 USD au total. Déjà retiré/en cours: ${totalWithdrawnUSD.toFixed(2)} USD`,
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     const cur = currency;
     const realBal = cur === 'FC' ? user.realBalanceFC : user.realBalance;
     const fee = round2(amount * 0.007);

@@ -87,6 +87,18 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Send push notification
+      try {
+        const { sendPushToUser } = await import('@/lib/push');
+        await sendPushToUser(withdrawal.userId, {
+          title: 'Retrait validé',
+          body: `Votre retrait de ${withdrawal.amount.toFixed(2)} ${withdrawal.currency} a été validé par l'agent.`,
+          url: '/history',
+        });
+      } catch (err) {
+        console.error('Push notification error:', err);
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Retrait validé avec succès',
@@ -132,6 +144,18 @@ export async function POST(request: NextRequest) {
           type: 'general',
         },
       })
+
+      // Send push notification
+      try {
+        const { sendPushToUser } = await import('@/lib/push');
+        await sendPushToUser(withdrawal.userId, {
+          title: 'Retrait refusé',
+          body: `Votre retrait de ${withdrawal.amount.toFixed(2)} ${withdrawal.currency} a été refusé par l'agent.`,
+          url: '/history',
+        });
+      } catch (err) {
+        console.error('Push notification error:', err);
+      }
 
       return NextResponse.json({
         success: true,

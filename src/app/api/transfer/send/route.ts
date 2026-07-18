@@ -118,6 +118,18 @@ export async function POST(request: NextRequest) {
       }),
     ])
 
+    // Send push notification to receiver
+    try {
+      const { sendPushToUser } = await import('@/lib/push')
+      await sendPushToUser(receiver.id, {
+        title: 'Transfert reçu',
+        body: `Vous avez reçu ${amount.toFixed(2)} ${cur} de ${sender.name || sender.phone || 'un utilisateur'}`,
+        url: '/history',
+      })
+    } catch (err) {
+      console.error('Push notification error:', err)
+    }
+
     const updatedSender = await db.user.findUnique({
       where: { id: senderId },
       select: { realBalance: true, realBalanceFC: true, bonusBalance: true, bonusBalanceFC: true },

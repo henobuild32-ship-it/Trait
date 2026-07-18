@@ -305,44 +305,33 @@ export default function AuthScreen() {
 
   const executeBiometricLogin = async (publicKey: string) => {
     try {
-      const res = await fetch('/api/biometric?action=verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicKey }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        toast.error(data.message || 'Vérification biométrique échouée');
-        setBiometricLoading(false);
-        return;
-      }
       const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ biometricKey: publicKey }),
       });
-      if (loginRes.ok) {
-        const loginData = await loginRes.json();
-        if (loginData.success && loginData.user) {
-          setUser(loginData.user as User);
-          navigateTo('home');
-          return;
-        }
+      const loginData = await loginRes.json();
+      if (loginRes.ok && loginData.success && loginData.user) {
+        setUser(loginData.user as User);
+        navigateTo('home');
+      } else {
+        toast.error(loginData.message || 'Connexion biométrique échouée');
+        setBiometricLoading(false);
       }
-      navigateTo('home');
     } catch {
       toast.error('Erreur de connexion biométrique');
       setBiometricLoading(false);
     }
   };
 
+
   const handleBiometricLogin = async () => {
     if (!biometricKey) {
-      toast.error('Aucune donnée biométrique trouvée');
+      toast.error('Aucune donnée biométrique trouvée. Activez-la dans les paramètres.');
       return;
     }
     setBiometricLoading(true);
-    
+
     let usingWebAuthn = false;
 
     if (typeof window !== 'undefined' && window.PublicKeyCredential) {
@@ -352,19 +341,39 @@ export default function AuthScreen() {
           const challenge = new Uint8Array(32);
           window.crypto.getRandomValues(challenge);
 
-          const getOptions: CredentialRequestOptions = {
+          // Retrieve stored credential ID for allowCredentials
+          const storedCredId = localStorage.getItem('trait_biometric_cred_id');
+
+          const allowCredentials: PublicKeyCredentialDescriptor[] = storedCredId
+            ? [{
+                id: (() => {
+                  const base64 = storedCredId.replace(/-/g, '+').replace(/_/g, '/');
+                  const binary = atob(base64);
+                  const buffer = new Uint8Array(binary.length);
+                  for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+                  return buffer.buffer;
+                })(),
+                type: 'public-key' as const,
+              }]
+            : [];
+
+          await navigator.credentials.get({
             publicKey: {
-              challenge: challenge,
+              challenge,
               timeout: 60000,
               userVerification: 'required',
+              ...(allowCredentials.length > 0 ? { allowCredentials } : {}),
             },
-          };
-
-          await navigator.credentials.get(getOptions);
+          });
           usingWebAuthn = true;
         }
-      } catch (webauthnError) {
-        console.warn('Real WebAuthn verification failed, falling back to camera scanner:', webauthnError);
+      } catch (webauthnError: any) {
+        console.warn('[BiometricLogin] WebAuthn error:', webauthnError?.name, webauthnError?.message);
+        if (webauthnError?.name !== 'NotAllowedError') {
+          toast.error('Biométrie échouée. Utilisez votre mot de passe.');
+        }
+        setBiometricLoading(false);
+        return;
       }
     }
 
@@ -375,6 +384,7 @@ export default function AuthScreen() {
       await startBioCameraScanner();
     }
   };
+
 
   const strength = getPasswordStrength(regPassword);
 

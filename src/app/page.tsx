@@ -247,6 +247,23 @@ export default function TraitApp() {
     }
   }, [user, currentPage, navigateTo])
 
+  // Handle ?pay_link=CODE to redirect user to checkout
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const payLinkCode = params.get('pay_link')
+    if (payLinkCode) {
+      if (user) {
+        // Clean URL and go to checkout page
+        window.history.replaceState({}, '', '/')
+        window.location.href = `/pay/link/${payLinkCode}`
+      } else {
+        // Force user to welcome screen to authenticate
+        navigateTo('welcome')
+      }
+    }
+  }, [user, navigateTo])
+
   // Synchronize Push Notifications subscription
   useEffect(() => {
     if (!user) return

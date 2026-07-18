@@ -140,7 +140,12 @@ export default function BiometricSetupScreen() {
 
       if (credential) {
         const rawId = new Uint8Array(credential.rawId);
+        // publicKey = hex string used for server-side comparison
         const publicKey = Array.from(rawId).map(b => b.toString(16).padStart(2, '0')).join('');
+        // credId = base64url string used in allowCredentials during get()
+        let binary = '';
+        rawId.forEach(b => binary += String.fromCharCode(b));
+        const credId = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
         setStep('success');
         setStepMessage('Enregistrement sécurisé...');
@@ -154,6 +159,7 @@ export default function BiometricSetupScreen() {
         if (data.success) {
           localStorage.setItem('trait_biometric_key', publicKey);
           localStorage.setItem('trait_biometric_public_key', publicKey);
+          localStorage.setItem('trait_biometric_cred_id', credId); // ← critical for allowCredentials
           localStorage.setItem('trait_biometric_type', type);
           
           if (type === 'faceId') setFaceIdEnabled(true);

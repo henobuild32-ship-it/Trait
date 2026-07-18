@@ -14,12 +14,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import jsQR from 'jsqr'
+import { Capacitor } from '@capacitor/core'
 import { useCameraPermission } from '@/hooks/useCameraPermission'
+import jsQR from 'jsqr'
+
+let BarcodeScannerModule: any = null
+
+async function getBarcodeScanner() {
+  if (!BarcodeScannerModule) {
+    BarcodeScannerModule = await import('@capacitor-mlkit/barcode-scanning')
+  }
+  return BarcodeScannerModule.BarcodeScanner
+}
 
 export default function SellerQRScannerScreen() {
   const { user, goBack } = useAppStore()
-  const { permissionStatus, permissionLoading, checkPermission, requestPermission } = useCameraPermission()
+  const { permissionLoading, checkPermission, requestPermission } = useCameraPermission()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -35,13 +45,15 @@ export default function SellerQRScannerScreen() {
   const [showPinPrompt, setShowPinPrompt] = useState(false)
   const [clientPin, setClientPin] = useState('')
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false)
+  const [scanMethod, setScanMethod] = useState<'native' | 'web'>('native')
 
   const pendingStreamRef = useRef<MediaStream | null>(null)
 
-  // Check permission on mount
   useEffect(() => {
-    checkPermission().catch(() => {})
-  }, [checkPermission])
+    if (!Capacitor.isNativePlatform()) {
+      setScanMethod('web')
+    }
+  }, [])
 
   function stopCamera() {
     scanningRef.current = false
@@ -66,18 +78,54 @@ export default function SellerQRScannerScreen() {
     }
   }, [cameraActive])
 
-  async function startCamera() {
+  // ─── Native Scan (Capacitor ML Kit) ───────────────────────────────
+
+  async function startNativeScan() {
     setCameraError('')
     setStatus('idle')
 
-    // Check permission first
-    const status = await checkPermission()
-    if (status === 'denied') {
+    try {
+      const BarcodeScanner = await getBarcodeScanner()
+      const { camera } = await BarcodeScanner.checkPermissions()
+      if (camera !== 'granted') {
+        const { camera: granted } = await BarcodeScanner.requestPermissions()
+        if (granted !== 'granted') {
+          setShowPermissionPrompt(true)
+          return
+        }
+      }
+
+      const result = await BarcodeScanner.scan({
+        formats: ['QR_CODE'],
+        autoZoom: true,
+      })
+
+      if (result.barcodes && result.barcodes.length > 0) {
+        const code = result.barcodes[0]
+        setQrCodeData(code.displayValue || code.rawValue || '')
+        toast('QR Code détecté', { description: 'Vous pouvez confirmer le paiement.' })
+      }
+    } catch (err: any) {
+      if (err.message?.includes('camera') || err.message?.includes('permission')) {
+        setShowPermissionPrompt(true)
+      } else {
+        setCameraError("Erreur lors du scan. Réessayez ou saisissez le code manuellement.")
+      }
+    }
+  }
+
+  // ─── Web Scan (getUserMedia + jsQR) ───────────────────────────────
+
+  async function startWebCamera() {
+    setCameraError('')
+    setStatus('idle')
+
+    const permStatus = await checkPermission()
+    if (permStatus === 'denied') {
       setShowPermissionPrompt(true)
       return
     }
-
-    if (status === 'prompt' || status === 'prompt-with-rationale') {
+    if (permStatus === 'prompt' || permStatus === 'prompt-with-rationale') {
       const result = await requestPermission()
       if (result !== 'granted') {
         setShowPermissionPrompt(true)
@@ -85,10 +133,10 @@ export default function SellerQRScannerScreen() {
       }
     }
 
-    doStartCamera()
+    doStartWebCamera()
   }
 
-  async function doStartCamera() {
+  async function doStartWebCamera() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -100,7 +148,7 @@ export default function SellerQRScannerScreen() {
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setShowPermissionPrompt(true)
       } else {
-        setCameraError("Impossible d'accéder à la caméra. Vérifiez que l'autorisation caméra est activée dans les paramètres de votre téléphone.")
+        setCameraError("Impossible d'accéder à la caméra. Vérifiez l'autorisation dans les paramètres.")
       }
     }
   }
@@ -127,13 +175,25 @@ export default function SellerQRScannerScreen() {
     animationRef.current = requestAnimationFrame(scanLoop)
   }
 
+  // ─── Unified start ────────────────────────────────────────────────
+
+  async function startScan() {
+    if (scanMethod === 'native' && Capacitor.isNativePlatform()) {
+      await startNativeScan()
+    } else {
+      await startWebCamera()
+    }
+  }
+
+  // ─── Payment ──────────────────────────────────────────────────────
+
   const handleScanAndPay = async (pinOverride?: string) => {
     if (!user?.id) {
       toast.error('Erreur', { description: 'Session service introuvable' })
       return
     }
     if (!qrCodeData.trim() || !amount || parseFloat(amount) <= 0) {
-      toast.error('Erreur', { description: 'Veuillez scanner le QR Code et saisir un montant valide' })
+      toast.error('Erreur', { description: 'Scannez le QR Code et saisissez un montant' })
       return
     }
     const pinToSubmit = pinOverride || clientPin
@@ -161,7 +221,7 @@ export default function SellerQRScannerScreen() {
       } else if (data.requirePin) {
         setStatus('idle')
         setShowPinPrompt(true)
-        toast('PIN requis', { description: "Veuillez demander à l'enfant de saisir son code PIN." })
+        toast('PIN requis', { description: "Demandez le code PIN à l'enfant." })
       } else {
         setStatus('error')
         setMessage(data.message || 'Erreur de paiement')
@@ -205,13 +265,18 @@ export default function SellerQRScannerScreen() {
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted">
                 <QrCode className="w-16 h-16 text-indigo-400" />
-                <Button type="button" onClick={startCamera} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-xl" disabled={permissionLoading}>
-                  {permissionLoading ? (
-                    <span className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Vérification...</span>
-                  ) : (
-                    <><Camera className="w-4 h-4 mr-2" />Ouvrir la caméra</>
+                <div className="flex flex-col gap-2">
+                  <Button type="button" onClick={startScan} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-xl" disabled={permissionLoading}>
+                    {permissionLoading ? (
+                      <span className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Vérification...</span>
+                    ) : (
+                      <><Camera className="w-4 h-4 mr-2" />Scanner un QR Code</>
+                    )}
+                  </Button>
+                  {scanMethod === 'web' && (
+                    <p className="text-xs text-gray-500">Autorisation caméra requise</p>
                   )}
-                </Button>
+                </div>
               </div>
             )}
           </div>
@@ -267,21 +332,21 @@ export default function SellerQRScannerScreen() {
         </div>
 
         {status === 'success' && (
-          <div className="flex items-center gap-3 text-green-600 bg-green-50 px-6 py-4 rounded-xl border border-green-100 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-3 text-green-600 bg-green-50 px-6 py-4 rounded-xl border border-green-100">
             <CheckCircle2 className="w-6 h-6" />
             <span className="font-semibold">{message}</span>
           </div>
         )}
 
         {status === 'error' && (
-          <div className="flex items-center gap-3 text-red-600 bg-red-50 px-6 py-4 rounded-xl border border-red-100 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-3 text-red-600 bg-red-50 px-6 py-4 rounded-xl border border-red-100">
             <XCircle className="w-6 h-6" />
             <span className="font-semibold">{message}</span>
           </div>
         )}
       </div>
 
-      {/* Dialogue demande autorisation caméra */}
+      {/* Dialogue autorisation caméra */}
       <Dialog open={showPermissionPrompt} onOpenChange={setShowPermissionPrompt}>
         <DialogContent className="mx-4 rounded-2xl max-w-sm">
           <DialogHeader>
@@ -311,8 +376,10 @@ export default function SellerQRScannerScreen() {
               onClick={async () => {
                 setShowPermissionPrompt(false)
                 const result = await requestPermission()
-                if (result === 'granted') {
-                  doStartCamera()
+                if (result === 'granted' && scanMethod === 'web') {
+                  doStartWebCamera()
+                } else if (result === 'granted' && scanMethod === 'native') {
+                  startNativeScan()
                 }
               }}
               disabled={permissionLoading}
@@ -323,7 +390,7 @@ export default function SellerQRScannerScreen() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialogue Code PIN Enfant */}
+      {/* Dialogue PIN Enfant */}
       <Dialog open={showPinPrompt} onOpenChange={setShowPinPrompt}>
         <DialogContent className="mx-4 rounded-2xl max-w-sm">
           <DialogHeader>
@@ -332,7 +399,7 @@ export default function SellerQRScannerScreen() {
               Code PIN Enfant requis
             </DialogTitle>
             <DialogDescription>
-              Cette carte appartient à un compte enfant. Veuillez demander à l&apos;enfant de saisir son code PIN à 4 chiffres pour valider l&apos;achat.
+              Cette carte appartient à un compte enfant. Saisissez son code PIN 4 chiffres.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

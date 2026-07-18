@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Camera } from '@capacitor/camera';
 
 type PermissionStatus = 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale' | 'unavailable';
 
@@ -13,77 +12,62 @@ export function useCameraPermission() {
   const checkPermission = useCallback(async (): Promise<PermissionStatus> => {
     if (typeof window === 'undefined') return 'denied';
 
-    // Not on Capacitor (regular browser) — use Permissions API
-    if (!Capacitor.isNativePlatform()) {
+    if (Capacitor.isNativePlatform()) {
       try {
-        const result = await navigator.permissions.query({ name: 'camera' as PermissionName });
-        const status = result.state === 'granted' ? 'granted' : result.state === 'denied' ? 'denied' : 'prompt';
-        setPermissionStatus(status);
-        return status;
+        const { BarcodeScanner } = await import('@capacitor-mlkit/barcode-scanning');
+        const { camera } = await BarcodeScanner.checkPermissions();
+        setPermissionStatus(camera as PermissionStatus);
+        return camera as PermissionStatus;
       } catch {
-        // Permissions API not supported, try getUserMedia
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-          stream.getTracks().forEach(t => t.stop());
-          setPermissionStatus('granted');
-          return 'granted';
-        } catch {
-          setPermissionStatus('denied');
-          return 'denied';
-        }
+        // fallback
       }
     }
 
-    // Capacitor native — use Camera plugin
     try {
-      const perm = await Camera.checkPermissions();
-      const status = perm.camera;
+      const result = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      const status = result.state === 'granted' ? 'granted' : result.state === 'denied' ? 'denied' : 'prompt';
       setPermissionStatus(status);
       return status;
     } catch {
-      setPermissionStatus('unavailable');
-      return 'unavailable';
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        stream.getTracks().forEach(t => t.stop());
+        setPermissionStatus('granted');
+        return 'granted';
+      } catch {
+        setPermissionStatus('denied');
+        return 'denied';
+      }
     }
   }, []);
 
   const requestPermission = useCallback(async (): Promise<PermissionStatus> => {
     setPermissionLoading(true);
     try {
-      if (!Capacitor.isNativePlatform()) {
+      if (Capacitor.isNativePlatform()) {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-          stream.getTracks().forEach(t => t.stop());
-          setPermissionStatus('granted');
+          const { BarcodeScanner } = await import('@capacitor-mlkit/barcode-scanning');
+          const { camera } = await BarcodeScanner.requestPermissions();
+          setPermissionStatus(camera as PermissionStatus);
           setPermissionLoading(false);
-          return 'granted';
-        } catch (err: any) {
-          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-            setPermissionStatus('denied');
-            setPermissionLoading(false);
-            return 'denied';
-          }
-          setPermissionStatus('prompt');
-          setPermissionLoading(false);
-          return 'prompt';
+          return camera as PermissionStatus;
+        } catch {
+          // fallback to getUserMedia
         }
       }
 
-      const perm = await Camera.requestPermissions();
-      const status = perm.camera;
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      stream.getTracks().forEach(t => t.stop());
+      setPermissionStatus('granted');
+      setPermissionLoading(false);
+      return 'granted';
+    } catch (err: any) {
+      const status = (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') ? 'denied' : 'prompt';
       setPermissionStatus(status);
       setPermissionLoading(false);
       return status;
-    } catch {
-      setPermissionStatus('denied');
-      setPermissionLoading(false);
-      return 'denied';
     }
   }, []);
 
-  return {
-    permissionStatus,
-    permissionLoading,
-    checkPermission,
-    requestPermission,
-  };
+  return { permissionStatus, permissionLoading, checkPermission, requestPermission };
 }

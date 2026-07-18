@@ -254,38 +254,64 @@ export default function TraitApp() {
     const subscribeToPush = async () => {
       try {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-          console.warn('Push notifications are not supported on this browser.')
+          console.warn('[TRAIT Push] ❌ Push notifications not supported on this browser.')
           return
         }
 
-        const permission = await Notification.requestPermission()
-        if (permission !== 'granted') return
-
-        const reg = await navigator.serviceWorker.ready
-        let sub = await reg.pushManager.getSubscription()
-
-        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-        if (!vapidPublicKey) return
-
-        // Convert base64 url-safe key to Uint8Array
-        const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4)
-        const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/')
-        const rawData = window.atob(base64)
-        const outputArray = new Uint8Array(rawData.length)
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i)
+        // ── Step 1 : Register Service Worker ──
+        let reg: ServiceWorkerRegistration
+        try {
+          reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          console.log('[TRAIT Push] ✅ Service Worker registered:', reg.scope)
+        } catch (swErr) {
+          console.warn('[TRAIT Push] ❌ Service Worker registration failed:', swErr)
+          return
         }
 
+        // Wait until SW is active
+        await navigator.serviceWorker.ready
+        console.log('[TRAIT Push] ✅ Service Worker is active and ready.')
+
+        // ── Step 2 : Request permission ──
+        const permission = await Notification.requestPermission()
+        console.log('[TRAIT Push] Permission:', permission)
+        if (permission !== 'granted') {
+          console.warn('[TRAIT Push] ❌ Notification permission denied.')
+          return
+        }
+
+        // ── Step 3 : Subscribe ──
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        if (!vapidPublicKey) {
+          console.warn('[TRAIT Push] ❌ NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set.')
+          return
+        }
+
+        let sub = await reg.pushManager.getSubscription()
+
         if (!sub) {
+          const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4)
+          const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/')
+          const rawData = window.atob(base64)
+          const outputArray = new Uint8Array(rawData.length)
+          for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i)
+
           sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: outputArray,
           })
+          console.log('[TRAIT Push] ✅ New push subscription created.')
+        } else {
+          console.log('[TRAIT Push] ✅ Existing push subscription found.')
         }
 
+        // ── Step 4 : Send subscription to server ──
         const p256dhKey = sub.getKey('p256dh')
         const authKey = sub.getKey('auth')
-        if (!p256dhKey || !authKey) return
+        if (!p256dhKey || !authKey) {
+          console.warn('[TRAIT Push] ❌ Could not extract subscription keys.')
+          return
+        }
 
         const keys = {
           p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dhKey))),
@@ -296,19 +322,16 @@ export default function TraitApp() {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            endpoint: sub.endpoint,
-            p256dh: keys.p256dh,
-            auth: keys.auth,
-          }),
+          body: JSON.stringify({ endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth }),
         })
         if (pushRes.ok) {
-          console.log('[TRAIT Push] Subscription registered successfully.')
+          console.log('[TRAIT Push] ✅ Subscription saved to server. Push notifications are ready!')
         } else {
-          console.warn('[TRAIT Push] Failed to register subscription:', await pushRes.text())
+          const errText = await pushRes.text()
+          console.warn('[TRAIT Push] ❌ Failed to save subscription to server:', errText)
         }
       } catch (err) {
-        console.warn('Could not register push subscription:', err)
+        console.warn('[TRAIT Push] ❌ Error during push setup:', err)
       }
     }
 

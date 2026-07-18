@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     }
 
     const rewards = await prisma.referralReward.findMany({
-      where: { userId: auth.id },
+      where: { userId: auth.userId },
       orderBy: { createdAt: 'desc' },
     })
 

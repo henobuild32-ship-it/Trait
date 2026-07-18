@@ -19,7 +19,7 @@ export async function PUT(
       return NextResponse.json({ success: false, message: 'Paiement récurrent introuvable' }, { status: 404 })
     }
 
-    if (existing.userId !== auth.id) {
+    if (existing.userId !== auth.userId) {
       return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 403 })
     }
 
@@ -67,7 +67,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Paiement récurrent introuvable' }, { status: 404 })
     }
 
-    if (existing.userId !== auth.id) {
+    if (existing.userId !== auth.userId) {
       return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 403 })
     }
 

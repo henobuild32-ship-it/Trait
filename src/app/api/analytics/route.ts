@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-    const userId = auth.id
+    const userId = auth.userId
 
     const [sentThisMonth, receivedThisMonth, allTransactions, topReceivers, dailyCounts, balanceHistory] = await Promise.all([
       prisma.transaction.aggregate({

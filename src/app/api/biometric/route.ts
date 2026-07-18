@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       }
 
       await prisma.user.update({
-        where: { id: auth.id },
+        where: { id: auth.userId },
         data: {
           biometricEnabled: true,
           biometricPublicKey: publicKey,
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       }
 
       const user = await prisma.user.findUnique({
-        where: { id: auth.id },
+        where: { id: auth.userId },
         select: { biometricPublicKey: true, biometricEnabled: true },
       })
 
@@ -70,7 +70,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.user.update({
-      where: { id: auth.id },
+      where: { id: auth.userId },
       data: {
         biometricEnabled: false,
         biometricPublicKey: null,

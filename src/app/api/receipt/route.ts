@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Transaction introuvable' }, { status: 404 })
     }
 
-    if (transaction.senderId !== auth.id && transaction.receiverId !== auth.id) {
+    if (transaction.senderId !== auth.userId && transaction.receiverId !== auth.userId) {
       return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 403 })
     }
 

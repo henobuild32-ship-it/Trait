@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     const credits = await prisma.microCredit.findMany({
-      where: { userId: auth.id },
+      where: { userId: auth.userId },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Non authentifié' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { id: auth.id } })
+    const user = await prisma.user.findUnique({ where: { id: auth.userId } })
     if (!user) {
       return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 })
     }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     const credit = await prisma.microCredit.create({
       data: {
-        userId: auth.id,
+        userId: auth.userId,
         amount: parseFloat(amount),
         currency: currency || 'FC',
         interestRate: DEFAULT_INTEREST_RATE,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     if (isSmallLoan) {
       const balanceField = credit.currency === 'FC' ? 'realBalanceFC' : 'realBalance'
       await prisma.user.update({
-        where: { id: auth.id },
+        where: { id: auth.userId },
         data: { [balanceField]: { increment: credit.amount } },
       })
     }

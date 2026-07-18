@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: auth.id },
+      where: { id: auth.userId },
       select: { referralCode: true },
     })
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     const rewards = await prisma.referralReward.findMany({
-      where: { userId: auth.id },
+      where: { userId: auth.userId },
     })
 
     const totalRewards = rewards.reduce((sum, r) => sum + r.amount, 0)
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Non authentifié' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { id: auth.id } })
+    const user = await prisma.user.findUnique({ where: { id: auth.userId } })
     if (!user) {
       return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 })
     }
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     } while (exists)
 
     await prisma.user.update({
-      where: { id: auth.id },
+      where: { id: auth.userId },
       data: { referralCode: code },
     })
 

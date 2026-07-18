@@ -49,7 +49,7 @@ export async function POST(
     const isFC = paymentRequest.currency === 'FC'
     const balanceField = isFC ? 'realBalanceFC' : 'realBalance'
 
-    const payer = await prisma.user.findUnique({ where: { id: auth.id } })
+    const payer = await prisma.user.findUnique({ where: { id: auth.userId } })
     if (!payer) {
       return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 })
     }
@@ -67,13 +67,13 @@ export async function POST(
           fee: 0,
           currency: paymentRequest.currency,
           status: 'completed',
-          senderId: auth.id,
+          senderId: auth.userId,
           receiverId: paymentRequest.requesterId,
           description: paymentRequest.description || `Paiement de demande à ${paymentRequest.requester.phone}`,
         },
       }),
       prisma.user.update({
-        where: { id: auth.id },
+        where: { id: auth.userId },
         data: { [balanceField]: { decrement: paymentRequest.amount } },
       }),
       prisma.user.update({

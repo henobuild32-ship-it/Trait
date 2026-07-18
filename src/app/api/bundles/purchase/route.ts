@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const isFC = product.currency === 'FC'
     const balanceField = isFC ? 'realBalanceFC' : 'realBalance'
 
-    const user = await prisma.user.findUnique({ where: { id: auth.id } })
+    const user = await prisma.user.findUnique({ where: { id: auth.userId } })
     if (!user) {
       return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 })
     }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const [purchase] = await prisma.$transaction([
       prisma.bundlePurchase.create({
         data: {
-          userId: auth.id,
+          userId: auth.userId,
           productId: product.id,
           phoneNumber: phoneNumber || null,
           amount: product.price,
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         },
       }),
       prisma.user.update({
-        where: { id: auth.id },
+        where: { id: auth.userId },
         data: { [balanceField]: { decrement: product.price } },
       }),
     ])

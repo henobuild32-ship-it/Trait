@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     }
 
     const payments = await prisma.recurringPayment.findMany({
-      where: { userId: auth.id },
+      where: { userId: auth.userId },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const recurring = await prisma.recurringPayment.create({
       data: {
-        userId: auth.id,
+        userId: auth.userId,
         recipientId: recipient.id,
         amount: parseFloat(amount),
         currency: currency || 'FC',

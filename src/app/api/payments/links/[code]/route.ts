@@ -82,14 +82,14 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Ce lien de paiement a atteint le nombre maximal d\'utilisations' }, { status: 400 })
     }
 
-    if (link.userId === auth.id) {
+    if (link.userId === auth.userId) {
       return NextResponse.json({ success: false, message: 'Vous ne pouvez pas payer votre propre lien' }, { status: 400 })
     }
 
     const isFC = link.currency === 'FC'
     const balanceField = isFC ? 'realBalanceFC' : 'realBalance'
 
-    const payer = await prisma.user.findUnique({ where: { id: auth.id } })
+    const payer = await prisma.user.findUnique({ where: { id: auth.userId } })
     if (!payer) {
       return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 })
     }
@@ -107,13 +107,13 @@ export async function POST(
           fee: 0,
           currency: link.currency,
           status: 'completed',
-          senderId: auth.id,
+          senderId: auth.userId,
           receiverId: link.userId,
           description: `Paiement via lien ${link.code}`,
         },
       }),
       prisma.user.update({
-        where: { id: auth.id },
+        where: { id: auth.userId },
         data: { [balanceField]: { decrement: link.amount } },
       }),
       prisma.user.update({

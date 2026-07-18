@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
 
-    const where: any = { userId: auth.id }
+    const where: any = { userId: auth.userId }
     if (status) where.status = status
 
     const links = await prisma.paymentLink.findMany({
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const link = await prisma.paymentLink.create({
       data: {
-        userId: auth.id,
+        userId: auth.userId,
         amount: parseFloat(amount),
         currency: currency || 'FC',
         description: description || null,

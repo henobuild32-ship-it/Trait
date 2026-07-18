@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     let requests
     if (role === 'sent') {
       requests = await prisma.paymentRequest.findMany({
-        where: { requesterId: auth.id },
+        where: { requesterId: auth.userId },
         orderBy: { createdAt: 'desc' },
       })
     } else if (role === 'received') {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       })
     } else {
       const sent = await prisma.paymentRequest.findMany({
-        where: { requesterId: auth.id },
+        where: { requesterId: auth.userId },
         orderBy: { createdAt: 'desc' },
       })
       const received = await prisma.paymentRequest.findMany({
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     const paymentRequest = await prisma.paymentRequest.create({
       data: {
-        requesterId: auth.id,
+        requesterId: auth.userId,
         targetId: target.id,
         targetPhone,
         amount: parseFloat(amount),

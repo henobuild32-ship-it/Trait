@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     }
 
     const goals = await prisma.savingsGoal.findMany({
-      where: { userId: auth.id },
+      where: { userId: auth.userId },
       include: { contributions: { orderBy: { createdAt: 'desc' } } },
       orderBy: { createdAt: 'desc' },
     })
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const goal = await prisma.savingsGoal.create({
       data: {
-        userId: auth.id,
+        userId: auth.userId,
         name,
         targetAmount: parseFloat(targetAmount),
         currency: currency || 'FC',

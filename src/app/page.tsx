@@ -292,8 +292,9 @@ export default function TraitApp() {
           auth: btoa(String.fromCharCode(...new Uint8Array(authKey))),
         }
 
-        await fetch('/api/notifications/push', {
+        const pushRes = await fetch('/api/notifications/push', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             endpoint: sub.endpoint,
@@ -301,6 +302,11 @@ export default function TraitApp() {
             auth: keys.auth,
           }),
         })
+        if (pushRes.ok) {
+          console.log('[TRAIT Push] Subscription registered successfully.')
+        } else {
+          console.warn('[TRAIT Push] Failed to register subscription:', await pushRes.text())
+        }
       } catch (err) {
         console.warn('Could not register push subscription:', err)
       }

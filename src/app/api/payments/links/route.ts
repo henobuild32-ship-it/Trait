@@ -16,12 +16,41 @@ export async function GET(request: NextRequest) {
     const where: any = { userId: auth.userId }
     if (status) where.status = status
 
-    const links = await prisma.paymentLink.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
+    const [links, stats] = await Promise.all([
+      prisma.paymentLink.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      // Aggregate stats
+      prisma.paymentLink.aggregate({
+        where: { userId: auth.userId },
+        _sum: { useCount: true },
+        _count: { _all: true },
+      }),
+    ])
+
+    // Total collected (from completed transactions of type payment_link)
+    const totalCollected = await prisma.transaction.aggregate({
+      where: {
+        receiverId: auth.userId,
+        type: 'payment_link',
+        status: 'completed',
+      },
+      _sum: { amount: true },
     })
 
-    return NextResponse.json({ success: true, links })
+    const activeLinks = links.filter(l => l.status === 'active').length
+
+    return NextResponse.json({
+      success: true,
+      links,
+      stats: {
+        totalLinks: stats._count._all,
+        activeLinks,
+        totalUses: stats._sum.useCount || 0,
+        totalCollected: totalCollected._sum.amount || 0,
+      },
+    })
   } catch (error) {
     console.error('Payment links GET error:', error)
     return NextResponse.json({ success: false, message: 'Erreur interne du serveur' }, { status: 500 })
@@ -36,13 +65,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { amount, currency, description, maxUses, expiresAt } = body
+    const { amount, currency, description, maxUses, expiresAt, allowedMethods } = body
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ success: false, message: 'Montant invalide' }, { status: 400 })
     }
 
-    const code = crypto.randomBytes(4).toString('hex')
+    const code = crypto.randomBytes(5).toString('hex')
+
+    // Build allowedMethods string
+    const methodsStr = Array.isArray(allowedMethods) && allowedMethods.length > 0
+      ? allowedMethods.join(',')
+      : 'wallet,mpesa,orange,airtel,afrimoney'
 
     const link = await prisma.paymentLink.create({
       data: {
@@ -53,18 +87,45 @@ export async function POST(request: NextRequest) {
         code,
         maxUses: maxUses ? parseInt(maxUses) : 0,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
+        allowedMethods: methodsStr,
       },
     })
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trait-rho.vercel.app'
 
     return NextResponse.json({
       success: true,
       link: {
         ...link,
-        url: `https://trait-rho.vercel.app/pay/link/${code}`,
+        url: `${baseUrl}/pay/link/${code}`,
       },
     }, { status: 201 })
   } catch (error) {
     console.error('Payment links POST error:', error)
+    return NextResponse.json({ success: false, message: 'Erreur interne du serveur' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const auth = await getAuthUser(request)
+    if (!auth) {
+      return NextResponse.json({ success: false, message: 'Non authentifié' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const linkId = searchParams.get('id')
+    if (!linkId) {
+      return NextResponse.json({ success: false, message: 'ID du lien requis' }, { status: 400 })
+    }
+
+    await prisma.paymentLink.deleteMany({
+      where: { id: linkId, userId: auth.userId },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Payment links DELETE error:', error)
     return NextResponse.json({ success: false, message: 'Erreur interne du serveur' }, { status: 500 })
   }
 }

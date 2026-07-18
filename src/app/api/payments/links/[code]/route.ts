@@ -37,6 +37,7 @@ export async function GET(
         currency: link.currency,
         description: link.description,
         status: link.status,
+        allowedMethods: link.allowedMethods || 'wallet,mpesa,orange,airtel,afrimoney',
         owner: link.user,
       },
     })

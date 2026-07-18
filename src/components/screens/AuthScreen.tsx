@@ -113,17 +113,21 @@ export default function AuthScreen() {
     }
   };
 
+  const [biometricType, setBiometricType] = useState<'faceId' | 'fingerprint' | null>(null);
+
   useEffect(() => {
     const stored = localStorage.getItem('trait_biometric_key');
+    const storedType = localStorage.getItem('trait_biometric_type') as 'faceId' | 'fingerprint' | null;
     if (stored) {
       setBiometricKey(stored);
       setBiometricAvailable(true);
+      setBiometricType(storedType || 'fingerprint');
     } else if (user?.biometricEnabled) {
-      // If user object has biometric enabled, they can use it
       const fallbackKey = localStorage.getItem('trait_biometric_public_key');
       if (fallbackKey) {
         setBiometricKey(fallbackKey);
         setBiometricAvailable(true);
+        setBiometricType(storedType || 'fingerprint');
       }
     }
     return () => stopBioCamera();
@@ -509,14 +513,16 @@ export default function AuthScreen() {
                     variant="outline"
                     disabled={biometricLoading}
                     onClick={handleBiometricLogin}
-                    className="w-full h-14 text-base font-semibold rounded-xl border-[#0D5C63]/30 hover:bg-[#0D5C63]/5 hover:border-[#0D5C63] cursor-pointer"
+                    className="w-full h-14 text-base font-semibold rounded-xl border-[#0D5C63]/30 hover:bg-[#0D5C63]/5 hover:border-[#0D5C63] cursor-pointer gap-3"
                   >
                     {biometricLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin mr-3 text-[#0D5C63]" />
+                      <Loader2 className="h-5 w-5 animate-spin text-[#0D5C63]" />
+                    ) : biometricType === 'faceId' ? (
+                      <Scan className="h-5 w-5 text-[#0D5C63]" />
                     ) : (
-                      <Fingerprint className="h-5 w-5 mr-3 text-[#0D5C63]" />
+                      <Fingerprint className="h-5 w-5 text-[#0D5C63]" />
                     )}
-                    Connexion avec empreinte
+                    {biometricType === 'faceId' ? 'Connexion avec Face ID' : 'Connexion avec empreinte'}
                   </Button>
                 </motion.div>
               )}

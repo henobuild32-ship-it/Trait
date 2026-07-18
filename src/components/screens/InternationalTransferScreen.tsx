@@ -52,7 +52,6 @@ import {
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
 import jsQR from 'jsqr';
-import { useCameraPermission } from '@/hooks/useCameraPermission';
 
 // ─── Constants ─────────────────────────────────────────────────────
 
@@ -251,7 +250,6 @@ function formatExpiryDate(value: string): string {
 
 export default function InternationalTransferScreen() {
   const { user, goBack, navigateTo, setUser } = useAppStore();
-  const { checkPermission: checkCamPermission, requestPermission: requestCamPermission } = useCameraPermission();
 
   const [selectedType, setSelectedType] = useState<TransferType | null>(null);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
@@ -273,8 +271,6 @@ export default function InternationalTransferScreen() {
   const [qrCameraActive, setQrCameraActive] = useState(false);
   const [qrCameraError, setQrCameraError] = useState('');
   const [qrScannedData, setQrScannedData] = useState('');
-  const [showQrPermissionPrompt, setShowQrPermissionPrompt] = useState(false);
-  const pendingStreamRef = useRef<MediaStream | null>(null);
 
   function stopQrScanner() {
     scanningRef.current = false;
@@ -300,19 +296,6 @@ export default function InternationalTransferScreen() {
 
   async function startQrScanner() {
     setQrCameraError('');
-    setShowQrPermissionPrompt(false);
-    const permStatus = await checkCamPermission();
-    if (permStatus === 'denied') {
-      setShowQrPermissionPrompt(true);
-      return;
-    }
-    if (permStatus === 'prompt' || permStatus === 'prompt-with-rationale') {
-      const result = await requestCamPermission();
-      if (result !== 'granted') {
-        setShowQrPermissionPrompt(true);
-        return;
-      }
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -321,11 +304,7 @@ export default function InternationalTransferScreen() {
       pendingStreamRef.current = stream;
       setQrCameraActive(true);
     } catch (err: any) {
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setShowQrPermissionPrompt(true);
-      } else {
-        setQrCameraError("Impossible d'accéder à la caméra. Vérifiez l'autorisation dans les paramètres.");
-      }
+      setQrCameraError("Impossible d'accéder à la caméra. Vérifiez l'autorisation dans les paramètres.");
     }
   }
 
@@ -871,36 +850,6 @@ export default function InternationalTransferScreen() {
             {qrCameraError && (
               <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-2 w-full">{qrCameraError}</p>
             )}
-
-            {/* Dialogue autorisation caméra */}
-            <Dialog open={showQrPermissionPrompt} onOpenChange={setShowQrPermissionPrompt}>
-              <DialogContent className="mx-4 rounded-2xl max-w-sm">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <ShieldAlert className="size-5 text-indigo-600" />
-                    Autorisation caméra requise
-                  </DialogTitle>
-                  <DialogDescription className="text-left space-y-2">
-                    <p>L'application <strong>TRAIT</strong> a besoin d'accéder à votre caméra pour scanner les QR codes de transfert.</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Allez dans <strong>Paramètres &gt; Applications &gt; TRAIT &gt; Autorisations</strong> et activez <strong>Appareil photo</strong>.
-                    </p>
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="flex gap-2">
-                  <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowQrPermissionPrompt(false)}>
-                    Plus tard
-                  </Button>
-                  <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl"
-                    onClick={async () => {
-                      setShowQrPermissionPrompt(false);
-                      await requestCamPermission();
-                    }}>
-                    Autoriser
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
 
             {qrScannedData && (
               <div className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">

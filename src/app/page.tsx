@@ -103,7 +103,6 @@ const ReferralScreen = lazy(() => import('@/components/screens/ReferralScreen'))
 const AnalyticsScreen = lazy(() => import('@/components/screens/AnalyticsScreen'));
 const ReceiptScreen = lazy(() => import('@/components/screens/ReceiptScreen'));
 const ContactPayScreen = lazy(() => import('@/components/screens/ContactPayScreen'));
-const BiometricSetupScreen = lazy(() => import('@/components/screens/BiometricSetupScreen'));
 
 const BottomNavigation = lazy(() => import('@/components/layout/BottomNavigation'));
 const PWAInstallBanner = lazy(() => import('@/components/layout/PWAInstallBanner').then(m => ({ default: m.PWAInstallBanner })));
@@ -206,7 +205,6 @@ const screenMap: Record<PageName, React.LazyExoticComponent<React.ComponentType>
   'analytics': AnalyticsScreen,
   'receipt': ReceiptScreen,
   'contact-pay': ContactPayScreen,
-  'biometric-setup': BiometricSetupScreen,
   'auth': AuthScreen,
   'forgot-password': ForgotPasswordScreen,
   'reset-password': ForgotPasswordScreen,

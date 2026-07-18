@@ -38,7 +38,6 @@ import {
   Target,
   BarChart3,
   Contact,
-  Fingerprint,
   Gift,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -100,7 +99,6 @@ const clientQuickActions = [
   { labelKey: 'Parrainage', icon: Gift, page: 'referral' as const, color: 'bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-950 dark:text-fuchsia-400' },
   { labelKey: 'Analytics', icon: BarChart3, page: 'analytics' as const, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400' },
   { labelKey: 'Contacts', icon: Contact, page: 'contact-pay' as const, color: 'bg-lime-50 text-lime-600 dark:bg-lime-950 dark:text-lime-400' },
-  { labelKey: 'Biométrie', icon: Fingerprint, page: 'biometric-setup' as const, color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
   { labelKey: 'USSD', icon: Phone, page: 'ussd' as const, color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
 ];
 

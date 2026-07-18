@@ -18,59 +18,45 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    let user;
 
-    if (body.biometricKey) {
-      user = await db.user.findFirst({
-        where: { biometricPublicKey: body.biometricKey, biometricEnabled: true }
+    const validation = validateRequest(LoginSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ success: false, message: validation.error }, { status: 400 })
+    }
+
+    const { phone, password } = validation.data
+
+    const user = await db.user.findUnique({
+      where: { phone: phone.trim() },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Numéro ou mot de passe incorrect' },
+        { status: 404 }
+      )
+    }
+
+    if (!user.password) {
+      return NextResponse.json(
+        { success: false, message: 'Numéro ou mot de passe incorrect' },
+        { status: 401 }
+      )
+    }
+
+    const isValid = await verifyAndMigratePassword(user.id, password.trim(), user.password)
+
+    if (!isValid) {
+      await logSecurityEvent({
+        userId: user.id,
+        action: 'login_failed',
+        details: JSON.stringify({ phone: phone.trim(), reason: 'invalid_password' }),
+        riskLevel: 'medium',
       })
-      if (!user) {
-        return NextResponse.json(
-          { success: false, message: 'Données biométriques introuvables ou inactives pour ce compte' },
-          { status: 401 }
-        )
-      }
-    } else {
-      const validation = validateRequest(LoginSchema, body)
-      if (!validation.success) {
-        return NextResponse.json({ success: false, message: validation.error }, { status: 400 })
-      }
-
-      const { phone, password } = validation.data
-
-      user = await db.user.findUnique({
-        where: { phone: phone.trim() },
-      })
-
-      if (!user) {
-        return NextResponse.json(
-          { success: false, message: 'Numéro ou mot de passe incorrect' },
-          { status: 404 }
-        )
-      }
-
-      if (!user.password) {
-        return NextResponse.json(
-          { success: false, message: 'Numéro ou mot de passe incorrect' },
-          { status: 401 }
-        )
-      }
-
-      // Verify password with lazy migration from plain text
-      const isValid = await verifyAndMigratePassword(user.id, password.trim(), user.password)
-
-      if (!isValid) {
-        await logSecurityEvent({
-          userId: user.id,
-          action: 'login_failed',
-          details: JSON.stringify({ phone: phone.trim(), reason: 'invalid_password' }),
-          riskLevel: 'medium',
-        })
-        return NextResponse.json(
-          { success: false, message: 'Numéro ou mot de passe incorrect' },
-          { status: 401 }
-        )
-      }
+      return NextResponse.json(
+        { success: false, message: 'Numéro ou mot de passe incorrect' },
+        { status: 401 }
+      )
     }
 
     if (user.suspended && user.role !== 'seller') {

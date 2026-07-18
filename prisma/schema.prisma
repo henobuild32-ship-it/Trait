@@ -55,10 +55,6 @@ model User {
   kycDocumentUrl         String?
   kycSelfieUrl           String?
   kycData                String?
-  biometricEnabled       Boolean                 @default(false)
-  biometricPublicKey     String?
-  faceIdEnabled          Boolean                 @default(false)
-  fingerprintEnabled     Boolean                 @default(false)
   multiCurrencyBalances String?
   referralCode           String?                 @unique
   referralCodeUsed       String?

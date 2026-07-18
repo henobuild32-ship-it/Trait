@@ -588,19 +588,6 @@ const translations: Record<Language, TranslationDict> = {
     'contact_pay.empty': 'Aucun contact récent',
     'contact_pay.recent': 'Contacts récents',
 
-    // ── Biometric Setup ──
-    'biometric.title': 'Sécurité biométrique',
-    'biometric.enabled': 'Activé',
-    'biometric.disabled': 'Désactivé',
-    'biometric.activate': 'Activer l\'empreinte / Face ID',
-    'biometric.deactivate': 'Désactiver',
-    'biometric.benefits': 'Rapide, sécurisé, pratique',
-    'biometric.benefit1': 'Connexion en un instant',
-    'biometric.benefit2': 'Sécurité renforcée',
-    'biometric.benefit3': 'Pas besoin de mot de passe',
-    'biometric.note': 'Vos données biométriques restent sur votre appareil',
-    'biometric.enabled_success': 'Biométrie activée avec succès !',
-    'biometric.disabled_success': 'Biométrie désactivée',
 
     // ── Send extras ──
     'send.currency': 'Devise',

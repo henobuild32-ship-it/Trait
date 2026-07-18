@@ -9,7 +9,7 @@ import {
   XCircle, ChevronRight, Plus, Trash2, AlertTriangle,
   HelpCircle, MessageSquare, ShieldOff, Key, Package,
   PiggyBank, Link, Handshake, Repeat,
-  BarChart3, Receipt, QrCode, Fingerprint, Store, RefreshCw,
+  BarChart3, Receipt, QrCode, Store, RefreshCw,
   Gift, Users, UserCheck, Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ type UssdStep =
   | 'support' | 'support-report' | 'support-help'
   | 'bundles' | 'microcredit' | 'savings' | 'payment-link' | 'payment-request'
   | 'recurring' | 'international' | 'cards' | 'referral' | 'analytics'
-  | 'receipts' | 'contact-pay' | 'qr-pay' | 'biometrics' | 'marketplace' | 'barter'
+  | 'receipts' | 'contact-pay' | 'qr-pay' | 'marketplace' | 'barter'
   | 'agent-info';
 
 type UssdCurrency = 'USD' | 'FC';
@@ -96,7 +96,6 @@ const MAIN_MENU = [
   { id: '17', label: 'Reçus électroniques', icon: Receipt, step: 'receipts' as UssdStep },
   { id: '18', label: 'Paiement Contact', icon: Users, step: 'contact-pay' as UssdStep },
   { id: '19', label: 'Paiement QR', icon: QrCode, step: 'qr-pay' as UssdStep },
-  { id: '20', label: 'Biometrics / 2FA', icon: Fingerprint, step: 'biometrics' as UssdStep },
   { id: '21', label: 'Marketplace', icon: Store, step: 'marketplace' as UssdStep },
   { id: '22', label: 'Troc (Barter)', icon: RefreshCw, step: 'barter' as UssdStep },
   { id: '23', label: 'Info Agent', icon: UserCheck, step: 'agent-info' as UssdStep },
@@ -1394,19 +1393,6 @@ export default function USSDScreen() {
     ]);
   }
 
-  function renderBiometrics() {
-    return renderInfoScreen('Biometrics / 2FA', <Fingerprint className="size-8 text-emerald-700" />, [
-      'SÉCURITÉ BIOMÉTRIQUE',
-      '━━━━━━━━━━━━━━━',
-      '🔐 Empreinte digitale',
-      '📸 Reconnaissance faciale',
-      '🔑 Authentification 2FA/TOTP',
-      '━━━━━━━━━━━━━━━',
-      'Dans l\'app TRAIT:',
-      'Menu > Sécurité > Biometrics',
-    ]);
-  }
-
   function renderMarketplace() {
     return renderInfoScreen('Marketplace', <Store className="size-8 text-emerald-700" />, [
       'MARKETPLACE TRAIT',
@@ -1921,7 +1907,6 @@ export default function USSDScreen() {
     'receipts': renderReceipts,
     'contact-pay': renderContactPay,
     'qr-pay': renderQrPay,
-    'biometrics': renderBiometrics,
     'marketplace': renderMarketplace,
     'barter': renderBarterScreen,
     'agent-info': renderAgentInfo,

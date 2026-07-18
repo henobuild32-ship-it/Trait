@@ -85,7 +85,6 @@ export type PageName =
   | 'analytics'
   | 'receipt'
   | 'contact-pay'
-  | 'biometric-setup'
   | 'forgot-password'
   | 'auth'
   | 'reset-password';

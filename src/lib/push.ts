@@ -61,10 +61,11 @@ export async function sendPushToMany(userIds: string[], payload: PushPayload): P
   await Promise.allSettled(userIds.map((id) => sendPushToUser(id, payload)))
 }
 
-export async function sendPushToAll(payload: PushPayload): Promise<void> {
+export async function sendPushToAll(payload: PushPayload & { tag?: string }) {
   try {
     const subscriptions = await db.pushSubscription.findMany()
-    if (!subscriptions.length) return
+    const total = subscriptions.length
+    if (total === 0) return { sent: 0, total: 0, failed: 0 }
 
     const data = JSON.stringify({
       title: payload.title,
@@ -74,15 +75,35 @@ export async function sendPushToAll(payload: PushPayload): Promise<void> {
       url: payload.url || '/',
     })
 
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       subscriptions.map((sub) =>
         webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           data
-        ).catch(() => {})
+        )
       )
     )
+
+    let sent = 0
+    let failed = 0
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i]
+      if (result.status === 'fulfilled') {
+        sent++
+      } else {
+        failed++
+        const err = result.reason as any
+        if (err?.statusCode === 410 || err?.statusCode === 404) {
+          await db.pushSubscription.deleteMany({
+            where: { endpoint: subscriptions[i].endpoint },
+          })
+        }
+      }
+    }
+
+    return { sent, total, failed }
   } catch (error) {
     console.error('sendPushToAll error:', error)
+    return { sent: 0, total: 0, failed: 0 }
   }
 }

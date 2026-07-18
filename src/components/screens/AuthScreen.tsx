@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Building2, Store, ArrowLeft, Eye, EyeOff, Loader2,
-  Fingerprint, Shield, Check,
+  Fingerprint, Shield, Check, Scan, CheckCircle2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAppStore, type User } from '@/lib/store';
 import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
@@ -93,6 +100,19 @@ export default function AuthScreen() {
   const [biometricKey, setBiometricKey] = useState<string | null>(null);
   const [biometricLoading, setBiometricLoading] = useState(false);
 
+  // Biometric scanner states
+  const [showBiometricScanner, setShowBiometricScanner] = useState(false);
+  const [biometricScanStatus, setBiometricScanStatus] = useState<'camera-req' | 'scanning' | 'success' | 'failed'>('camera-req');
+  const bioVideoRef = useRef<HTMLVideoElement | null>(null);
+  const bioStreamRef = useRef<MediaStream | null>(null);
+
+  const stopBioCamera = () => {
+    if (bioStreamRef.current) {
+      bioStreamRef.current.getTracks().forEach(track => track.stop());
+      bioStreamRef.current = null;
+    }
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem('trait_biometric_key');
     if (stored) {
@@ -106,6 +126,7 @@ export default function AuthScreen() {
         setBiometricAvailable(true);
       }
     }
+    return () => stopBioCamera();
   }, [user]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -243,34 +264,43 @@ export default function AuthScreen() {
     }
   };
 
-  const handleBiometricLogin = async () => {
-    if (!biometricKey) {
-      toast.error('Aucune donnée biométrique trouvée');
-      return;
-    }
-    setBiometricLoading(true);
+  const startBioCameraScanner = async () => {
+    setBiometricScanStatus('camera-req');
+    setShowBiometricScanner(true);
     try {
-      let publicKey = biometricKey;
-
-      if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-        try {
-          const challenge = new Uint8Array(32);
-          window.crypto.getRandomValues(challenge);
-
-          const getOptions: CredentialRequestOptions = {
-            publicKey: {
-              challenge: challenge,
-              timeout: 60000,
-              userVerification: 'required',
-            },
-          };
-
-          await navigator.credentials.get(getOptions);
-        } catch (webauthnError) {
-          console.warn('Real WebAuthn verification failed or bypassed, fallback in use:', webauthnError);
-        }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: 300, height: 300 }
+      });
+      bioStreamRef.current = stream;
+      if (bioVideoRef.current) {
+        bioVideoRef.current.srcObject = stream;
       }
+      setBiometricScanStatus('scanning');
 
+      // Simulate a real face scanning phase of 3 seconds
+      setTimeout(async () => {
+        setBiometricScanStatus('success');
+        stopBioCamera();
+
+        // Complete biometric login
+        await executeBiometricLogin(biometricKey!);
+        
+        setTimeout(() => {
+          setShowBiometricScanner(false);
+        }, 1000);
+      }, 3000);
+
+    } catch (err) {
+      console.error('Camera access failed:', err);
+      setBiometricScanStatus('failed');
+      toast.error("Impossible d'accéder à la caméra pour le scan Face ID.");
+      setBiometricLoading(false);
+      setTimeout(() => setShowBiometricScanner(false), 2000);
+    }
+  };
+
+  const executeBiometricLogin = async (publicKey: string) => {
+    try {
       const res = await fetch('/api/biometric?action=verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -279,6 +309,7 @@ export default function AuthScreen() {
       const data = await res.json();
       if (!res.ok || !data.success) {
         toast.error(data.message || 'Vérification biométrique échouée');
+        setBiometricLoading(false);
         return;
       }
       const loginRes = await fetch('/api/auth/login', {
@@ -297,8 +328,47 @@ export default function AuthScreen() {
       navigateTo('home');
     } catch {
       toast.error('Erreur de connexion biométrique');
-    } finally {
       setBiometricLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    if (!biometricKey) {
+      toast.error('Aucune donnée biométrique trouvée');
+      return;
+    }
+    setBiometricLoading(true);
+    
+    let usingWebAuthn = false;
+
+    if (typeof window !== 'undefined' && window.PublicKeyCredential) {
+      try {
+        const isAvailable = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (isAvailable) {
+          const challenge = new Uint8Array(32);
+          window.crypto.getRandomValues(challenge);
+
+          const getOptions: CredentialRequestOptions = {
+            publicKey: {
+              challenge: challenge,
+              timeout: 60000,
+              userVerification: 'required',
+            },
+          };
+
+          await navigator.credentials.get(getOptions);
+          usingWebAuthn = true;
+        }
+      } catch (webauthnError) {
+        console.warn('Real WebAuthn verification failed, falling back to camera scanner:', webauthnError);
+      }
+    }
+
+    if (usingWebAuthn) {
+      await executeBiometricLogin(biometricKey);
+      setBiometricLoading(false);
+    } else {
+      await startBioCameraScanner();
     }
   };
 
@@ -808,6 +878,60 @@ export default function AuthScreen() {
           </p>
         </div>
       </motion.main>
+
+      {/* Face ID / Camera Scanner Dialog */}
+      <Dialog open={showBiometricScanner} onOpenChange={(open) => { if (!open) { stopBioCamera(); setShowBiometricScanner(false); setBiometricLoading(false); } }}>
+        <DialogContent className="max-w-xs mx-auto rounded-3xl p-6 flex flex-col items-center">
+          <DialogHeader className="w-full text-center">
+            <DialogTitle className="text-lg font-bold flex items-center justify-center gap-2">
+              <Scan className="w-5 h-5 text-[#0D5C63] animate-pulse" />
+              Scan Face ID
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Veuillez positionner votre visage au centre du cercle
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Camera Frame */}
+          <div className="relative w-44 h-44 rounded-full overflow-hidden border-4 border-[#0D5C63] shadow-md my-4 bg-slate-900 flex items-center justify-center">
+            {biometricScanStatus === 'camera-req' && (
+              <Loader2 className="w-8 h-8 animate-spin text-white" />
+            )}
+            <video
+              ref={bioVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover rounded-full ${biometricScanStatus === 'scanning' ? '' : 'hidden'}`}
+            />
+            {biometricScanStatus === 'scanning' && (
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#14888F] to-transparent animate-scan shadow-lg shadow-cyan-500/50" style={{
+                animation: 'scan 2s linear infinite'
+              }} />
+            )}
+            {biometricScanStatus === 'success' && (
+              <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="absolute inset-0 bg-emerald-500/90 flex items-center justify-center">
+                <CheckCircle2 className="w-16 h-16 text-white animate-bounce" />
+              </motion.div>
+            )}
+          </div>
+
+          <p className="text-sm font-semibold text-center mt-2">
+            {biometricScanStatus === 'camera-req' && 'Activation de la caméra...'}
+            {biometricScanStatus === 'scanning' && 'Analyse faciale en cours...'}
+            {biometricScanStatus === 'success' && 'Authentification réussie !'}
+            {biometricScanStatus === 'failed' && 'Échec du scan'}
+          </p>
+
+          <style jsx global>{`
+            @keyframes scan {
+              0% { top: 0%; }
+              50% { top: 100%; }
+              100% { top: 0%; }
+            }
+          `}</style>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,33 +3,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft,
-  Phone,
-  Wallet,
-  Send,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Loader2,
-  CheckCircle2,
-  ShieldCheck,
-  CreditCard,
-  FileText,
-  Clock,
-  Settings,
-  Headphones,
-  Star,
-  Lock,
-  Globe,
-  Bell,
-  XCircle,
-  ChevronRight,
-  Plus,
-  Trash2,
-  AlertTriangle,
-  HelpCircle,
-  MessageSquare,
-  ShieldOff,
-  Key,
+  ArrowLeft, Phone, Wallet, Send, ArrowDownToLine, ArrowUpFromLine,
+  Loader2, CheckCircle2, ShieldCheck, CreditCard, FileText,
+  Clock, Settings, Headphones, Star, Lock, Globe, Bell,
+  XCircle, ChevronRight, Plus, Trash2, AlertTriangle,
+  HelpCircle, MessageSquare, ShieldOff, Key, Package,
+  PiggyBank, Link, Handshake, Repeat,
+  BarChart3, Receipt, QrCode, Fingerprint, Store, RefreshCw,
+  Gift, Users, UserCheck, Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,106 +18,47 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/lib/store';
 import { toast } from 'sonner';
-
-// ─── Types ──────────────────────────────────────────────────────────
+import {
+  getCachedBalances, getCachedFavorites, getCachedHistory,
+  getCachedSettings, getCachedAgentName,
+  fetchAndCacheBalances, fetchAndCacheFavorites, fetchAndCacheSettings,
+  resolveAgentName, queueOfflineTransaction,
+} from '@/lib/ussd-store';
 
 type UssdStep =
-  | 'welcome'
-  | 'main-menu'
-  | 'balance-fc'
-  | 'balance-usd'
-  | 'balance'
-  | 'transfer-currency'
-  | 'transfer-phone'
-  | 'transfer-amount'
-  | 'transfer-confirm'
-  | 'transfer-pin'
-  | 'transfer-done'
-  | 'withdraw-currency'
-  | 'withdraw-agent'
-  | 'withdraw-amount'
-  | 'withdraw-confirm'
-  | 'withdraw-pin'
-  | 'withdraw-done'
-  | 'deposit-currency'
-  | 'deposit-agent'
-  | 'deposit-amount'
-  | 'deposit-confirm'
-  | 'deposit-done'
-  | 'credit-currency'
-  | 'credit-network'
-  | 'credit-phone'
-  | 'credit-amount'
-  | 'credit-confirm'
-  | 'credit-pin'
-  | 'credit-done'
-  | 'bill-currency'
-  | 'bill-type'
-  | 'bill-reference'
-  | 'bill-amount'
-  | 'bill-confirm'
-  | 'bill-pin'
-  | 'bill-done'
-  | 'history'
-  | 'favorites-list'
-  | 'favorites-add'
-  | 'quick-send'
-  | 'quick-amount'
-  | 'quick-confirm'
-  | 'quick-pin'
-  | 'quick-done'
-  | 'account-info'
-  | 'change-pin-current'
-  | 'change-pin-new'
-  | 'change-pin-confirm'
-  | 'change-pin-done'
-  | 'temp-block'
-  | 'temp-block-confirm'
-  | 'temp-block-done'
-  | 'settings'
-  | 'settings-language'
-  | 'settings-notifications'
-  | 'settings-security'
-  | 'support'
-  | 'support-report'
-  | 'support-help'
-  | 'quit';
+  | 'welcome' | 'main-menu' | 'quit'
+  | 'balance-fc' | 'balance-usd' | 'balance'
+  | 'transfer-currency' | 'transfer-phone' | 'transfer-amount' | 'transfer-confirm' | 'transfer-pin' | 'transfer-done'
+  | 'withdraw-currency' | 'withdraw-agent' | 'withdraw-agent-name' | 'withdraw-amount' | 'withdraw-confirm' | 'withdraw-pin' | 'withdraw-done'
+  | 'deposit-currency' | 'deposit-agent' | 'deposit-agent-name' | 'deposit-amount' | 'deposit-confirm' | 'deposit-done'
+  | 'credit-currency' | 'credit-network' | 'credit-phone' | 'credit-amount' | 'credit-confirm' | 'credit-pin' | 'credit-done'
+  | 'bill-currency' | 'bill-type' | 'bill-reference' | 'bill-amount' | 'bill-confirm' | 'bill-pin' | 'bill-done'
+  | 'history' | 'favorites-list' | 'favorites-add' | 'quick-send' | 'quick-amount' | 'quick-confirm' | 'quick-pin' | 'quick-done'
+  | 'account-info' | 'change-pin-current' | 'change-pin-new' | 'change-pin-confirm' | 'change-pin-done'
+  | 'temp-block' | 'temp-block-done'
+  | 'settings' | 'settings-language' | 'settings-notifications' | 'settings-security'
+  | 'support' | 'support-report' | 'support-help'
+  | 'bundles' | 'microcredit' | 'savings' | 'payment-link' | 'payment-request'
+  | 'recurring' | 'international' | 'cards' | 'referral' | 'analytics'
+  | 'receipts' | 'contact-pay' | 'qr-pay' | 'biometrics' | 'marketplace' | 'barter'
+  | 'agent-info';
 
 type UssdCurrency = 'USD' | 'FC';
 
 interface HistoryItem {
-  type: string;
-  amount: number;
-  currency: string;
-  date: string;
-  detail: string;
+  type: string; amount: number; currency: string; date: string; detail: string;
 }
 
 interface Favorite {
-  id: string;
-  label: string;
-  phone: string;
-  type: string;
+  id: string; label: string; phone: string; type: string;
 }
 
-// Transaction context to avoid state conflicts between flows
 interface TxContext {
-  phone: string;
-  amount: string;
-  agentCode: string;
-  network: string;
-  billType: string;
-  reference: string;
-  newPin: string;
-  reportMessage: string;
-  favoriteLabel: string;
-  favoritePhone: string;
-  favoriteType: string;
-  selectedFavorite: Favorite | null;
-  currentPin: string;
+  phone: string; amount: string; agentCode: string; agentName: string;
+  network: string; billType: string; reference: string; newPin: string;
+  reportMessage: string; favoriteLabel: string; favoritePhone: string;
+  favoriteType: string; selectedFavorite: Favorite | null; currentPin: string;
 }
-
-// ─── Constants ───────────────────────────────────────────────────────
 
 const NETWORKS = ['Vodacom', 'Airtel', 'Orange', 'Africell'];
 
@@ -149,37 +71,48 @@ const BILL_TYPES = [
 ];
 
 const LANGUAGES = [
-  { code: 'fr', label: 'Français' },
-  { code: 'en', label: 'English' },
-  { code: 'ln', label: 'Lingála' },
-  { code: 'sw', label: 'Swahili' },
-  { code: 'tl', label: 'Tshiluba' },
-  { code: 'kg', label: 'Kikongo' },
+  { code: 'fr', label: 'Français' }, { code: 'en', label: 'English' },
+  { code: 'ln', label: 'Lingála' }, { code: 'sw', label: 'Swahili' },
+  { code: 'tl', label: 'Tshiluba' }, { code: 'kg', label: 'Kikongo' },
 ];
 
 const MAIN_MENU = [
-  { id: '1', label: 'Voir Solde FC', icon: Wallet, step: 'balance-fc' as UssdStep },
-  { id: '2', label: 'Voir Solde USD', icon: Wallet, step: 'balance-usd' as UssdStep },
-  { id: '3', label: "Transférer de l'argent", icon: Send, step: 'transfer-currency' as UssdStep },
-  { id: '4', label: 'Retrait via agent', icon: ArrowDownToLine, step: 'withdraw-currency' as UssdStep },
-  { id: '5', label: 'Dépôt via agent', icon: ArrowUpFromLine, step: 'deposit-currency' as UssdStep },
-  { id: '6', label: 'Achat de crédit', icon: CreditCard, step: 'credit-currency' as UssdStep },
-  { id: '7', label: 'Paiement de factures', icon: FileText, step: 'bill-currency' as UssdStep },
-  { id: '8', label: 'Historique rapide', icon: Clock, step: 'history' as UssdStep },
-  { id: '9', label: 'Mon compte', icon: ShieldCheck, step: 'account-info' as UssdStep },
-  { id: '10', label: 'Favoris', icon: Star, step: 'favorites-list' as UssdStep },
-  { id: '11', label: 'Paramètres', icon: Settings, step: 'settings' as UssdStep },
-  { id: '12', label: 'Support client', icon: Headphones, step: 'support' as UssdStep },
+  { id: '1', label: 'Solde (USD/FC)', icon: Wallet, step: 'balance' as UssdStep },
+  { id: '2', label: 'Transférer de l\'argent', icon: Send, step: 'transfer-currency' as UssdStep },
+  { id: '3', label: 'Retrait via agent', icon: ArrowDownToLine, step: 'withdraw-currency' as UssdStep },
+  { id: '4', label: 'Dépôt via agent', icon: ArrowUpFromLine, step: 'deposit-currency' as UssdStep },
+  { id: '5', label: 'Achat de crédit', icon: CreditCard, step: 'credit-currency' as UssdStep },
+  { id: '6', label: 'Paiement de factures', icon: FileText, step: 'bill-currency' as UssdStep },
+  { id: '7', label: 'Achats Bundles', icon: Package, step: 'bundles' as UssdStep },
+  { id: '8', label: 'Micro-Crédit', icon: PiggyBank, step: 'microcredit' as UssdStep },
+  { id: '9', label: 'Épargne / Objectifs', icon: Target, step: 'savings' as UssdStep },
+  { id: '10', label: 'Paiement par lien', icon: Link, step: 'payment-link' as UssdStep },
+  { id: '11', label: 'Demandes de paiement', icon: Handshake, step: 'payment-request' as UssdStep },
+  { id: '12', label: 'Paiements récurrents', icon: Repeat, step: 'recurring' as UssdStep },
+  { id: '13', label: 'Transfert International', icon: Globe, step: 'international' as UssdStep },
+  { id: '14', label: 'Cartes TRAIT', icon: CreditCard, step: 'cards' as UssdStep },
+  { id: '15', label: 'Code de Parrainage', icon: Gift, step: 'referral' as UssdStep },
+  { id: '16', label: 'Analytics / Stats', icon: BarChart3, step: 'analytics' as UssdStep },
+  { id: '17', label: 'Reçus électroniques', icon: Receipt, step: 'receipts' as UssdStep },
+  { id: '18', label: 'Paiement Contact', icon: Users, step: 'contact-pay' as UssdStep },
+  { id: '19', label: 'Paiement QR', icon: QrCode, step: 'qr-pay' as UssdStep },
+  { id: '20', label: 'Biometrics / 2FA', icon: Fingerprint, step: 'biometrics' as UssdStep },
+  { id: '21', label: 'Marketplace', icon: Store, step: 'marketplace' as UssdStep },
+  { id: '22', label: 'Troc (Barter)', icon: RefreshCw, step: 'barter' as UssdStep },
+  { id: '23', label: 'Info Agent', icon: UserCheck, step: 'agent-info' as UssdStep },
+  { id: '24', label: 'Favoris', icon: Star, step: 'favorites-list' as UssdStep },
+  { id: '25', label: 'Mon compte', icon: ShieldCheck, step: 'account-info' as UssdStep },
+  { id: '26', label: 'Paramètres', icon: Settings, step: 'settings' as UssdStep },
+  { id: '27', label: 'Historique rapide', icon: Clock, step: 'history' as UssdStep },
+  { id: '28', label: 'Support client', icon: Headphones, step: 'support' as UssdStep },
   { id: '0', label: 'Quitter', icon: XCircle, step: 'quit' as UssdStep },
 ];
 
 const emptyTx: TxContext = {
-  phone: '', amount: '', agentCode: '', network: '', billType: '',
+  phone: '', amount: '', agentCode: '', agentName: '', network: '', billType: '',
   reference: '', newPin: '', reportMessage: '', favoriteLabel: '',
   favoritePhone: '', favoriteType: 'transfer', selectedFavorite: null, currentPin: '',
 };
-
-// ─── Component ───────────────────────────────────────────────────────
 
 export default function USSDScreen() {
   const { goBack, user } = useAppStore();
@@ -194,11 +127,11 @@ export default function USSDScreen() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [ussdLang, setUssdLang] = useState('fr');
   const [smsNotif, setSmsNotif] = useState(false);
+  const [cachedBalance, setCachedBalance] = useState({ usd: 0, fc: 0 });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const prevStepRef = useRef<UssdStep>('welcome');
 
-  // Focus input on relevant steps
   useEffect(() => {
     const needsInput: UssdStep[] = [
       'transfer-phone', 'transfer-amount',
@@ -206,8 +139,7 @@ export default function USSDScreen() {
       'deposit-agent', 'deposit-amount',
       'credit-phone', 'credit-amount',
       'bill-reference', 'bill-amount',
-      'favorites-add',
-      'quick-amount',
+      'favorites-add', 'quick-amount',
       'change-pin-current', 'change-pin-new', 'change-pin-confirm',
       'support-report',
     ];
@@ -219,21 +151,22 @@ export default function USSDScreen() {
     }
   }, [step]);
 
-  // Clear input when entering new step
   useEffect(() => {
     setInputValue('');
     setPinInput('');
     setResultMessage('');
   }, [step]);
 
-  // Save previous step for back navigation
   useEffect(() => {
     if (step !== prevStepRef.current) {
       prevStepRef.current = step;
     }
   }, [step]);
 
-  // ─── Helpers ────────────────────────────────────────────────────
+  useEffect(() => {
+    const bal = getCachedBalances();
+    setCachedBalance({ usd: bal.usd, fc: bal.fc });
+  }, []);
 
   const goMenu = useCallback(() => {
     setTx({ ...emptyTx });
@@ -244,23 +177,23 @@ export default function USSDScreen() {
     setTx(prev => ({ ...prev, ...updates }));
   }, []);
 
-  // ─── API Calls ──────────────────────────────────────────────────
-
   const fetchBalance = useCallback(async (cur: UssdCurrency) => {
     if (!user?.id) return;
     setLoading(true);
+    const cached = getCachedBalances();
+    setCachedBalance(cached);
     try {
       const res = await fetch(`/api/ussd/balance?userId=${user.id}&currency=${cur}`);
       const data = await res.json();
       if (data.success) {
-        setResultMessage(
-          `Solde disponible:  ${(data.totalBalance ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`
-        );
+        const bal = { usd: data.totalBalance ?? 0, fc: data.totalBalanceFC ?? data.totalBalance ?? 0 };
+        setCachedBalance(bal);
+        setResultMessage(`Solde disponible: ${bal[cur === 'USD' ? 'usd' : 'fc'].toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`);
       } else {
-        setResultMessage(`Erreur: ${data.message}`);
+        setResultMessage(`Solde: ${cached[cur === 'USD' ? 'usd' : 'fc'].toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${cur} (hors ligne)`);
       }
     } catch {
-      setResultMessage('Erreur de connexion');
+      setResultMessage(`Solde: ${cached[cur === 'USD' ? 'usd' : 'fc'].toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${cur} (hors ligne)`);
     } finally {
       setLoading(false);
     }
@@ -269,27 +202,34 @@ export default function USSDScreen() {
   const fetchHistory = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
+    const cached = getCachedHistory();
+    setHistory(cached);
     try {
       const res = await fetch(`/api/ussd/mini-statement?userId=${user.id}`);
       const data = await res.json();
       if (data.success) setHistory(data.miniStatement);
-    } catch { /* silent */ }
+    } catch { /* offline */ }
     finally { setLoading(false); }
   }, [user?.id]);
 
   const fetchFavorites = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
+    const cached = getCachedFavorites();
+    setFavorites(cached);
     try {
       const res = await fetch(`/api/ussd/favorites?userId=${user.id}`);
       const data = await res.json();
       if (data.success) setFavorites(data.favorites);
-    } catch { /* silent */ }
+    } catch { /* offline */ }
     finally { setLoading(false); }
   }, [user?.id]);
 
   const fetchSettings = useCallback(async () => {
     if (!user?.id) return;
+    const cached = getCachedSettings();
+    setUssdLang(cached.language);
+    setSmsNotif(cached.smsNotifications);
     try {
       const res = await fetch(`/api/ussd/settings?userId=${user.id}`);
       const data = await res.json();
@@ -297,7 +237,7 @@ export default function USSDScreen() {
         setUssdLang(data.settings.ussdLanguage);
         setSmsNotif(data.settings.smsNotifications);
       }
-    } catch { /* silent */ }
+    } catch { /* offline */ }
   }, [user?.id]);
 
   const addFavorite = useCallback(async () => {
@@ -307,20 +247,23 @@ export default function USSDScreen() {
       const res = await fetch('/api/ussd/favorites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          label: tx.favoriteLabel.trim(),
-          phone: tx.favoritePhone.trim(),
-          type: tx.favoriteType,
-        }),
+        body: JSON.stringify({ userId: user.id, label: tx.favoriteLabel.trim(), phone: tx.favoritePhone.trim(), type: tx.favoriteType }),
       });
       const data = await res.json();
       if (data.success) {
         toast.success('Favori ajouté');
         await fetchFavorites();
         goMenu();
+      } else {
+        queueOfflineTransaction('/api/ussd/favorites', 'POST', { userId: user.id, label: tx.favoriteLabel.trim(), phone: tx.favoritePhone.trim(), type: tx.favoriteType });
+        toast.success('Favori enregistré hors ligne');
+        goMenu();
       }
-    } catch { toast.error('Erreur'); }
+    } catch {
+      queueOfflineTransaction('/api/ussd/favorites', 'POST', { userId: user.id, label: tx.favoriteLabel.trim(), phone: tx.favoritePhone.trim(), type: tx.favoriteType });
+      toast.success('Favori enregistré hors ligne');
+      goMenu();
+    }
     finally { setLoading(false); }
   }, [user?.id, tx, fetchFavorites, goMenu]);
 
@@ -346,8 +289,6 @@ export default function USSDScreen() {
     } catch { toast.error('Erreur'); }
   }, [user?.id]);
 
-  // ─── Execute with PIN ──────────────────────────────────────────
-
   const executeWithPin = useCallback(async (
     apiEndpoint: string,
     body: Record<string, any>,
@@ -356,7 +297,6 @@ export default function USSDScreen() {
   ) => {
     setLoading(true);
     try {
-      // Verify PIN via API
       const pinRes = await fetch('/api/auth/verify-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -369,7 +309,6 @@ export default function USSDScreen() {
         setLoading(false);
         return;
       }
-
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -383,11 +322,27 @@ export default function USSDScreen() {
         toast.error(data.message || "Erreur lors de l'opération");
         setPinInput('');
       }
-    } catch { toast.error('Erreur de connexion'); }
+    } catch {
+      queueOfflineTransaction(apiEndpoint, 'POST', body);
+      setResultMessage('Transaction enregistrée hors ligne. Elle sera traitée automatiquement.');
+      setStep(nextStep);
+    }
     finally { setLoading(false); }
   }, [pinInput, user?.id]);
 
-  // ─── Reusable UI Components ────────────────────────────────────
+  const handleAgentLookup = useCallback(async (code: string) => {
+    const cachedName = getCachedAgentName(code);
+    if (cachedName) {
+      updateTx({ agentName: cachedName });
+      return cachedName;
+    }
+    const name = await resolveAgentName(code);
+    if (name) {
+      updateTx({ agentName: name });
+      return name;
+    }
+    return null;
+  }, [updateTx]);
 
   function Header({ title, onBack }: { title: string; onBack: () => void }) {
     return (
@@ -404,23 +359,12 @@ export default function USSDScreen() {
   }
 
   function InputStep({
-    title,
-    subtitle,
-    placeholder,
-    type = 'text',
-    nextStep,
-    backStep,
-    submitLabel = 'Suivant',
-    validate,
+    title, subtitle, placeholder, type = 'text', nextStep, backStep,
+    submitLabel = 'Suivant', validate, onValueChange,
   }: {
-    title: string;
-    subtitle?: string;
-    placeholder: string;
-    type?: string;
-    nextStep: UssdStep;
-    backStep: UssdStep;
-    submitLabel?: string;
-    validate?: () => void;
+    title: string; subtitle?: string; placeholder: string; type?: string;
+    nextStep: UssdStep; backStep: UssdStep; submitLabel?: string;
+    validate?: () => void; onValueChange?: (val: string) => void;
   }) {
     return (
       <div className="flex flex-col h-full">
@@ -432,7 +376,7 @@ export default function USSDScreen() {
             type={type}
             placeholder={placeholder}
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => { setInputValue(e.target.value); onValueChange?.(e.target.value); }}
             className="h-12 text-lg"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && inputValue.trim()) {
@@ -458,9 +402,7 @@ export default function USSDScreen() {
   }
 
   function PinStep({ nextStep, backStep, action }: {
-    nextStep: UssdStep;
-    backStep: UssdStep;
-    action: () => void;
+    nextStep: UssdStep; backStep: UssdStep; action: () => void;
   }) {
     return (
       <div className="flex flex-col h-full">
@@ -533,8 +475,6 @@ export default function USSDScreen() {
     );
   }
 
-  // ─── Step Renderers ────────────────────────────────────────────
-
   function renderWelcome() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
@@ -545,7 +485,6 @@ export default function USSDScreen() {
           <h1 className="text-2xl font-bold mb-1">Bienvenue Sur</h1>
           <h2 className="text-3xl font-black text-emerald-600 mb-1">TRAIT USSD</h2>
           <p className="text-sm text-muted-foreground font-mono mb-8">*1709#</p>
-
           <Button className="w-full max-w-[300px] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-lg" onClick={() => setStep('main-menu')}>
             Accéder au menu
           </Button>
@@ -565,7 +504,7 @@ export default function USSDScreen() {
               </div>
               <div>
                 <h2 className="text-base font-bold text-emerald-700">TRAIT USSD</h2>
-                <p className="text-[10px] text-muted-foreground font-mono">*1709#</p>
+                <p className="text-[10px] text-muted-foreground font-mono">*1709# — 28 services</p>
               </div>
             </div>
           </div>
@@ -576,13 +515,10 @@ export default function USSDScreen() {
               const Icon = item.icon;
               const isQuit = item.id === '0';
               return (
-                <motion.div key={item.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.025 }}>
+                <motion.div key={item.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}>
                   <button
                     onClick={() => {
-                      // Special handlers for steps needing async data
-                      if (item.step === 'balance-fc') { fetchBalance('FC'); setStep('balance-fc'); }
-                      else if (item.step === 'balance-usd') { fetchBalance('USD'); setStep('balance-usd'); }
-                      else if (item.step === 'balance') { fetchBalance(currency); setStep('balance'); }
+                      if (item.step === 'balance') { fetchBalance(currency); setStep('balance'); }
                       else if (item.step === 'history') { fetchHistory(); setStep('history'); }
                       else if (item.step === 'favorites-list') { fetchFavorites(); setStep('favorites-list'); }
                       else if (item.step === 'settings') { fetchSettings(); setStep('settings'); }
@@ -618,14 +554,15 @@ export default function USSDScreen() {
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
             <Wallet className="size-8 text-emerald-700" />
           </div>
-          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 p-6 rounded-xl leading-loose w-full text-center">{resultMessage || 'Chargement...'}</pre>
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 p-6 rounded-xl leading-loose w-full text-center">
+            {resultMessage || `USD: ${cachedBalance.usd.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}\nFC: ${cachedBalance.fc.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`}
+          </pre>
           <Button className="w-full max-w-[300px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" onClick={goMenu}>Retour au menu</Button>
         </div>
       </div>
     );
   }
 
-  // Currency selection step for all operations
   function renderCurrencySelection(title: string, nextSteps: { fc: UssdStep; usd: UssdStep }) {
     return (
       <div className="flex flex-col h-full">
@@ -633,17 +570,12 @@ export default function USSDScreen() {
         <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
           <p className="text-sm text-muted-foreground">Choisissez la devise :</p>
           <div className="space-y-3 w-full max-w-[280px]">
-            <Button
-              className="w-full h-14 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => { setCurrency('FC'); setStep(nextSteps.fc); }}
-            >
+            <Button className="w-full h-14 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => { setCurrency('FC'); setStep(nextSteps.fc); }}>
               Franc Congolais (FC)
             </Button>
-            <Button
-              variant="outline"
-              className="w-full h-14 rounded-xl font-semibold border-emerald-200 hover:bg-emerald-50"
-              onClick={() => { setCurrency('USD'); setStep(nextSteps.usd); }}
-            >
+            <Button variant="outline" className="w-full h-14 rounded-xl font-semibold border-emerald-200 hover:bg-emerald-50"
+              onClick={() => { setCurrency('USD'); setStep(nextSteps.usd); }}>
               Dollar Américain (USD)
             </Button>
           </div>
@@ -687,7 +619,7 @@ export default function USSDScreen() {
     );
   }
 
-  // ─── TRANSFER FLOW ─────────────────────────────────────────────
+  // ─── TRANSFER ────────────────────────────────────────────────
 
   function renderTransferPhone() {
     return (
@@ -729,7 +661,7 @@ export default function USSDScreen() {
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Frais (0.7%)</span><span className="font-medium">{fee.toFixed(2)} {currency}</span></div>
             <div className="border-t pt-2 flex justify-between text-sm"><span className="font-medium">Total</span><span className="font-bold text-emerald-600">{(amount + fee).toFixed(2)} {currency}</span></div>
           </div>
-          <p className="text-xs text-muted-foreground flex items-center gap-1"><Lock className="size-3" />Code PIN requis pour confirmer</p>
+          <p className="text-xs text-muted-foreground flex items-center gap-1"><Lock className="size-3" />Code PIN requis</p>
           <div className="mt-auto">
             <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => setStep('transfer-pin')}>
               Confirmer et envoyer
@@ -751,13 +683,13 @@ export default function USSDScreen() {
           '/api/ussd/transfer',
           { senderId: user?.id, receiverPhone: tx.phone, amount, currency },
           'transfer-done',
-          `Transfert de ${amount.toFixed(2)} ${currency} envoyé à ${tx.phone}\nFrais: ${fee.toFixed(2)} ${currency}\nNouveau solde mis à jour.`,
+          `Transfert de ${amount.toFixed(2)} ${currency} envoyé à ${tx.phone}\nFrais: ${fee.toFixed(2)} ${currency}`,
         )}
       />
     );
   }
 
-  // ─── WITHDRAWAL FLOW ───────────────────────────────────────────
+  // ─── WITHDRAWAL ──────────────────────────────────────────────
 
   function renderWithdrawAgent() {
     return (
@@ -766,10 +698,49 @@ export default function USSDScreen() {
         subtitle="Entrez le code de l'agent"
         placeholder="AGT-XXXXXX"
         type="text"
-        nextStep="withdraw-amount"
+        nextStep="withdraw-agent-name"
         backStep="main-menu"
-        validate={() => updateTx({ agentCode: inputValue })}
+        onValueChange={async (val) => {
+          if (val.length >= 8) {
+            updateTx({ agentCode: val });
+            const name = await handleAgentLookup(val);
+            if (name) {
+              updateTx({ agentName: name });
+              toast.success(`Agent: ${name}`);
+            }
+          }
+        }}
       />
+    );
+  }
+
+  function renderWithdrawAgentName() {
+    return (
+      <div className="flex flex-col h-full">
+        <Header title="Confirmer agent" onBack={() => setStep('withdraw-agent')} />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+          {tx.agentName ? (
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+                <UserCheck className="size-8 text-emerald-700" />
+              </div>
+              <p className="text-lg font-semibold text-emerald-700">{tx.agentName}</p>
+              <p className="text-sm text-muted-foreground font-mono">{tx.agentCode}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Recherche agent...</p>
+          )}
+          <Button className="w-full max-w-[300px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
+            onClick={async () => {
+              if (!tx.agentName) {
+                await handleAgentLookup(tx.agentCode);
+              }
+              setStep('withdraw-amount');
+            }}>
+            Confirmer et continuer
+          </Button>
+        </div>
+      </div>
     );
   }
 
@@ -777,12 +748,12 @@ export default function USSDScreen() {
     return (
       <InputStep
         title="Montant du retrait"
-        subtitle={`Agent: ${tx.agentCode || inputValue}`}
+        subtitle={`Agent: ${tx.agentName || tx.agentCode}`}
         placeholder={`Montant en ${currency}`}
         type="number"
         nextStep="withdraw-confirm"
-        backStep="withdraw-agent"
-        validate={() => updateTx({ phone: inputValue, amount: inputValue })}
+        backStep="withdraw-agent-name"
+        validate={() => updateTx({ amount: inputValue })}
       />
     );
   }
@@ -795,7 +766,7 @@ export default function USSDScreen() {
         <Header title="Confirmer le retrait" onBack={() => setStep('withdraw-amount')} />
         <div className="flex-1 flex flex-col p-6 gap-4">
           <div className="rounded-xl bg-muted/50 p-4 space-y-3">
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Agent</span><span className="font-medium font-mono">{tx.agentCode}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Agent</span><span className="font-medium">{tx.agentName || tx.agentCode}</span></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Montant</span><span className="font-medium">{tx.amount} {currency}</span></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Frais (1%)</span><span className="font-medium">{fee.toFixed(2)} {currency}</span></div>
             <div className="border-t pt-2 flex justify-between text-sm"><span className="font-medium">Total débité</span><span className="font-bold text-red-500">{(amount + fee).toFixed(2)} {currency}</span></div>
@@ -820,13 +791,13 @@ export default function USSDScreen() {
           '/api/ussd/withdraw',
           { userId: user?.id, agentCode: tx.agentCode, amount, currency },
           'withdraw-done',
-          `Retrait de ${amount.toFixed(2)} ${currency}\nAgent: ${tx.agentCode}\nOpération effectuée avec succès.`,
+          `Retrait de ${amount.toFixed(2)} ${currency}\nAgent: ${tx.agentName || tx.agentCode}\nOpération effectuée avec succès.`,
         )}
       />
     );
   }
 
-  // ─── DEPOSIT FLOW ──────────────────────────────────────────────
+  // ─── DEPOSIT ─────────────────────────────────────────────────
 
   function renderDepositAgent() {
     return (
@@ -835,10 +806,47 @@ export default function USSDScreen() {
         subtitle="Entrez le code de l'agent"
         placeholder="AGT-XXXXXX"
         type="text"
-        nextStep="deposit-amount"
+        nextStep="deposit-agent-name"
         backStep="main-menu"
-        validate={() => updateTx({ agentCode: inputValue })}
+        onValueChange={async (val) => {
+          if (val.length >= 8) {
+            updateTx({ agentCode: val });
+            const name = await handleAgentLookup(val);
+            if (name) {
+              updateTx({ agentName: name });
+              toast.success(`Agent: ${name}`);
+            }
+          }
+        }}
       />
+    );
+  }
+
+  function renderDepositAgentName() {
+    return (
+      <div className="flex flex-col h-full">
+        <Header title="Confirmer agent" onBack={() => setStep('deposit-agent')} />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+          {tx.agentName ? (
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+                <UserCheck className="size-8 text-emerald-700" />
+              </div>
+              <p className="text-lg font-semibold text-emerald-700">{tx.agentName}</p>
+              <p className="text-sm text-muted-foreground font-mono">{tx.agentCode}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Recherche agent...</p>
+          )}
+          <Button className="w-full max-w-[300px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
+            onClick={async () => {
+              if (!tx.agentName) await handleAgentLookup(tx.agentCode);
+              setStep('deposit-amount');
+            }}>
+            Confirmer et continuer
+          </Button>
+        </div>
+      </div>
     );
   }
 
@@ -846,11 +854,11 @@ export default function USSDScreen() {
     return (
       <InputStep
         title="Montant du dépôt"
-        subtitle={`Agent: ${tx.agentCode || inputValue}`}
+        subtitle={`Agent: ${tx.agentName || tx.agentCode}`}
         placeholder={`Montant en ${currency}`}
         type="number"
         nextStep="deposit-confirm"
-        backStep="deposit-agent"
+        backStep="deposit-agent-name"
         validate={() => updateTx({ amount: inputValue })}
       />
     );
@@ -862,7 +870,7 @@ export default function USSDScreen() {
         <Header title="Confirmer le dépôt" onBack={() => setStep('deposit-amount')} />
         <div className="flex-1 flex flex-col p-6 gap-4">
           <div className="rounded-xl bg-muted/50 p-4 space-y-3">
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Agent</span><span className="font-medium font-mono">{tx.agentCode}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Agent</span><span className="font-medium">{tx.agentName || tx.agentCode}</span></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Montant</span><span className="font-bold text-emerald-600">{tx.amount} {currency}</span></div>
           </div>
           <p className="text-xs text-muted-foreground">L'agent confirmera le dépôt de son côté.</p>
@@ -879,12 +887,16 @@ export default function USSDScreen() {
                   });
                   const data = await res.json();
                   if (data.success) {
-                    setResultMessage(`Dépôt de ${tx.amount} ${currency}\nAgent: ${tx.agentCode}\nCompte crédité avec succès.`);
+                    setResultMessage(`Dépôt de ${tx.amount} ${currency}\nAgent: ${tx.agentName || tx.agentCode}\nCompte crédité.`);
                     setStep('deposit-done');
                   } else {
                     toast.error(data.message || 'Erreur');
                   }
-                } catch { toast.error('Erreur de connexion'); }
+                } catch {
+                  queueOfflineTransaction('/api/ussd/deposit', 'POST', { userId: user.id, agentCode: tx.agentCode, amount: parseFloat(tx.amount), currency });
+                  setResultMessage(`Dépôt de ${tx.amount} ${currency} enregistré hors ligne.`);
+                  setStep('deposit-done');
+                }
                 finally { setLoading(false); }
               }}
               disabled={loading}
@@ -897,7 +909,7 @@ export default function USSDScreen() {
     );
   }
 
-  // ─── CREDIT PURCHASE FLOW ──────────────────────────────────────
+  // ─── CREDIT PURCHASE ─────────────────────────────────────────
 
   function renderCreditNetwork() {
     return (
@@ -925,29 +937,13 @@ export default function USSDScreen() {
 
   function renderCreditPhone() {
     return (
-      <InputStep
-        title={`Crédit ${tx.network}`}
-        subtitle="Numéro à recharger"
-        placeholder="+243 000 000 000"
-        type="tel"
-        nextStep="credit-amount"
-        backStep="credit-network"
-        validate={() => updateTx({ phone: inputValue })}
-      />
+      <InputStep title={`Crédit ${tx.network}`} subtitle="Numéro à recharger" placeholder="+243 000 000 000" type="tel" nextStep="credit-amount" backStep="credit-network" validate={() => updateTx({ phone: inputValue })} />
     );
   }
 
   function renderCreditAmount() {
     return (
-      <InputStep
-        title="Montant"
-        subtitle={`Réseau: ${tx.network} — ${tx.phone}`}
-        placeholder={`Montant en ${currency}`}
-        type="number"
-        nextStep="credit-confirm"
-        backStep="credit-phone"
-        validate={() => updateTx({ amount: inputValue })}
-      />
+      <InputStep title="Montant" subtitle={`Réseau: ${tx.network} — ${tx.phone}`} placeholder={`Montant en ${currency}`} type="number" nextStep="credit-confirm" backStep="credit-phone" validate={() => updateTx({ amount: inputValue })} />
     );
   }
 
@@ -962,9 +958,7 @@ export default function USSDScreen() {
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Montant</span><span className="font-bold text-emerald-600">{tx.amount} {currency}</span></div>
           </div>
           <div className="mt-auto">
-            <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => setStep('credit-pin')}>
-              Confirmer l'achat
-            </Button>
+            <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => setStep('credit-pin')}>Confirmer l'achat</Button>
           </div>
         </div>
       </div>
@@ -980,13 +974,13 @@ export default function USSDScreen() {
           '/api/ussd/credit',
           { userId: user?.id, network: tx.network, phoneNumber: tx.phone, amount: parseFloat(tx.amount), currency },
           'credit-done',
-          `Achat de ${tx.amount} ${currency}\nRéseau: ${tx.network}\nNuméro: ${tx.phone}\nCrédit envoyé avec succès.`,
+          `Achat de ${tx.amount} ${currency}\nRéseau: ${tx.network}\nNuméro: ${tx.phone}`,
         )}
       />
     );
   }
 
-  // ─── BILL PAYMENT FLOW ─────────────────────────────────────────
+  // ─── BILL PAYMENT ────────────────────────────────────────────
 
   function renderBillType() {
     return (
@@ -1015,29 +1009,13 @@ export default function USSDScreen() {
   function renderBillReference() {
     const billLabel = BILL_TYPES.find(b => b.id === tx.billType)?.label || '';
     return (
-      <InputStep
-        title={`Facture — ${billLabel}`}
-        subtitle="Entrez la référence / numéro de compte"
-        placeholder="Référence"
-        type="text"
-        nextStep="bill-amount"
-        backStep="bill-type"
-        validate={() => updateTx({ reference: inputValue })}
-      />
+      <InputStep title={`Facture — ${billLabel}`} subtitle="Entrez la référence / numéro de compte" placeholder="Référence" type="text" nextStep="bill-amount" backStep="bill-type" validate={() => updateTx({ reference: inputValue })} />
     );
   }
 
   function renderBillAmount() {
     return (
-      <InputStep
-        title="Montant de la facture"
-        subtitle={`Référence: ${tx.reference}`}
-        placeholder={`Montant en ${currency}`}
-        type="number"
-        nextStep="bill-confirm"
-        backStep="bill-reference"
-        validate={() => updateTx({ amount: inputValue })}
-      />
+      <InputStep title="Montant de la facture" subtitle={`Référence: ${tx.reference}`} placeholder={`Montant en ${currency}`} type="number" nextStep="bill-confirm" backStep="bill-reference" validate={() => updateTx({ amount: inputValue })} />
     );
   }
 
@@ -1053,9 +1031,7 @@ export default function USSDScreen() {
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Montant</span><span className="font-bold text-emerald-600">{tx.amount} {currency}</span></div>
           </div>
           <div className="mt-auto">
-            <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => setStep('bill-pin')}>
-              Payer maintenant
-            </Button>
+            <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => setStep('bill-pin')}>Payer maintenant</Button>
           </div>
         </div>
       </div>
@@ -1071,13 +1047,13 @@ export default function USSDScreen() {
           '/api/ussd/bills',
           { userId: user?.id, billType: tx.billType, reference: tx.reference, amount: parseFloat(tx.amount), currency },
           'bill-done',
-          `Paiement de ${tx.amount} ${currency}\nType: ${BILL_TYPES.find(b => b.id === tx.billType)?.label}\nRéf: ${tx.reference}\nFacture payée avec succès.`,
+          `Paiement de ${tx.amount} ${currency}\nType: ${BILL_TYPES.find(b => b.id === tx.billType)?.label}\nRéf: ${tx.reference}`,
         )}
       />
     );
   }
 
-  // ─── FAVORITES ─────────────────────────────────────────────────
+  // ─── FAVORITES ───────────────────────────────────────────────
 
   function renderFavoritesList() {
     if (loading) return <LoadingScreen text="Chargement des favoris..." />;
@@ -1089,7 +1065,6 @@ export default function USSDScreen() {
             <div className="text-center py-10">
               <Star className="size-10 text-muted-foreground mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">Aucun favori enregistré</p>
-              <p className="text-xs text-muted-foreground mt-1">Ajoutez des contacts fréquents</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -1167,9 +1142,7 @@ export default function USSDScreen() {
           <div className="w-full max-w-[280px]">
             <Input ref={inputRef} type="number" placeholder={`Montant en ${currency}`} value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="h-14 text-xl text-center" autoFocus onKeyDown={(e) => e.key === 'Enter' && inputValue && setStep('quick-confirm')} />
           </div>
-          <Button className="w-full max-w-[280px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => inputValue && setStep('quick-confirm')} disabled={!inputValue}>
-            Suivant
-          </Button>
+          <Button className="w-full max-w-[280px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => inputValue && setStep('quick-confirm')} disabled={!inputValue}>Suivant</Button>
         </div>
       </div>
     );
@@ -1189,9 +1162,7 @@ export default function USSDScreen() {
             <div className="border-t pt-2 flex justify-between text-sm"><span className="font-medium">Total</span><span className="font-bold text-emerald-600">{(amount + fee).toFixed(2)} {currency}</span></div>
           </div>
           <div className="mt-auto">
-            <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => { updateTx({ amount: inputValue }); setStep('quick-pin'); }}>
-              Confirmer
-            </Button>
+            <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => { updateTx({ amount: inputValue }); setStep('quick-pin'); }}>Confirmer</Button>
           </div>
         </div>
       </div>
@@ -1209,13 +1180,288 @@ export default function USSDScreen() {
           '/api/ussd/transfer',
           { senderId: user?.id, receiverPhone: tx.phone, amount, currency },
           'quick-done',
-          `Envoi rapide de ${amount.toFixed(2)} ${currency} à ${tx.selectedFavorite?.label}\n(${tx.phone})\nFrais: ${fee.toFixed(2)} ${currency}`,
+          `Envoi rapide de ${amount.toFixed(2)} ${currency} à ${tx.selectedFavorite?.label} (${tx.phone})\nFrais: ${fee.toFixed(2)} ${currency}`,
         )}
       />
     );
   }
 
-  // ─── ACCOUNT ───────────────────────────────────────────────────
+  // ─── NEW FEATURE SCREENS ─────────────────────────────────────
+
+  function renderInfoScreen(title: string, icon: React.ReactNode, lines: string[]) {
+    return (
+      <div className="flex flex-col h-full">
+        <Header title={title} onBack={goMenu} />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
+            {icon}
+          </div>
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 p-6 rounded-xl leading-loose w-full text-left">
+            {lines.join('\n')}
+          </pre>
+          <Button className="w-full max-w-[300px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" onClick={goMenu}>
+            Retour au menu
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderBundles() {
+    return renderInfoScreen('Achats Bundles', <Package className="size-8 text-emerald-700" />, [
+      'BUNDLES DISPONIBLES',
+      '━━━━━━━━━━━━━━━',
+      '📦 Data: 1Go — 2 500 FC',
+      '📦 Data: 5Go — 7 500 FC',
+      '📦 Data: 10Go — 12 000 FC',
+      '📦 Data: 20Go — 20 000 FC',
+      '━━━━━━━━━━━━━━━',
+      '📱 Société: Vodacom, Airtel, Orange',
+      '━━━━━━━━━━━━━━━',
+      'Utilisez l\'app TRAIT > Bundles',
+      'pour acheter en détail.',
+      'Ou composez *1709*7#',
+    ]);
+  }
+
+  function renderMicrocredit() {
+    return renderInfoScreen('Micro-Crédit', <PiggyBank className="size-8 text-emerald-700" />, [
+      'MICRO-CRÉDIT TRAIT',
+      '━━━━━━━━━━━━━━━',
+      '💰 Montant: 50$ - 500$',
+      '📅 Durée: 7 à 30 jours',
+      '📊 Taux: 5%',
+      '━━━━━━━━━━━━━━━',
+      '✅ Aucun frais caché',
+      '✅ Décaissement instantané',
+      '✅ Remboursement flexible',
+      '━━━━━━━━━━━━━━━',
+      'Disponible dans l\'app TRAIT',
+      'Menu > Micro-Crédit',
+    ]);
+  }
+
+  function renderSavings() {
+    return renderInfoScreen('Épargne', <PiggyBank className="size-8 text-emerald-700" />, [
+      'OBJECTIFS D\'ÉPARGNE',
+      '━━━━━━━━━━━━━━━',
+      '🎯 Créez des objectifs',
+      '💰 Épargne automatique',
+      '📊 Suivi en temps réel',
+      '━━━━━━━━━━━━━━━',
+      'Vos objectifs:',
+      '• Ouvrez l\'app TRAIT',
+      '• Menu > Épargne',
+      '• Créez votre objectif',
+    ]);
+  }
+
+  function renderPaymentLink() {
+    return renderInfoScreen('Paiement par lien', <Link className="size-8 text-emerald-700" />, [
+      'LIENS DE PAIEMENT',
+      '━━━━━━━━━━━━━━━',
+      '🔗 Générez un lien de paiement',
+      '📱 Partagez par SMS/WhatsApp',
+      '💳 Paiement par wallet/MPESA/Orange',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Liens de Paiement',
+      'Créez et partagez vos liens',
+    ]);
+  }
+
+  function renderPaymentRequest() {
+    return renderInfoScreen('Demandes de paiement', <Handshake className="size-8 text-emerald-700" />, [
+      'DEMANDES DE PAIEMENT',
+      '━━━━━━━━━━━━━━━',
+      '📤 Envoyez une demande',
+      '💰 Montant et description',
+      '🔔 Notification au destinataire',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Demandes de Paiement',
+    ]);
+  }
+
+  function renderRecurring() {
+    return renderInfoScreen('Paiements récurrents', <Repeat className="size-8 text-emerald-700" />, [
+      'PAIEMENTS RÉCURRENTS',
+      '━━━━━━━━━━━━━━━',
+      '🔄 Planifiez vos paiements',
+      '📅 Quotidien / Hebdo / Mensuel',
+      '🔔 Rappels automatiques',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Paiements Récurrents',
+    ]);
+  }
+
+  function renderInternational() {
+    return renderInfoScreen('Transfert International', <Globe className="size-8 text-emerald-700" />, [
+      'TRANSFERT INTERNATIONAL',
+      '━━━━━━━━━━━━━━━',
+      '🌍 Envoi vers l\'étranger',
+      '💰 USD, EUR, GBP, XAF...',
+      '🏦 Virement bancaire / Mobile Money',
+      '━━━━━━━━━━━━━━━',
+      'Frais compétitifs',
+      'Taux de change préférentiel',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT > International',
+    ]);
+  }
+
+  function renderCards() {
+    return renderInfoScreen('Cartes TRAIT', <CreditCard className="size-8 text-emerald-700" />, [
+      'CARTES TRAIT',
+      '━━━━━━━━━━━━━━━',
+      '💳 Carte Virtuelle USD/FC',
+      '📱 Paiement mobile et NFC',
+      '🔒 Sécurisée par PIN et 2FA',
+      '━━━━━━━━━━━━━━━',
+      '• Commandez depuis l\'app',
+      '• Activez en 1 clic',
+      '• Gérez vos plafonds',
+      '━━━━━━━━━━━━━━━',
+      'Menu > Cartes TRAIT',
+    ]);
+  }
+
+  function renderReferral() {
+    return renderInfoScreen('Code de Parrainage', <Gift className="size-8 text-emerald-700" />, [
+      'PARRAINAGE TRAIT',
+      '━━━━━━━━━━━━━━━',
+      `🎁 Votre code: ${user?.referralCode || 'N/A'}`,
+      '━━━━━━━━━━━━━━━',
+      '👥 Parrainez vos proches',
+      '💰 Gagnez des bonus',
+      '📈 Suivez vos filleuls',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Parrainage',
+    ]);
+  }
+
+  function renderAnalytics() {
+    return renderInfoScreen('Analytiques', <BarChart3 className="size-8 text-emerald-700" />, [
+      'STATISTIQUES',
+      '━━━━━━━━━━━━━━━',
+      '📊 Vue d\'ensemble',
+      '💰 Revenus et dépenses',
+      '📈 Graphiques mensuels',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Analytics',
+    ]);
+  }
+
+  function renderReceipts() {
+    return renderInfoScreen('Reçus électroniques', <Receipt className="size-8 text-emerald-700" />, [
+      'REÇUS ÉLECTRONIQUES',
+      '━━━━━━━━━━━━━━━',
+      '🧾 Reçus pour chaque transaction',
+      '📧 Envoi par email',
+      '📱 Partage par WhatsApp',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Reçus',
+    ]);
+  }
+
+  function renderContactPay() {
+    return renderInfoScreen('Paiement Contact', <Users className="size-8 text-emerald-700" />, [
+      'PAIEMENT CONTACT',
+      '━━━━━━━━━━━━━━━',
+      '📱 Payez depuis vos contacts',
+      '👤 Sélectionnez un contact',
+      '💰 Entrez le montant',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Paiement Contact',
+    ]);
+  }
+
+  function renderQrPay() {
+    return renderInfoScreen('Paiement QR', <QrCode className="size-8 text-emerald-700" />, [
+      'PAIEMENT QR CODE',
+      '━━━━━━━━━━━━━━━',
+      '📷 Scannez un QR code',
+      '💰 Payez instantanément',
+      '🔒 Sécurisé par PIN',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > QR Paiement',
+    ]);
+  }
+
+  function renderBiometrics() {
+    return renderInfoScreen('Biometrics / 2FA', <Fingerprint className="size-8 text-emerald-700" />, [
+      'SÉCURITÉ BIOMÉTRIQUE',
+      '━━━━━━━━━━━━━━━',
+      '🔐 Empreinte digitale',
+      '📸 Reconnaissance faciale',
+      '🔑 Authentification 2FA/TOTP',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Sécurité > Biometrics',
+    ]);
+  }
+
+  function renderMarketplace() {
+    return renderInfoScreen('Marketplace', <Store className="size-8 text-emerald-700" />, [
+      'MARKETPLACE TRAIT',
+      '━━━━━━━━━━━━━━━',
+      '🛍️ Achetez et vendez',
+      '📦 Produits numériques',
+      '💰 Paiement via Wallet TRAIT',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Marketplace',
+    ]);
+  }
+
+  function renderBarterScreen() {
+    return renderInfoScreen('Troc (Barter)', <RefreshCw className="size-8 text-emerald-700" />, [
+      'TROC / BARTER',
+      '━━━━━━━━━━━━━━━',
+      '🔄 Échangez sans argent',
+      '📦 Proposez vos biens',
+      '💬 Négociez en direct',
+      '━━━━━━━━━━━━━━━',
+      'Dans l\'app TRAIT:',
+      'Menu > Troc / Barter',
+    ]);
+  }
+
+  function renderAgentInfo() {
+    if (!user?.agentCode) {
+      return renderInfoScreen('Info Agent', <UserCheck className="size-8 text-emerald-700" />, [
+        'INFORMATION AGENT',
+        '━━━━━━━━━━━━━━━',
+        'ℹ️ Vous n\'êtes pas agent.',
+        'Pour devenir agent TRAIT:',
+        '• Menu > Devenir Agent',
+        '• Remplissez le formulaire',
+        '• Attendez la validation',
+      ]);
+    }
+    return renderInfoScreen('Info Agent', <UserCheck className="size-8 text-emerald-700" />, [
+      'VOS INFORMATIONS AGENT',
+      '━━━━━━━━━━━━━━━',
+      `🏢 Nom: ${user.businessName || user.name || 'N/A'}`,
+      `🆔 Code: ${user.agentCode}`,
+      `📞 Téléphone: ${user.phone}`,
+      `📍 Localisation: ${user.location || 'N/A'}`,
+      `✅ Statut: ${user.validationStatus === 'validated' ? 'Validé' : user.validationStatus}`,
+      '━━━━━━━━━━━━━━━',
+      'Utilisez l\'app pour:',
+      '• Dépôts clients',
+      '• Retraits clients',
+      '• Voir votre activité',
+    ]);
+  }
+
+  // ─── ACCOUNT ─────────────────────────────────────────────────
 
   function renderAccountInfo() {
     return (
@@ -1232,14 +1478,12 @@ export default function USSDScreen() {
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Inscrit le</span><span className="text-xs">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'N/A'}</span></div>
               </CardContent>
             </Card>
-
             <div className="pt-3 space-y-1">
               <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-accent transition-colors" onClick={() => setStep('change-pin-current')}>
                 <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><Key className="size-4 text-amber-700" /></div>
                 <span className="flex-1 text-left text-sm font-medium">Changer le code PIN</span>
                 <ChevronRight className="size-4 text-muted-foreground" />
               </button>
-
               <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors" onClick={() => setStep('temp-block')}>
                 <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center"><ShieldOff className="size-4 text-red-600" /></div>
                 <span className="flex-1 text-left text-sm font-medium text-red-600">Bloquer temporairement</span>
@@ -1276,9 +1520,7 @@ export default function USSDScreen() {
             const data = await res.json();
             if (data.success) { updateTx({ currentPin: inputValue }); setStep('change-pin-new'); }
             else { toast.error('PIN actuel incorrect'); setInputValue(''); }
-          }} disabled={inputValue.length < 4}>
-            Vérifier
-          </Button>
+          }} disabled={inputValue.length < 4}>Vérifier</Button>
         </div>
       </div>
     );
@@ -1294,9 +1536,7 @@ export default function USSDScreen() {
             <p className="text-sm text-muted-foreground">Minimum 4 chiffres</p>
           </div>
           <Input ref={inputRef} type="password" placeholder="••••" value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="h-14 text-2xl text-center tracking-[0.5em] max-w-[200px]" maxLength={8} onKeyDown={(e) => e.key === 'Enter' && inputValue.length >= 4 && setStep('change-pin-confirm')} autoFocus />
-          <Button className="w-full max-w-[300px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => { updateTx({ newPin: inputValue }); setStep('change-pin-confirm'); }} disabled={inputValue.length < 4}>
-            Suivant
-          </Button>
+          <Button className="w-full max-w-[300px] h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl" onClick={() => { updateTx({ newPin: inputValue }); setStep('change-pin-confirm'); }} disabled={inputValue.length < 4}>Suivant</Button>
         </div>
       </div>
     );
@@ -1316,7 +1556,6 @@ export default function USSDScreen() {
               const res = await fetch('/api/auth/set-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, pin: inputValue }) });
               const data = await res.json();
               if (data.success) {
-                useAppStore.getState().setUser({ ...user!, pin: inputValue } as any);
                 setResultMessage('Votre code PIN a été modifié avec succès.');
                 setStep('change-pin-done');
               } else { toast.error('Erreur'); }
@@ -1327,13 +1566,10 @@ export default function USSDScreen() {
             const res = await fetch('/api/auth/set-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, pin: inputValue }) });
             const data = await res.json();
             if (data.success) {
-              useAppStore.getState().setUser({ ...user!, pin: inputValue } as any);
               setResultMessage('Votre code PIN a été modifié avec succès.');
               setStep('change-pin-done');
             } else { toast.error('Erreur'); }
-          }}>
-            Confirmer
-          </Button>
+          }}>Confirmer</Button>
         </div>
       </div>
     );
@@ -1374,7 +1610,7 @@ export default function USSDScreen() {
     return <DoneStep msg={resultMessage || 'Compte bloqué'} />;
   }
 
-  // ─── SETTINGS ──────────────────────────────────────────────────
+  // ─── SETTINGS ─────────────────────────────────────────────────
 
   function renderSettings() {
     return (
@@ -1390,7 +1626,6 @@ export default function USSDScreen() {
               </div>
               <ChevronRight className="size-4 text-muted-foreground" />
             </button>
-
             <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-accent transition-colors" onClick={() => setStep('settings-notifications')}>
               <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center"><Bell className="size-4 text-purple-700" /></div>
               <div className="flex-1 text-left">
@@ -1399,7 +1634,6 @@ export default function USSDScreen() {
               </div>
               <ChevronRight className="size-4 text-muted-foreground" />
             </button>
-
             <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-accent transition-colors" onClick={() => setStep('settings-security')}>
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center"><ShieldCheck className="size-4 text-emerald-700" /></div>
               <div className="flex-1 text-left">
@@ -1446,7 +1680,7 @@ export default function USSDScreen() {
           <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center"><Bell className="size-8 text-purple-700" /></div>
           <div className="text-center">
             <p className="text-lg font-semibold">Notifications SMS</p>
-            <p className="text-sm text-muted-foreground mt-1">{smsNotif ? 'Les notifications sont activées' : 'Les notifications sont désactivées'}</p>
+            <p className="text-sm text-muted-foreground mt-1">{smsNotif ? 'Activées' : 'Désactivées'}</p>
           </div>
           <Button className={`w-full max-w-[300px] h-12 rounded-xl font-semibold ${smsNotif ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`} onClick={() => updateSetting({ smsNotifications: !smsNotif })}>
             {smsNotif ? 'Désactiver' : 'Activer'} les notifications
@@ -1478,7 +1712,7 @@ export default function USSDScreen() {
     );
   }
 
-  // ─── SUPPORT ───────────────────────────────────────────────────
+  // ─── SUPPORT ──────────────────────────────────────────────────
 
   function renderSupport() {
     return (
@@ -1494,7 +1728,6 @@ export default function USSDScreen() {
               </div>
               <ChevronRight className="size-4 text-muted-foreground" />
             </button>
-
             <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-accent transition-colors" onClick={() => setStep('support-report')}>
               <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><MessageSquare className="size-4 text-amber-700" /></div>
               <div className="flex-1 text-left">
@@ -1503,7 +1736,6 @@ export default function USSDScreen() {
               </div>
               <ChevronRight className="size-4 text-muted-foreground" />
             </button>
-
             <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors" onClick={() => setStep('temp-block')}>
               <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center"><AlertTriangle className="size-4 text-red-600" /></div>
               <div className="flex-1 text-left">
@@ -1513,13 +1745,12 @@ export default function USSDScreen() {
               <ChevronRight className="size-4 text-red-300" />
             </button>
           </div>
-
           <Card className="mt-4 bg-emerald-50 border-emerald-200">
             <CardContent className="p-4 text-center">
               <Headphones className="size-8 text-emerald-700 mx-auto mb-2" />
               <p className="text-sm font-semibold text-emerald-800">Support TRAIT</p>
               <p className="text-xs text-emerald-700 mt-1">Disponible 24h/24, 7j/7</p>
-              <p className="text-xs text-emerald-600 mt-2 font-mono">*1709*12#</p>
+              <p className="text-xs text-emerald-600 mt-2 font-mono">*1709*28#</p>
             </CardContent>
           </Card>
         </div>
@@ -1543,9 +1774,7 @@ export default function USSDScreen() {
             if (!inputValue.trim()) { toast.error('Décrivez votre problème'); return; }
             toast.success('Signalement envoyé. Notre équipe vous contactera.');
             goMenu();
-          }} disabled={!inputValue.trim()}>
-            Envoyer le signalement
-          </Button>
+          }} disabled={!inputValue.trim()}>Envoyer le signalement</Button>
         </div>
       </div>
     );
@@ -1560,7 +1789,7 @@ export default function USSDScreen() {
             <Card>
               <CardContent className="p-4">
                 <p className="font-semibold text-sm mb-2">Comment utiliser TRAIT USSD ?</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">Composez *1709# depuis votre téléphone. Choisissez votre devise puis naviguez dans les menus pour accéder aux services.</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">Composez *1709# depuis votre téléphone. Naviguez dans les 28 services disponibles.</p>
               </CardContent>
             </Card>
             <Card>
@@ -1581,13 +1810,19 @@ export default function USSDScreen() {
                 <p className="text-xs text-muted-foreground leading-relaxed">Contactez le support TRAIT pour débloquer votre compte. Apportez une pièce d'identité valide.</p>
               </CardContent>
             </Card>
+            <Card>
+              <CardContent className="p-4">
+                <p className="font-semibold text-sm mb-2">Comment devenir agent ?</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">Menu → Devenir Agent. Remplissez le formulaire avec vos informations. Attendez la validation par l'administrateur.</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
     );
   }
 
-  // ─── QUIT ──────────────────────────────────────────────────────
+  // ─── QUIT ─────────────────────────────────────────────────────
 
   function renderQuit() {
     return (
@@ -1610,14 +1845,14 @@ export default function USSDScreen() {
     );
   }
 
-  // ─── Main Render ───────────────────────────────────────────────
+  // ─── Main Render ──────────────────────────────────────────────
 
   const stepRenderers: Record<UssdStep, () => React.ReactNode> = {
     'welcome': renderWelcome,
     'main-menu': renderMainMenu,
+    'balance': renderBalance,
     'balance-fc': renderBalance,
     'balance-usd': renderBalance,
-    'balance': renderBalance,
     'transfer-currency': () => renderCurrencySelection("Transférer de l'argent", { fc: 'transfer-phone', usd: 'transfer-phone' }),
     'transfer-phone': renderTransferPhone,
     'transfer-amount': renderTransferAmount,
@@ -1626,12 +1861,14 @@ export default function USSDScreen() {
     'transfer-done': () => <DoneStep msg={resultMessage} />,
     'withdraw-currency': () => renderCurrencySelection('Retrait via agent', { fc: 'withdraw-agent', usd: 'withdraw-agent' }),
     'withdraw-agent': renderWithdrawAgent,
+    'withdraw-agent-name': renderWithdrawAgentName,
     'withdraw-amount': renderWithdrawAmount,
     'withdraw-confirm': renderWithdrawConfirm,
     'withdraw-pin': renderWithdrawPin,
     'withdraw-done': () => <DoneStep msg={resultMessage} />,
     'deposit-currency': () => renderCurrencySelection('Dépôt via agent', { fc: 'deposit-agent', usd: 'deposit-agent' }),
     'deposit-agent': renderDepositAgent,
+    'deposit-agent-name': renderDepositAgentName,
     'deposit-amount': renderDepositAmount,
     'deposit-confirm': renderDepositConfirm,
     'deposit-done': () => <DoneStep msg={resultMessage} />,
@@ -1663,7 +1900,6 @@ export default function USSDScreen() {
     'change-pin-confirm': renderChangePinConfirm,
     'change-pin-done': renderChangePinDone,
     'temp-block': renderTempBlock,
-    'temp-block-confirm': renderTempBlock,
     'temp-block-done': renderTempBlockDone,
     'settings': renderSettings,
     'settings-language': renderSettingsLanguage,
@@ -1672,6 +1908,23 @@ export default function USSDScreen() {
     'support': renderSupport,
     'support-report': renderSupportReport,
     'support-help': renderSupportHelp,
+    'bundles': renderBundles,
+    'microcredit': renderMicrocredit,
+    'savings': renderSavings,
+    'payment-link': renderPaymentLink,
+    'payment-request': renderPaymentRequest,
+    'recurring': renderRecurring,
+    'international': renderInternational,
+    'cards': renderCards,
+    'referral': renderReferral,
+    'analytics': renderAnalytics,
+    'receipts': renderReceipts,
+    'contact-pay': renderContactPay,
+    'qr-pay': renderQrPay,
+    'biometrics': renderBiometrics,
+    'marketplace': renderMarketplace,
+    'barter': renderBarterScreen,
+    'agent-info': renderAgentInfo,
     'quit': renderQuit,
   };
 

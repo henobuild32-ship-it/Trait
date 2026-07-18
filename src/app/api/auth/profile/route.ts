@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
         kycStatus: true,
         parentId: true,
         createdAt: true,
+        referralCode: true,
       },
     })
 

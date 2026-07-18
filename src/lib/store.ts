@@ -119,6 +119,7 @@ export interface User {
   suspended: boolean;
   hasCompletedOnboarding: boolean;
   twoFactorEnabled?: boolean;
+  referralCode?: string | null;
   createdAt?: string;
 }
 

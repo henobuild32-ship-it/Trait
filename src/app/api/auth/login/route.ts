@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
         parentId: user.parentId,
         hasCompletedOnboarding: user.hasCompletedOnboarding,
         twoFactorEnabled: user.twoFactorEnabled,
+        referralCode: user.referralCode,
       },
     })
 

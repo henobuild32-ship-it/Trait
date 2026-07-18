@@ -191,6 +191,7 @@ export async function POST(request: NextRequest) {
         isVerified: updatedUser.isVerified,
         role: updatedUser.role,
         hasCompletedOnboarding: updatedUser.hasCompletedOnboarding,
+        referralCode: updatedUser.referralCode,
       },
     });
     setTokenCookie(response, token);

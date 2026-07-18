@@ -234,6 +234,13 @@ export default function SettingsScreen() {
         const data = await res.json();
         if (data.hasUpdate) {
           toast.success(t('settings.update_available').replace('{version}', data.latestVersion));
+          try {
+            const { AppUpdate } = await import('@/plugins/app-update');
+            await AppUpdate.downloadAndInstall({ url: data.downloadUrl || '/downloads/trait.apk' });
+          } catch {
+            const downloadUrl = data.downloadUrl || '/downloads/trait.apk';
+            window.open(downloadUrl.startsWith('http') ? downloadUrl : window.location.origin + downloadUrl, '_blank');
+          }
         } else {
           toast.success(t('settings.up_to_date'));
         }

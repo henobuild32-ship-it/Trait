@@ -176,6 +176,53 @@ const seed = async () => {
   }
   console.log('✅ Paramètres utilisateur créés');
 
+  // ── App Version ───────────────────────────────────────────────────
+  await db.appVersion.upsert({
+    where: { version: '2.0.0' },
+    update: {
+      isCurrent: true,
+      downloadUrl: '/downloads/trait.apk',
+      description: [
+        'Version 2.0 — Nouvelle identité visuelle',
+        'QR Code personnel noir & blanc avec lien unique',
+        'Paiement par scan : /pay/[userId]',
+        'Temps réel : WebSocket Socket.IO',
+        'Notifications centralisées (DB + WebSocket + Push)',
+        'Mode hors ligne : files d\'attente IndexedDB',
+        'Authentification à deux facteurs (2FA/TOTP)',
+        'Dépôt 4 méthodes : Mobile Money, Banque, Visa, Agent',
+        'Système de support client avec historique',
+        'Admin KYC : validation documents + selfie',
+        'Changement de PIN sécurisé',
+        'USSD 28 menus hors ligne',
+        'Scan QR natif via ML Kit',
+        'Permissions Android optimisées',
+      ].join('\n'),
+    },
+    create: {
+      version: '2.0.0',
+      isCurrent: true,
+      downloadUrl: '/downloads/trait.apk',
+      description: [
+        'Version 2.0 — Nouvelle identité visuelle',
+        'QR Code personnel noir & blanc avec lien unique',
+        'Paiement par scan : /pay/[userId]',
+        'Temps réel : WebSocket Socket.IO',
+        'Notifications centralisées (DB + WebSocket + Push)',
+        'Mode hors ligne : files d\'attente IndexedDB',
+        'Authentification à deux facteurs (2FA/TOTP)',
+        'Dépôt 4 méthodes : Mobile Money, Banque, Visa, Agent',
+        'Système de support client avec historique',
+        'Admin KYC : validation documents + selfie',
+        'Changement de PIN sécurisé',
+        'USSD 28 menus hors ligne',
+        'Scan QR natif via ML Kit',
+        'Permissions Android optimisées',
+      ].join('\n'),
+    },
+  });
+  console.log('✅ AppVersion 2.0.0 enregistrée');
+
   // ── Sample favorites ──────────────────────────────────────────────
   try {
     await db.ussdFavorite.createMany({

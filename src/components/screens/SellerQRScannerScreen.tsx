@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Camera, CameraOff, CheckCircle2, Loader2, QrCode, XCircle, Lock } from 'lucide-react'
+import { ArrowLeft, Camera, CameraOff, CheckCircle2, Loader2, QrCode, XCircle, Lock, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppStore } from '@/lib/store'
 import {
@@ -15,9 +15,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import jsQR from 'jsqr'
+import { useCameraPermission } from '@/hooks/useCameraPermission'
 
 export default function SellerQRScannerScreen() {
   const { user, goBack } = useAppStore()
+  const { permissionStatus, permissionLoading, checkPermission, requestPermission } = useCameraPermission()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -32,8 +34,14 @@ export default function SellerQRScannerScreen() {
   const [message, setMessage] = useState('')
   const [showPinPrompt, setShowPinPrompt] = useState(false)
   const [clientPin, setClientPin] = useState('')
+  const [showPermissionPrompt, setShowPermissionPrompt] = useState(false)
 
   const pendingStreamRef = useRef<MediaStream | null>(null)
+
+  // Check permission on mount
+  useEffect(() => {
+    checkPermission().catch(() => {})
+  }, [checkPermission])
 
   function stopCamera() {
     scanningRef.current = false
@@ -45,7 +53,6 @@ export default function SellerQRScannerScreen() {
 
   useEffect(() => stopCamera, [])
 
-  // Attach pending stream once video element is rendered
   useEffect(() => {
     if (cameraActive && videoRef.current && pendingStreamRef.current) {
       const video = videoRef.current
@@ -63,6 +70,25 @@ export default function SellerQRScannerScreen() {
     setCameraError('')
     setStatus('idle')
 
+    // Check permission first
+    const status = await checkPermission()
+    if (status === 'denied') {
+      setShowPermissionPrompt(true)
+      return
+    }
+
+    if (status === 'prompt' || status === 'prompt-with-rationale') {
+      const result = await requestPermission()
+      if (result !== 'granted') {
+        setShowPermissionPrompt(true)
+        return
+      }
+    }
+
+    doStartCamera()
+  }
+
+  async function doStartCamera() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -70,28 +96,27 @@ export default function SellerQRScannerScreen() {
       })
       pendingStreamRef.current = stream
       setCameraActive(true)
-    } catch {
-      setCameraError("Impossible d'accéder à la caméra. Autorisez la caméra dans les paramètres.")
+    } catch (err: any) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setShowPermissionPrompt(true)
+      } else {
+        setCameraError("Impossible d'accéder à la caméra. Vérifiez que l'autorisation caméra est activée dans les paramètres de votre téléphone.")
+      }
     }
   }
 
   function scanLoop() {
     if (!scanningRef.current) return
-
     const video = videoRef.current
     const canvas = canvasRef.current
-
     if (video && canvas && video.readyState >= 2) {
       const ctx = canvas.getContext('2d')
       if (!ctx) return
-
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const code = jsQR(imageData.data, imageData.width, imageData.height)
-
       if (code) {
         setQrCodeData(code.data)
         toast('QR Code détecté', { description: 'Vous pouvez confirmer le paiement.' })
@@ -99,7 +124,6 @@ export default function SellerQRScannerScreen() {
         return
       }
     }
-
     animationRef.current = requestAnimationFrame(scanLoop)
   }
 
@@ -112,9 +136,7 @@ export default function SellerQRScannerScreen() {
       toast.error('Erreur', { description: 'Veuillez scanner le QR Code et saisir un montant valide' })
       return
     }
-
     const pinToSubmit = pinOverride || clientPin
-
     setStatus('loading')
     try {
       const res = await fetch('/api/payment/qr', {
@@ -129,7 +151,6 @@ export default function SellerQRScannerScreen() {
         }),
       })
       const data = await res.json()
-
       if (data.success) {
         setStatus('success')
         setMessage(data.message || 'Paiement réussi')
@@ -184,9 +205,12 @@ export default function SellerQRScannerScreen() {
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted">
                 <QrCode className="w-16 h-16 text-indigo-400" />
-                <Button type="button" onClick={startCamera} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-xl">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Ouvrir la caméra
+                <Button type="button" onClick={startCamera} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-xl" disabled={permissionLoading}>
+                  {permissionLoading ? (
+                    <span className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Vérification...</span>
+                  ) : (
+                    <><Camera className="w-4 h-4 mr-2" />Ouvrir la caméra</>
+                  )}
                 </Button>
               </div>
             )}
@@ -257,6 +281,48 @@ export default function SellerQRScannerScreen() {
         )}
       </div>
 
+      {/* Dialogue demande autorisation caméra */}
+      <Dialog open={showPermissionPrompt} onOpenChange={setShowPermissionPrompt}>
+        <DialogContent className="mx-4 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="size-5 text-indigo-600" />
+              Autorisation caméra requise
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-2">
+              <p>L'application <strong>TRAIT</strong> a besoin d'accéder à votre caméra pour :</p>
+              <ul className="list-disc pl-5 text-sm space-y-1">
+                <li>Scanner les QR codes de paiement</li>
+                <li>Prendre des photos de profil</li>
+                <li>Vérifier vos documents KYC</li>
+                <li>Authentification par reconnaissance faciale</li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-2">
+                Allez dans <strong>Paramètres &gt; Applications &gt; TRAIT &gt; Autorisations</strong> et activez <strong>Appareil photo</strong>.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowPermissionPrompt(false)}>
+              Plus tard
+            </Button>
+            <Button
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl"
+              onClick={async () => {
+                setShowPermissionPrompt(false)
+                const result = await requestPermission()
+                if (result === 'granted') {
+                  doStartCamera()
+                }
+              }}
+              disabled={permissionLoading}
+            >
+              {permissionLoading ? 'Demande...' : 'Autoriser'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialogue Code PIN Enfant */}
       <Dialog open={showPinPrompt} onOpenChange={setShowPinPrompt}>
         <DialogContent className="mx-4 rounded-2xl max-w-sm">
@@ -281,21 +347,10 @@ export default function SellerQRScannerScreen() {
             />
           </div>
           <DialogFooter className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1 rounded-xl"
-              onClick={() => {
-                setShowPinPrompt(false)
-                setClientPin('')
-              }}
-            >
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => { setShowPinPrompt(false); setClientPin('') }}>
               Annuler
             </Button>
-            <Button
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl"
-              disabled={clientPin.length !== 4}
-              onClick={() => handleScanAndPay()}
-            >
+            <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl" disabled={clientPin.length !== 4} onClick={() => handleScanAndPay()}>
               Confirmer
             </Button>
           </DialogFooter>

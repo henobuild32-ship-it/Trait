@@ -19,6 +19,11 @@ const config: CapacitorConfig = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
+    Camera: {
+      iosInfoAddAppTransportSecurity: true,
+      iosUsesCameraUsageDescription: "TRAIT a besoin d'accéder à la caméra pour scanner les QR codes, prendre des photos de profil et vérifier vos documents KYC.",
+      androidUsesCameraUsageDescription: "TRAIT a besoin d'accéder à la caméra pour scanner les QR codes, prendre des photos de profil et vérifier vos documents KYC.",
+    },
   },
 };
 

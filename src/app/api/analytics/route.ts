@@ -54,12 +54,12 @@ export async function GET(request: NextRequest) {
         take: 5,
       }),
       prisma.$queryRaw`
-        SELECT DATE(created_at) as date, COUNT(*) as count
+        SELECT DATE("createdAt") as date, COUNT(*) as count
         FROM "Transaction"
-        WHERE (sender_id = ${userId} OR receiver_id = ${userId})
-          AND created_at >= ${thirtyDaysAgo}
-          AND status = 'completed'
-        GROUP BY DATE(created_at)
+        WHERE ("senderId" = ${userId} OR "receiverId" = ${userId})
+          AND "createdAt" >= ${thirtyDaysAgo}
+          AND "status" = 'completed'
+        GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
       prisma.transaction.findMany({

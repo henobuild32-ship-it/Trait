@@ -101,7 +101,7 @@ export default function BillsScreen() {
   async function fetchHistory() {
     if (!user?.id) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/bills/history?userId=${user.id}`);
+      const res = await fetch(`/api/bills/history`);
       const data = await res.json();
       if (data.success) setHistory(data.history ?? []);
     } catch {}

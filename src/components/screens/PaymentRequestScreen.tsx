@@ -79,7 +79,7 @@ export default function PaymentRequestScreen() {
   async function fetchRequests() {
     if (!user?.id) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/payment-requests?userId=${user.id}`);
+      const res = await fetch(`/api/payments/request`);
       const data = await res.json();
       if (data.success) setRequests(data.requests ?? []);
     } catch { toast.error('Erreur de chargement'); }
@@ -107,12 +107,12 @@ export default function PaymentRequestScreen() {
     if (!formAmount || parseFloat(formAmount) <= 0) { toast.error('Montant invalide'); return; }
     setCreating(true);
     try {
-      const res = await fetch('/api/payment-requests/create', {
+      const res = await fetch('/api/payments/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           requesterId: user?.id,
-          recipientPhone: formPhone,
+          targetPhone: formPhone,
           amount: parseFloat(formAmount),
           currency: formCurrency,
           description: formDescription,
@@ -137,10 +137,10 @@ export default function PaymentRequestScreen() {
   function handleAccept(request: PaymentRequest) {
     setPendingPinAction(async () => {
       try {
-        const res = await fetch('/api/payment-requests/accept', {
+        const res = await fetch(`/api/payments/request/${request.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ requestId: request.id, userId: user?.id }),
+          body: JSON.stringify({ action: 'accept', userId: user?.id }),
         });
         const data = await res.json();
         if (data.success) {
@@ -154,10 +154,10 @@ export default function PaymentRequestScreen() {
 
   async function handleReject(request: PaymentRequest) {
     try {
-      const res = await fetch('/api/payment-requests/reject', {
+      const res = await fetch(`/api/payments/request/${request.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId: request.id, userId: user?.id }),
+        body: JSON.stringify({ action: 'reject', userId: user?.id }),
       });
       const data = await res.json();
       if (data.success) { toast.success('Demande refusée'); fetchRequests(); }

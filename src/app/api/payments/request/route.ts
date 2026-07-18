@@ -9,38 +9,80 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Non authentifié' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const role = searchParams.get('role')
+    // Fetch requests where user is either requester or recipient
+    const sent = await prisma.paymentRequest.findMany({
+      where: { requesterId: auth.userId },
+      include: {
+        requester: { select: { id: true, name: true, phone: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
 
-    let requests
-    if (role === 'sent') {
-      requests = await prisma.paymentRequest.findMany({
-        where: { requesterId: auth.userId },
-        orderBy: { createdAt: 'desc' },
-      })
-    } else if (role === 'received') {
-      requests = await prisma.paymentRequest.findMany({
-        where: { targetPhone: auth.phone },
-        orderBy: { createdAt: 'desc' },
-      })
-    } else {
-      const sent = await prisma.paymentRequest.findMany({
-        where: { requesterId: auth.userId },
-        orderBy: { createdAt: 'desc' },
-      })
-      const received = await prisma.paymentRequest.findMany({
-        where: { targetPhone: auth.phone },
-        orderBy: { createdAt: 'desc' },
-      })
-      const map = new Map()
-      for (const r of sent) map.set(r.id, { ...r, direction: 'sent' })
-      for (const r of received) map.set(r.id, { ...r, direction: 'received' })
-      requests = Array.from(map.values()).sort(
-        (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
+    const received = await prisma.paymentRequest.findMany({
+      where: { targetPhone: auth.phone },
+      include: {
+        requester: { select: { id: true, name: true, phone: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Gather all target phones to fetch recipient profiles
+    const targetPhones = Array.from(
+      new Set([
+        ...sent.map((r) => r.targetPhone).filter(Boolean),
+        ...received.map((r) => r.targetPhone).filter(Boolean),
+      ])
+    ) as string[]
+
+    const targetUsers = await prisma.user.findMany({
+      where: { phone: { in: targetPhones } },
+      select: { id: true, name: true, phone: true },
+    })
+
+    const userMap = new Map(targetUsers.map((u) => [u.phone, u]))
+
+    const mapRequest = (r: any) => {
+      const recipientProfile = userMap.get(r.targetPhone || '') || {
+        id: r.targetId || '',
+        name: 'Utilisateur inconnu',
+        phone: r.targetPhone || '',
+      }
+
+      return {
+        id: r.id,
+        amount: r.amount,
+        currency: r.currency,
+        description: r.description || '',
+        status: r.status === 'completed' ? 'accepted' : r.status,
+        createdAt: r.createdAt.toISOString(),
+        requester: {
+          id: r.requester.id,
+          name: r.requester.name || 'Utilisateur inconnu',
+          phone: r.requester.phone,
+        },
+        recipient: {
+          id: recipientProfile.id,
+          name: recipientProfile.name || 'Utilisateur inconnu',
+          phone: recipientProfile.phone,
+        },
+      }
     }
 
-    return NextResponse.json({ success: true, requests })
+    const mappedSent = sent.map(mapRequest)
+    const mappedReceived = received.map(mapRequest)
+
+    // Combine and sort
+    const allMapped = [...mappedSent, ...mappedReceived]
+    const uniqueMap = new Map()
+    for (const item of allMapped) {
+      uniqueMap.set(item.id, item)
+    }
+
+    const sortedRequests = Array.from(uniqueMap.values()).sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+
+    return NextResponse.json({ success: true, requests: sortedRequests })
   } catch (error) {
     console.error('Payment requests GET error:', error)
     return NextResponse.json({ success: false, message: 'Erreur interne du serveur' }, { status: 500 })
@@ -55,10 +97,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { targetPhone, amount, currency, description } = body
+    const targetPhone = body.targetPhone || body.recipientPhone
+    const { amount, currency, description } = body
 
     if (!targetPhone || !amount) {
-      return NextResponse.json({ success: false, message: 'Téléphone et montant requis' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Téléphone destinataire et montant requis' }, { status: 400 })
     }
 
     if (amount <= 0) {
@@ -67,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     const target = await prisma.user.findUnique({ where: { phone: targetPhone } })
     if (!target) {
-      return NextResponse.json({ success: false, message: 'Utilisateur non trouvé' }, { status: 404 })
+      return NextResponse.json({ success: false, message: 'Destinataire non trouvé' }, { status: 404 })
     }
 
     const paymentRequest = await prisma.paymentRequest.create({

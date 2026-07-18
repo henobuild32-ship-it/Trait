@@ -89,7 +89,7 @@ export default function MicroCreditScreen() {
   async function fetchCredits() {
     if (!user?.id) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/credits?userId=${user.id}`);
+      const res = await fetch(`/api/microcredit`);
       const data = await res.json();
       if (data.success) {
         setCredits(data.credits ?? []);
@@ -112,7 +112,7 @@ export default function MicroCreditScreen() {
     if (requestAmount <= 0) { toast.error('Montant invalide'); return; }
     setRequesting(true);
     try {
-      const res = await fetch('/api/credits/request', {
+      const res = await fetch('/api/microcredit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -137,7 +137,7 @@ export default function MicroCreditScreen() {
     }
     setPendingPinAction(async () => {
       try {
-        const res = await fetch('/api/credits/repay', {
+        const res = await fetch('/api/microcredit/repay', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

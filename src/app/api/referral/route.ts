@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      code: user.referralCode,
       stats: {
         code: user.referralCode,
         totalReferrals: referredUsers,

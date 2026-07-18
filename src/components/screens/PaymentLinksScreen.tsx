@@ -85,7 +85,7 @@ export default function PaymentLinksScreen() {
   async function fetchLinks() {
     if (!user?.id) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/payment-links?userId=${user.id}`);
+      const res = await fetch(`/api/payments/links`);
       const data = await res.json();
       if (data.success) setLinks(data.links ?? []);
     } catch { toast.error('Erreur de chargement'); }
@@ -103,7 +103,7 @@ export default function PaymentLinksScreen() {
     }
     setCreating(true);
     try {
-      const res = await fetch('/api/payment-links/create', {
+      const res = await fetch('/api/payments/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

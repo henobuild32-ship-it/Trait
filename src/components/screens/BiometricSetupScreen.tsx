@@ -40,7 +40,7 @@ export default function BiometricSetupScreen() {
   async function fetchBiometricStatus() {
     if (!user?.id) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/biometric/status?userId=${user.id}`);
+      const res = await fetch('/api/biometric');
       const data = await res.json();
       if (data.success) setBiometricEnabled(data.enabled);
     } catch {}
@@ -55,10 +55,10 @@ export default function BiometricSetupScreen() {
     setEnabling(true);
 
     try {
-      const res = await fetch('/api/biometric/enable', {
+      const res = await fetch('/api/biometric?action=register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id }),
+        body: JSON.stringify({ publicKey: 'simulated-biometric-public-key' }),
       });
       const data = await res.json();
       if (data.success) {
@@ -71,10 +71,8 @@ export default function BiometricSetupScreen() {
 
   async function handleDisable() {
     try {
-      const res = await fetch('/api/biometric/disable', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id }),
+      const res = await fetch('/api/biometric', {
+        method: 'DELETE',
       });
       const data = await res.json();
       if (data.success) {

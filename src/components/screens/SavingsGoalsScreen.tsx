@@ -71,7 +71,7 @@ export default function SavingsGoalsScreen() {
   async function fetchGoals() {
     if (!user?.id) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/savings-goals?userId=${user.id}`);
+      const res = await fetch(`/api/savings`);
       const data = await res.json();
       if (data.success) setGoals(data.goals ?? []);
     } catch { toast.error('Erreur de chargement'); }
@@ -84,7 +84,7 @@ export default function SavingsGoalsScreen() {
     }
     setCreating(true);
     try {
-      const res = await fetch('/api/savings-goals/create', {
+      const res = await fetch('/api/savings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,7 +111,7 @@ export default function SavingsGoalsScreen() {
     }
     setPendingPinAction(async () => {
       try {
-        const res = await fetch('/api/savings-goals/contribute', {
+        const res = await fetch('/api/savings/contribute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

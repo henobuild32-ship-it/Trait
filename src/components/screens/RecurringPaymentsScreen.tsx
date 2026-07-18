@@ -84,7 +84,7 @@ export default function RecurringPaymentsScreen() {
   async function fetchPayments() {
     if (!user?.id) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/recurring-payments?userId=${user.id}`);
+      const res = await fetch(`/api/payments/recurring`);
       const data = await res.json();
       if (data.success) setPayments(data.payments ?? []);
     } catch { toast.error('Erreur de chargement'); }
@@ -109,7 +109,7 @@ export default function RecurringPaymentsScreen() {
     }
     setProcessing('create');
     try {
-      const res = await fetch('/api/recurring-payments/create', {
+      const res = await fetch('/api/payments/recurring', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +119,7 @@ export default function RecurringPaymentsScreen() {
           currency: formCurrency,
           frequency: formFrequency,
           description: formDescription,
-          startDate: formStartDate,
+          nextRun: formStartDate,
         }),
       });
       const data = await res.json();
@@ -133,10 +133,10 @@ export default function RecurringPaymentsScreen() {
     const newStatus = payment.status === 'active' ? 'paused' : 'active';
     setProcessing(payment.id);
     try {
-      const res = await fetch('/api/recurring-payments/update', {
-        method: 'POST',
+      const res = await fetch(`/api/payments/recurring/${payment.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: payment.id, userId: user?.id, status: newStatus }),
+        body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
       if (data.success) { toast.success(newStatus === 'paused' ? 'Paiement mis en pause' : 'Paiement repris'); fetchPayments(); }
@@ -148,10 +148,8 @@ export default function RecurringPaymentsScreen() {
   async function handleDelete() {
     if (!deleting) return;
     try {
-      const res = await fetch('/api/recurring-payments/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: deleting.id, userId: user?.id }),
+      const res = await fetch(`/api/payments/recurring/${deleting.id}`, {
+        method: 'DELETE',
       });
       const data = await res.json();
       if (data.success) { toast.success('Paiement supprimé'); setDeleting(null); fetchPayments(); }
@@ -163,12 +161,11 @@ export default function RecurringPaymentsScreen() {
     if (!editing || !formAmount || parseFloat(formAmount) <= 0) { toast.error('Montant invalide'); return; }
     setProcessing('edit');
     try {
-      const res = await fetch('/api/recurring-payments/update', {
-        method: 'POST',
+      const res = await fetch(`/api/payments/recurring/${editing.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: editing.id, userId: user?.id,
-          amount: parseFloat(formAmount), currency: formCurrency, frequency: formFrequency,
+          amount: parseFloat(formAmount), frequency: formFrequency,
         }),
       });
       const data = await res.json();

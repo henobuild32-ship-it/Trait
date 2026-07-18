@@ -60,7 +60,7 @@ export default function ReferralScreen() {
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const res = await fetch('/api/referral/generate', {
+      const res = await fetch('/api/referral', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id }),

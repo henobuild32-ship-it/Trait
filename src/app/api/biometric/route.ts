@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
 
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await getAuthUser(request)
+    if (!auth) {
+      return NextResponse.json({ success: false, message: 'Non authentifié' }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { biometricEnabled: true },
+    })
+
+    return NextResponse.json({ success: true, enabled: user?.biometricEnabled || false })
+  } catch (error) {
+    console.error('Biometric GET error:', error)
+    return NextResponse.json({ success: false, message: 'Erreur interne du serveur' }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await getAuthUser(request)

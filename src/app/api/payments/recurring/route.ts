@@ -14,7 +14,31 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json({ success: true, payments })
+    const recipientIds = Array.from(new Set(payments.map((p) => p.recipientId)))
+    const recipients = await prisma.user.findMany({
+      where: { id: { in: recipientIds } },
+      select: { id: true, name: true, phone: true },
+    })
+
+    const recipientMap = new Map(recipients.map((r) => [r.id, r]))
+
+    const mappedPayments = payments.map((p) => {
+      const rec = recipientMap.get(p.recipientId)
+      return {
+        id: p.id,
+        recipientName: rec?.name || rec?.phone || 'Utilisateur inconnu',
+        recipientPhone: rec?.phone || '',
+        amount: p.amount,
+        currency: p.currency,
+        frequency: p.frequency,
+        nextRunDate: p.nextRun.toISOString(),
+        status: p.status,
+        description: p.description || '',
+        createdAt: p.createdAt.toISOString(),
+      }
+    })
+
+    return NextResponse.json({ success: true, payments: mappedPayments })
   } catch (error) {
     console.error('Recurring payments GET error:', error)
     return NextResponse.json({ success: false, message: 'Erreur interne du serveur' }, { status: 500 })
@@ -29,19 +53,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { recipientPhone, amount, currency, frequency, description, nextRun } = body
+    const recipientPhone = body.recipientPhone
+    const amount = body.amount
+    const currency = body.currency
+    const frequency = body.frequency
+    const description = body.description
+    const nextRunInput = body.nextRun || body.startDate
 
-    if (!recipientPhone || !amount || !nextRun) {
-      return NextResponse.json({ success: false, message: 'Téléphone destinataire, montant et prochaine exécution requis' }, { status: 400 })
+    if (!recipientPhone || !amount || !nextRunInput) {
+      return NextResponse.json({ success: false, message: 'Téléphone destinataire, montant et date de début requis' }, { status: 400 })
     }
 
     if (amount <= 0) {
       return NextResponse.json({ success: false, message: 'Montant invalide' }, { status: 400 })
     }
 
-    const nextRunDate = new Date(nextRun)
-    if (nextRunDate <= new Date()) {
-      return NextResponse.json({ success: false, message: 'La prochaine exécution doit être dans le futur' }, { status: 400 })
+    const nextRunDate = new Date(nextRunInput)
+    if (isNaN(nextRunDate.getTime())) {
+      return NextResponse.json({ success: false, message: 'Date invalide' }, { status: 400 })
     }
 
     const recipient = await prisma.user.findUnique({ where: { phone: recipientPhone } })
